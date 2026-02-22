@@ -48,18 +48,14 @@ CREATE TABLE IF NOT EXISTS users (
      'AB','AB+','AB-'
      ) NOT NULL COMMENT 'blood type of the user',
 
-    employid VARCHAR(255) DEFAULT NULL COMMENT 'users employment id but is left blank for patients',
-    adminid  VARCHAR(255) DEFAULT NULL COMMENT 'any admin users id, but is left blank for non-admin users',
+ password   VARCHAR(255)            NOT NULL    COMMENT 'hashed password, never plain text',
+ extra      VARCHAR(2000) DEFAULT NULL           COMMENT 'extra info e.g. medical history',
+ employid   VARCHAR(255)  DEFAULT NULL           COMMENT 'employment id, NULL for patients',
+ adminid    VARCHAR(255)  DEFAULT NULL           COMMENT 'admin id, NULL for non-admins',
 
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'date and time a user was created',
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'date and time a user was last updated',
-    deleted_at TIMESTAMP DEFAULT NULL COMMENT 'date and time a user was deleted',
-
-    CONSTRAINT chk_employid_role CHECK (
-     (user_role IN ('ADMIN', 'PATIENT') AND employid IS NULL) OR
-     (user_role NOT IN ('ADMIN', 'PATIENT') AND employid IS NOT NULL)
-     ),
-    CONSTRAINT chk_adminid_role CHECK (adminid IS NULL OR user_role = 'ADMIN')
+ created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP                         COMMENT 'row creation time',
+ updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'last update time',
+ deleted_at TIMESTAMP DEFAULT NULL                                                COMMENT 'soft delete timestamp'
 );
 
 CREATE TABLE IF NOT EXISTS user_role (
