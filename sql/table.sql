@@ -66,3 +66,17 @@ CREATE TABLE IF NOT EXISTS users (
      ),
     CONSTRAINT chk_adminid_role CHECK (adminid IS NULL OR user_role = 'ADMIN')
 );
+
+CREATE TABLE IF NOT EXISTS user_role (
+ user_id INTEGER NOT NULL COMMENT 'id of the user',
+ role ENUM(
+     'PATIENT','PHYSICIAN','NURSE','PHARMACIST','RADIOLOGIST','LAB_TECH',
+     'SURGEON','RECEPTIONIST','ADMIN','BILLING','EMS','THERAPIST'
+     ) NOT NULL COMMENT 'role assigned to the user',
+
+ assigned_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'when the role was assigned',
+
+ PRIMARY KEY (user_id, role),
+ CONSTRAINT fk_user_role_user FOREIGN KEY (user_id)
+     REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE
+);
