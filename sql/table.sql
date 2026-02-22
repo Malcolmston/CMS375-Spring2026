@@ -46,10 +46,7 @@ CREATE TABLE IF NOT EXISTS users (
      'A','A+','A-',
      'B','B+','B-',
      'AB','AB+','AB-'
-     ) NOT NULL COMMENT 'the users blood type',
-
-    password VARCHAR(255) NOT NULL COMMENT 'users password NOT IN PLAIN TEXT',
-    extra VARCHAR(2000) DEFAULT NULL COMMENT 'any extra info about a user, e.g. medical history',
+     ) NOT NULL COMMENT 'blood type of the user',
 
     employid VARCHAR(255) DEFAULT NULL COMMENT 'users employment id but is left blank for patients',
     adminid  VARCHAR(255) DEFAULT NULL COMMENT 'any admin users id, but is left blank for non-admin users',
