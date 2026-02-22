@@ -5,6 +5,8 @@
 -- - Password must already be bcrypt-hashed before calling
 -- ============================================================
 DELIMITER $$
+DROP FUNCTION IF EXISTS insert_user$$
+
 CREATE FUNCTION insert_user(
     p_firstname  VARCHAR(255),
     p_lastname   VARCHAR(255),
