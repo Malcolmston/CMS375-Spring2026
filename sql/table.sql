@@ -23,9 +23,8 @@ CREATE TABLE IF NOT EXISTS users (
     location POINT SRID 4326 NOT NULL COMMENT 'location of a user e.g. POINT(12.345678 89.012345)',
     SPATIAL INDEX (location),
 
-    email VARCHAR(255) NOT NULL UNIQUE
-        COMMENT 'email address of a user e.g. account@location.place',
-     CHECK (email REGEXP '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$'),
+ email VARCHAR(255) NOT NULL UNIQUE COMMENT 'email address of a user e.g. account@location.place',
+ CHECK (email REGEXP '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$'),
 
     age INTEGER NOT NULL CHECK (age BETWEEN 1 AND 200) COMMENT 'age of a user in years between 1 and 200',
 
