@@ -29,9 +29,7 @@ CREATE TABLE IF NOT EXISTS users (
  age INTEGER NOT NULL COMMENT 'age of a user in years between 1 and 200',
  CHECK (age BETWEEN 1 AND 200),
 
-    status ENUM(
-     'NEWBORN','CHILD','YOUNG_ADULT','ADULT','MIDDLE_AGE','OLD','AT_RISK'
-     ) AS (
+ status VARCHAR(11) AS (
      CASE
          WHEN age = 1 THEN 'NEWBORN'
          WHEN age BETWEEN 2 AND 12 THEN 'CHILD'
@@ -41,7 +39,7 @@ CREATE TABLE IF NOT EXISTS users (
          WHEN age BETWEEN 66 AND 200 THEN 'OLD'
          ELSE 'AT_RISK'
          END
-     ) STORED COMMENT 'the status of ones age, and groups age',
+     ) STORED COMMENT 'computed age group status',
 
     blood ENUM(
      'O','O+','O-',
