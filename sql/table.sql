@@ -26,7 +26,8 @@ CREATE TABLE IF NOT EXISTS users (
  email VARCHAR(255) NOT NULL UNIQUE COMMENT 'email address of a user e.g. account@location.place',
  CHECK (email REGEXP '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$'),
 
-    age INTEGER NOT NULL CHECK (age BETWEEN 1 AND 200) COMMENT 'age of a user in years between 1 and 200',
+ age INTEGER NOT NULL COMMENT 'age of a user in years between 1 and 200',
+ CHECK (age BETWEEN 1 AND 200),
 
     status ENUM(
      'NEWBORN','CHILD','YOUNG_ADULT','ADULT','MIDDLE_AGE','OLD','AT_RISK'
