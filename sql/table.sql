@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS users (
     prefix ENUM(
      'Mr','Ms','Mrs','Miss','Dr','Prof','Mx','Sir','Lady','Rev','Hon',
      'Sgt','Cpl','Col','Fr','Sr'
-     ) DEFAULT NULL COMMENT 'title of a users e.g. Mr, Ms, Mrs, Dr, Prof',
+     ) DEFAULT NULL COMMENT 'title of a user e.g. Mr, Ms, Mrs, Dr, Prof',
 
     suffix ENUM(
      'Jr','Sr','II','III','IV','V','PhD','MD','DO','DDS','DMD','JD','Esq',
