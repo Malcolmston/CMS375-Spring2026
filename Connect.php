@@ -22,4 +22,9 @@ class Connect
 
         $this->conn->query("SET time_zone = '+00:00'");
     }
+
+    public function getConnection(): mysqli
+    {
+        return $this->conn;
+    }
 }
