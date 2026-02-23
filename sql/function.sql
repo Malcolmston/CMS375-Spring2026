@@ -81,4 +81,26 @@ BEGIN
     RETURN COALESCE(v_has_role, FALSE);
 END$$
 
+-- ============================================================
+-- assign_role assigns a role to a user
+-- - p_user_id is the user's id'
+-- - p_role is the role to check for
+-- - Returns true if new role was assigned, false otherwise
+-- ============================================================
+
+DROP FUNCTION IF EXISTS assign_role$$
+
+CREATE FUNCTION assign_role(p_user_id INT, p_role ENUM(
+    'PATIENT','PHYSICIAN','NURSE','PHARMACIST','RADIOLOGIST','LAB_TECH',
+    'SURGEON','RECEPTIONIST','ADMIN','BILLING','EMS','THERAPIST'
+    ))
+    RETURNS BOOLEAN
+    NOT DETERMINISTIC
+    MODIFIES SQL DATA
+BEGIN
+    INSERT IGNORE INTO user_role (user_id, role) VALUES (p_user_id, p_role);
+    RETURN ROW_COUNT() > 0;
+END$$
+
+
 DELIMITER ;
