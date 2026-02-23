@@ -1,0 +1,21 @@
+CREATE TRIGGER trg_log_user_insert
+AFTER INSERT ON users
+    FOR EACH ROW BEGIN
+    INSERT INTO logs (user_id, action, table_name, record_id, new_data)
+    VALUES (
+               NEW.id,
+               'CREATE',
+               'users',
+               NEW.id,
+               JSON_OBJECT(
+                       'firstname', NEW.firstname,
+                       'lastname',  NEW.lastname,
+                       'email',     NEW.email,
+                       'age',       NEW.age,
+                       'blood',     NEW.blood,
+                       'gender',    NEW.gender
+               )
+           );
+END;
+
+
