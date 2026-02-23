@@ -100,9 +100,6 @@ CREATE TABLE IF NOT EXISTS logs (
     old_data JSON DEFAULT NULL COMMENT 'previous state of the record',
     new_data JSON DEFAULT NULL COMMENT 'new state of the record',
 
-    ip_address VARCHAR(45)  DEFAULT NULL COMMENT 'ip address of the user',
-    user_agent VARCHAR(255) DEFAULT NULL COMMENT 'browser/device of the user',
-
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'when the action occurred',
 
     CONSTRAINT fk_logs_user FOREIGN KEY (user_id)
