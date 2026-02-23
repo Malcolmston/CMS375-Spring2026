@@ -7,7 +7,7 @@ use Connect;
 /**
  * Account management class
  */
-class Account extends Connect
+abstract class Account extends Connect
 {
 
 }
