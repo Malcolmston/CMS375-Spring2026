@@ -1,21 +1,20 @@
-DELIMITER $$
-
-DROP FUNCTION IF EXISTS has_user$$
+DROP FUNCTION IF EXISTS has_user;
 
 CREATE FUNCTION has_user(p_id VARCHAR(255))
     RETURNS BOOLEAN
     DETERMINISTIC
+    READS SQL DATA
 BEGIN
     DECLARE v_has_role BOOLEAN DEFAULT FALSE;
 
-    SELECT TRUE INTO v_has_role
+    SELECT TRUE
+    INTO v_has_role
     FROM view_users
-    WHERE id = p_user_id
-
+    WHERE id = p_id
     LIMIT 1;
 
     RETURN COALESCE(v_has_role, FALSE);
-END $$
+END;
 
 -- ============================================================
 -- Insert a new user and return the generated id
@@ -23,7 +22,7 @@ END $$
 -- - Primary role is seeded into user_role by AFTER INSERT trigger
 -- - Password must already be bcrypt-hashed before calling
 -- ============================================================
-DROP FUNCTION IF EXISTS insert_user$$
+DROP FUNCTION IF EXISTS insert_user;
 
 CREATE FUNCTION insert_user(
     p_firstname  VARCHAR(255),
@@ -58,10 +57,10 @@ BEGIN
         firstname, lastname, middlename, prefix, suffix, gender, phone, location,
         email, age, blood, password, extra
     ) VALUES (
-                 p_firstname, p_lastname, p_middlename, p_prefix, p_suffix, p_gender, p_phone,
-                 ST_SRID(POINT(p_loc_x, p_loc_y), 4326),
-                 p_email, p_age, p_blood, p_password, p_extra
-             );
+        p_firstname, p_lastname, p_middlename, p_prefix, p_suffix, p_gender, p_phone,
+        ST_SRID(POINT(p_loc_x, p_loc_y), 4326),
+        p_email, p_age, p_blood, p_password, p_extra
+    );
 
     SET v_user_id = LAST_INSERT_ID();
 
@@ -70,16 +69,15 @@ BEGIN
     ) VALUES (v_user_id, p_user_role);
 
     RETURN v_user_id;
-    END$$
+END;
 
 -- ============================================================
 -- Has role checks if a user with a given role exists
--- - p_user_id is the user's id'
+-- - p_user_id is the user's id
 -- - p_role is the role to check for
 -- - Returns true if user exists, false otherwise
 -- ============================================================
-
-DROP FUNCTION IF EXISTS has_role$$
+DROP FUNCTION IF EXISTS has_role;
 
 CREATE FUNCTION has_role(p_user_id INT, p_role ENUM(
     'PATIENT','PHYSICIAN','NURSE','PHARMACIST','RADIOLOGIST','LAB_TECH',
@@ -92,21 +90,20 @@ BEGIN
 
     SELECT TRUE INTO v_has_role
     FROM user_role
-        WHERE userid = p_user_id
-          AND role = p_role
-        LIMIT 1;
+    WHERE userid = p_user_id
+      AND role = p_role
+    LIMIT 1;
 
     RETURN COALESCE(v_has_role, FALSE);
-END$$
+END;
 
 -- ============================================================
 -- assign_role assigns a role to a user
--- - p_user_id is the user's id'
--- - p_role is the role to check for
+-- - p_user_id is the user's id
+-- - p_role is the role to assign
 -- - Returns true if new role was assigned, false otherwise
 -- ============================================================
-
-DROP FUNCTION IF EXISTS assign_role$$
+DROP FUNCTION IF EXISTS assign_role;
 
 CREATE FUNCTION assign_role(p_user_id INT, p_role ENUM(
     'PATIENT','PHYSICIAN','NURSE','PHARMACIST','RADIOLOGIST','LAB_TECH',
@@ -118,15 +115,15 @@ CREATE FUNCTION assign_role(p_user_id INT, p_role ENUM(
 BEGIN
     INSERT IGNORE INTO user_role (user_id, role) VALUES (p_user_id, p_role);
     RETURN ROW_COUNT() > 0;
-END$$
+END;
 
 -- ============================================================
 -- revoke_role revokes a role from a user
--- - p_user_id is the user's id'
--- - p_role is the role to check for
--- - Returns true if new role was changed, false otherwise
+-- - p_user_id is the user's id
+-- - p_role is the role to revoke
+-- - Returns true if role was removed, false otherwise
 -- ============================================================
-DROP FUNCTION IF EXISTS revoke_role$$
+DROP FUNCTION IF EXISTS revoke_role;
 
 CREATE FUNCTION revoke_role(p_user_id INT, p_role VARCHAR(30))
     RETURNS BOOLEAN
@@ -135,7 +132,4 @@ CREATE FUNCTION revoke_role(p_user_id INT, p_role VARCHAR(30))
 BEGIN
     DELETE FROM user_role WHERE user_id = p_user_id AND role = p_role;
     RETURN ROW_COUNT() > 0;
-END$$
-
-
-DELIMITER ;
+END;
