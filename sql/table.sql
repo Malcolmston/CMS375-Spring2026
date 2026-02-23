@@ -105,3 +105,20 @@ CREATE TABLE IF NOT EXISTS logs (
     CONSTRAINT fk_logs_user FOREIGN KEY (user_id)
         REFERENCES users(id) ON DELETE NO ACTION ON UPDATE CASCADE
 );
+
+CREATE TABLE backup_logs (
+     id INTEGER NOT NULL,
+     user_id INTEGER NOT NULL,
+     action ENUM(
+         'CREATE','UPDATE','DELETE','LOGIN','LOGOUT',
+         'ROLE_ASSIGNED','ROLE_REMOVED','PASSWORD_CHANGE',
+         'HARD_DELETE','FAILED'
+         ) NOT NULL,
+     severity TINYINT NOT NULL,
+     table_name VARCHAR(64) NOT NULL,
+     record_id INTEGER NOT NULL,
+     old_data TEXT,
+     new_data TEXT,
+     created_at TIMESTAMP NOT NULL,
+     deleted_at TIMESTAMP DEFAULT NULL
+)  ENGINE=ARCHIVE;
