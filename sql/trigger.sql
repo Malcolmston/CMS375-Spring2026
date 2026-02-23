@@ -195,9 +195,11 @@ END;
 DROP TRIGGER IF EXISTS user_soft_delete;
 
 CREATE TRIGGER user_soft_delete
-BEFORE UPDATE ON users
+BEFORE DELETE ON users
     FOR EACH ROW BEGIN
-    IF OLD.deleted_at IS NULL AND NEW.deleted_at IS NOT NULL THEN
-        SET NEW.deleted_at = NOW();
+    IF @hard_delete_user IS NOT TRUE THEN
+        UPDATE users SET deleted_at = NOW() WHERE id = OLD.id AND deleted_at IS NULL;
+
+        CALL throw( 'Use hard_delete_user for permanent deletion');
     END IF;
 END;
