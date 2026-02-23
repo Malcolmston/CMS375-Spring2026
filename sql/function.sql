@@ -53,4 +53,32 @@ BEGIN
 
     RETURN v_user_id;
     END$$
+
+-- ============================================================
+-- Has role checks if a user with a given role exists
+-- - p_user_id is the user's id'
+-- - p_role is the role to check for
+-- - Returns true if user exists, false otherwise
+-- ============================================================
+
+DROP FUNCTION IF EXISTS has_role$$
+
+CREATE FUNCTION has_role(p_user_id INT, p_role ENUM(
+    'PATIENT','PHYSICIAN','NURSE','PHARMACIST','RADIOLOGIST','LAB_TECH',
+    'SURGEON','RECEPTIONIST','ADMIN','BILLING','EMS','THERAPIST'
+    ))
+    RETURNS BOOLEAN
+    DETERMINISTIC
+BEGIN
+    DECLARE v_has_role BOOLEAN DEFAULT FALSE;
+
+    SELECT TRUE INTO v_has_role
+    FROM usser_role
+        WHERE userid = p_user_id
+          AND role = p_role
+        LIMIT 1;
+
+    RETURN COALESCE(v_has_role, FALSE);
+END$$
+
 DELIMITER ;
