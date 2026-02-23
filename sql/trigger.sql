@@ -58,7 +58,7 @@ DROP TRIGGER IF EXISTS trg_log_user_soft_delete;
 CREATE TRIGGER trg_log_user_soft_delete
 AFTER UPDATE ON users
     FOR EACH ROW BEGIN
-    IF NOT (OLD.deleted_at <=> NEW.deleted_at) THEN
+    IF OLD.deleted_at IS NULL AND NEW.deleted_at IS NOT NULL THEN
         INSERT INTO logs (user_id, action, table_name, record_id, old_data, new_data)
         VALUES (
                    NEW.id,
@@ -174,3 +174,63 @@ CREATE TRIGGER trg_log_role_delete
                JSON_OBJECT('role', OLD.role)
            );
 END ;
+
+DROP TRIGGER IF EXISTS trg_log_password_change;
+
+CREATE TRIGGER trg_log_password_change
+AFTER UPDATE ON users
+    FOR EACH ROW BEGIN
+    IF OLD.password <> NEW.password AND OLD.deleted_at IS NULL THEN
+        INSERT INTO logs (user_id, action, table_name, record_id, new_data)
+        VALUES (
+                   NEW.id,
+                   'PASSWORD_CHANGE',
+                   'users',
+                   NEW.id,
+                   JSON_OBJECT('changed', TRUE)
+               );
+    END IF;
+END;
+
+DROP TRIGGER IF EXISTS user_soft_delete;
+
+CREATE TRIGGER user_soft_delete
+BEFORE DELETE ON users
+    FOR EACH ROW BEGIN
+    IF @hard_delete_user IS NOT TRUE THEN
+        UPDATE users SET deleted_at = NOW() WHERE id = OLD.id AND deleted_at IS NULL;
+
+        CALL throw( 'Use hard_delete_user for permanent deletion');
+    END IF;
+END;
+
+DROP TRIGGER IF EXISTS on_remove_of_log;
+
+CREATE TRIGGER on_remove_of_log
+    BEFORE DELETE ON logs
+    FOR EACH ROW
+BEGIN
+    INSERT INTO backup_logs (
+        id,
+        user_id,
+        action,
+        severity,
+        table_name,
+        record_id,
+        old_data,
+        new_data,
+        created_at,
+        deleted_at
+    ) VALUES (
+                 OLD.id,
+                 OLD.user_id,
+                 OLD.action,
+                 OLD.severity,
+                 OLD.table_name,
+                 OLD.record_id,
+                 OLD.old_data,
+                 OLD.new_data,
+                 OLD.created_at,
+                 NOW()
+             );
+END;

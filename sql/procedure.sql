@@ -1,3 +1,10 @@
+DROP PROCEDURE IF EXISTS throw;
+
+CREATE PROCEDURE throw(IN p_message VARCHAR(255))
+BEGIN
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = p_message;
+END ;
+
 -- ============================================================
 -- insert_user inserts a new user and returns the generated id
 -- - employid / adminid are set by BEFORE INSERT triggers
@@ -116,4 +123,55 @@ BEGIN
         SET user_phone = NULL;
         SET is_deleted = NULL;
     END IF;
+END;
+
+DROP PROCEDURE IF EXISTS soft_delete_user;
+
+CREATE PROCEDURE soft_delete_user(IN p_user_id INT)
+BEGIN
+    DECLARE v_status BOOLEAN;
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        RESIGNAL;
+    END;
+
+    SET v_status = has_user(p_user_id);
+
+    IF v_status IS NULL THEN
+        CALL throw('User does not exist');
+    END IF;
+
+    IF v_status = FALSE THEN
+        CALL throw('User is already deleted');
+    END IF;
+
+    START TRANSACTION;
+        UPDATE users SET deleted_at = NOW() WHERE id = p_user_id;
+    COMMIT;
+END;
+
+DROP PROCEDURE IF EXISTS hard_delete_user;
+
+CREATE PROCEDURE hard_delete_user(IN p_user_id INT)
+BEGIN
+   DECLARE v_status BOOLEAN;
+   DECLARE EXIT HANDLER FOR SQLEXCEPTION
+       BEGIN
+        ROLLBACK;
+        SET @hard_delete_user = NULL;
+        RESIGNAL;
+      END;
+
+   SET v_status = has_user(p_user_id);
+
+   IF v_status IS NULL THEN
+       CALL throw('User does not exist');
+   END IF;
+
+   SET @hard_delete_user = TRUE;
+   START TRANSACTION;
+       DELETE FROM users WHERE id = p_user_id;
+   COMMIT;
+   SET @hard_delete_user = NULL;
 END;
