@@ -71,3 +71,27 @@ CREATE TABLE IF NOT EXISTS user_role (
  CONSTRAINT fk_user_role_user FOREIGN KEY (user_id)
      REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE
 );
+
+CREATE TABLE IF NOT EXISTS logs (
+    id INTEGER PRIMARY KEY AUTO_INCREMENT,
+
+    user_id INTEGER NOT NULL COMMENT 'user who performed the action',
+    action ENUM(
+        'CREATE','UPDATE','DELETE','LOGIN','LOGOUT',
+        'ROLE_ASSIGNED','ROLE_REMOVED','PASSWORD_CHANGE', 'HARD_DELETE'
+        ) NOT NULL COMMENT 'action performed',
+
+    table_name VARCHAR(64) NOT NULL COMMENT 'table the action was performed on',
+    record_id INTEGER NOT NULL COMMENT 'id of the affected record',
+
+    old_data JSON DEFAULT NULL COMMENT 'previous state of the record',
+    new_data JSON DEFAULT NULL COMMENT 'new state of the record',
+
+    ip_address VARCHAR(45)  DEFAULT NULL COMMENT 'ip address of the user',
+    user_agent VARCHAR(255) DEFAULT NULL COMMENT 'browser/device of the user',
+
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'when the action occurred',
+
+    CONSTRAINT fk_logs_user FOREIGN KEY (user_id)
+        REFERENCES users(id) ON DELETE NO ACTION ON UPDATE CASCADE
+);

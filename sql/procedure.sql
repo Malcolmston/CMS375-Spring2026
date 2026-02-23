@@ -31,6 +31,8 @@ CREATE PROCEDURE insert_user(
     OUT p_user_id    INT
 )
 BEGIN
+    SET @insert_user_role = p_user_role;
+
     INSERT INTO users (
         firstname, lastname, middlename, prefix, suffix, gender, phone, location,
         email, age, blood, password, extra
