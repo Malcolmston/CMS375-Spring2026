@@ -106,7 +106,7 @@ CREATE TABLE IF NOT EXISTS logs (
         REFERENCES users(id) ON DELETE NO ACTION ON UPDATE CASCADE
 );
 
-CREATE TABLE backup_logs (
+CREATE TABLE IF NOT EXISTS backup_logs (
      id INTEGER NOT NULL,
      user_id INTEGER NOT NULL,
      action ENUM(
