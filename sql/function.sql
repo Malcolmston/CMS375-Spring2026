@@ -97,7 +97,7 @@ BEGIN
 
     SELECT TRUE INTO v_has_role
     FROM user_role
-    WHERE userid = p_user_id
+    WHERE user_id = p_user_id
       AND role = p_role
     LIMIT 1;
 
