@@ -1,3 +1,5 @@
+DROP TRIGGER IF EXISTS trg_log_user_insert;
+
 CREATE TRIGGER trg_log_user_insert
 AFTER INSERT ON users
     FOR EACH ROW BEGIN
@@ -13,7 +15,8 @@ AFTER INSERT ON users
                        'email',     NEW.email,
                        'age',       NEW.age,
                        'blood',     NEW.blood,
-                       'gender',    NEW.gender
+                       'gender',    NEW.gender,
+                       'role',      @insert_user_role
                )
            );
 END;
