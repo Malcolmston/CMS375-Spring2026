@@ -33,3 +33,16 @@ WHERE deleted_at IS NULL;
 CREATE OR REPLACE VIEW view_deleted_users AS
     SELECT * FROM users u
 WHERE deleted_at IS NOT NULL;
+
+CREATE OR REPLACE VIEW total_view AS
+SELECT
+    id, user_id, action, severity, table_name, record_id,
+    old_data, new_data, created_at,
+    NULL AS deleted_at
+FROM logs
+UNION ALL
+SELECT
+    id, user_id, action, severity, table_name, record_id,
+    old_data, new_data, created_at,
+    deleted_at
+FROM backup_logs;
