@@ -78,7 +78,8 @@ CREATE TABLE IF NOT EXISTS logs (
     user_id INTEGER NOT NULL COMMENT 'user who performed the action',
     action ENUM(
         'CREATE','UPDATE','DELETE','LOGIN','LOGOUT',
-        'ROLE_ASSIGNED','ROLE_REMOVED','PASSWORD_CHANGE', 'HARD_DELETE'
+        'ROLE_ASSIGNED','ROLE_REMOVED','PASSWORD_CHANGE',
+        'HARD_DELETE','FAILED'
         ) NOT NULL COMMENT 'action performed',
 
     table_name VARCHAR(64) NOT NULL COMMENT 'table the action was performed on',
