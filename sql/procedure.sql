@@ -8,13 +8,16 @@ CREATE PROCEDURE get_user(
     OUT is_deleted BOOLEAN
 )
 BEGIN
-    IF EXISTS (SELECT 1 FROM view_users WHERE id = user_id) THEN
+    DECLARE v_status BOOLEAN DEFAULT NULL;
+    SET v_status = has_user(user_id);
+
+    IF v_status = TRUE THEN
         SELECT firstname, email, phone, FALSE
         INTO user_name, user_email, user_phone, is_deleted
         FROM view_users
         WHERE id = user_id
         LIMIT 1;
-    ELSEIF EXISTS (SELECT 1 FROM view_deleted_users WHERE id = user_id) THEN
+    ELSEIF v_status = FALSE THEN
         SELECT firstname, email, phone, TRUE
         INTO user_name, user_email, user_phone, is_deleted
         FROM view_deleted_users
