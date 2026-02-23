@@ -1,10 +1,28 @@
+DELIMITER $$
+
+DROP FUNCTION IF EXISTS has_user$$
+
+CREATE FUNCTION has_user(p_id VARCHAR(255))
+    RETURNS BOOLEAN
+    DETERMINISTIC
+BEGIN
+    DECLARE v_has_role BOOLEAN DEFAULT FALSE;
+
+    SELECT TRUE INTO v_has_role
+    FROM view_users
+    WHERE id = p_user_id
+
+    LIMIT 1;
+
+    RETURN COALESCE(v_has_role, FALSE);
+END $$
+
 -- ============================================================
 -- Insert a new user and return the generated id
 -- - employid / adminid are set by BEFORE INSERT triggers
 -- - Primary role is seeded into user_role by AFTER INSERT trigger
 -- - Password must already be bcrypt-hashed before calling
 -- ============================================================
-DELIMITER $$
 DROP FUNCTION IF EXISTS insert_user$$
 
 CREATE FUNCTION insert_user(
