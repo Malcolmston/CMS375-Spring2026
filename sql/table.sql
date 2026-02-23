@@ -82,6 +82,18 @@ CREATE TABLE IF NOT EXISTS logs (
         'HARD_DELETE','FAILED'
         ) NOT NULL COMMENT 'action performed',
 
+    severity INT AS (
+        CASE
+            WHEN action IN ('CREATE','UPDATE','DELETE')    THEN 1
+            WHEN action IN ('LOGIN','LOGOUT')              THEN 2
+            WHEN action IN ('ROLE_ASSIGNED','ROLE_REMOVED') THEN 3
+            WHEN action IN ('PASSWORD_CHANGE')             THEN 4
+            WHEN action IN ('HARD_DELETE','FAILED')        THEN 5
+            ELSE -1  -- unreachable given ENUM, but safe to keep
+            END
+        ) STORED COMMENT 'severity level of the action (1=low, 5=critical)',
+
+
     table_name VARCHAR(64) NOT NULL COMMENT 'table the action was performed on',
     record_id INTEGER NOT NULL COMMENT 'id of the affected record',
 
