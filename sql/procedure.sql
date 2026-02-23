@@ -171,7 +171,6 @@ BEGIN
 
    SET @hard_delete_user = TRUE;
    START TRANSACTION;
-       DELETE FROM user_role WHERE user_id = p_user_id;
        DELETE FROM users WHERE id = p_user_id;
    COMMIT;
    SET @hard_delete_user = NULL;
