@@ -78,17 +78,27 @@ CREATE TABLE IF NOT EXISTS logs (
     user_id INTEGER NOT NULL COMMENT 'user who performed the action',
     action ENUM(
         'CREATE','UPDATE','DELETE','LOGIN','LOGOUT',
-        'ROLE_ASSIGNED','ROLE_REMOVED','PASSWORD_CHANGE', 'HARD_DELETE'
+        'ROLE_ASSIGNED','ROLE_REMOVED','PASSWORD_CHANGE',
+        'HARD_DELETE','FAILED'
         ) NOT NULL COMMENT 'action performed',
+
+    severity INT AS (
+        CASE
+            WHEN action IN ('CREATE','UPDATE','DELETE')    THEN 1
+            WHEN action IN ('LOGIN','LOGOUT')              THEN 2
+            WHEN action IN ('ROLE_ASSIGNED','ROLE_REMOVED') THEN 3
+            WHEN action IN ('PASSWORD_CHANGE')             THEN 4
+            WHEN action IN ('HARD_DELETE','FAILED')        THEN 5
+            ELSE -1  -- unreachable given ENUM, but safe to keep
+            END
+        ) STORED COMMENT 'severity level of the action (1=low, 5=critical)',
+
 
     table_name VARCHAR(64) NOT NULL COMMENT 'table the action was performed on',
     record_id INTEGER NOT NULL COMMENT 'id of the affected record',
 
     old_data JSON DEFAULT NULL COMMENT 'previous state of the record',
     new_data JSON DEFAULT NULL COMMENT 'new state of the record',
-
-    ip_address VARCHAR(45)  DEFAULT NULL COMMENT 'ip address of the user',
-    user_agent VARCHAR(255) DEFAULT NULL COMMENT 'browser/device of the user',
 
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'when the action occurred',
 
