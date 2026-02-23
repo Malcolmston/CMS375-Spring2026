@@ -120,3 +120,27 @@ AFTER UPDATE ON users
                );
     END IF;
 END;
+
+DROP TRIGGER IF EXISTS trg_log_user_hard_delete;
+
+CREATE TRIGGER trg_log_user_hard_delete
+AFTER DELETE ON users
+    FOR EACH ROW BEGIN
+    INSERT INTO logs (user_id, action, table_name, record_id, old_data, new_data)
+    VALUES (
+               OLD.id,
+               'HARD_DELETE',
+               'users',
+               OLD.id,
+               JSON_OBJECT(
+                       'firstname',  OLD.firstname,
+                       'lastname',   OLD.lastname,
+                       'email',      OLD.email,
+                       'age',        OLD.age,
+                       'blood',      OLD.blood,
+                       'gender',     OLD.gender,
+                       'deleted_at', OLD.deleted_at
+               ),
+               NULL
+           );
+END;
