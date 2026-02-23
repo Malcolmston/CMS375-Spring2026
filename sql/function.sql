@@ -102,5 +102,22 @@ BEGIN
     RETURN ROW_COUNT() > 0;
 END$$
 
+-- ============================================================
+-- revoke_role revokes a role from a user
+-- - p_user_id is the user's id'
+-- - p_role is the role to check for
+-- - Returns true if new role was changed, false otherwise
+-- ============================================================
+DROP FUNCTION IF EXISTS revoke_role$$
+
+CREATE FUNCTION revoke_role(p_user_id INT, p_role VARCHAR(30))
+    RETURNS BOOLEAN
+    NOT DETERMINISTIC
+    MODIFIES SQL DATA
+BEGIN
+    DELETE FROM user_role WHERE user_id = p_user_id AND role = p_role;
+    RETURN ROW_COUNT() > 0;
+END$$
+
 
 DELIMITER ;
