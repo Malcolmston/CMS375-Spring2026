@@ -25,3 +25,11 @@ SELECT
 FROM users u
          LEFT JOIN user_role ur ON ur.user_id = u.id
 WHERE u.deleted_at IS NULL;
+
+CREATE OR REPLACE VIEW view_users AS
+SELECT * FROM users u
+WHERE deleted_at IS NULL;
+
+CREATE OR REPLACE VIEW view_deleted_users AS
+    SELECT * FROM users u
+WHERE deleted_at IS NOT NULL;
