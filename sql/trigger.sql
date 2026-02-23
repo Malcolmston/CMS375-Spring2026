@@ -191,3 +191,13 @@ AFTER UPDATE ON users
                );
     END IF;
 END;
+
+DROP TRIGGER IF EXISTS user_soft_delete;
+
+CREATE TRIGGER user_soft_delete
+BEFORE UPDATE ON users
+    FOR EACH ROW BEGIN
+    IF OLD.deleted_at IS NULL AND NEW.deleted_at IS NOT NULL THEN
+        SET NEW.deleted_at = NOW();
+    END IF;
+END;
