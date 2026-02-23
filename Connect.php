@@ -37,4 +37,11 @@ class Connect
     {
         return isset($this->conn);
     }
+
+    public function __destruct()
+    {
+        if ($this->isConnected()) {
+            $this->conn->close();
+        }
+    }
 }
