@@ -58,7 +58,7 @@ DROP TRIGGER IF EXISTS trg_log_user_soft_delete;
 CREATE TRIGGER trg_log_user_soft_delete
 AFTER UPDATE ON users
     FOR EACH ROW BEGIN
-    IF NOT (OLD.deleted_at <=> NEW.deleted_at) THEN
+    IF OLD.deleted_at IS NULL AND NEW.deleted_at IS NOT NULL THEN
         INSERT INTO logs (user_id, action, table_name, record_id, old_data, new_data)
         VALUES (
                    NEW.id,
