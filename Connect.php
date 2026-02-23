@@ -27,4 +27,14 @@ class Connect
     {
         return $this->conn;
     }
+
+    /**
+     * Check if the database connection is established
+     *
+     * @return bool True if connected, false otherwise
+     */
+    public function isConnected(): bool
+    {
+        return isset($this->conn);
+    }
 }
