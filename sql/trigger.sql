@@ -203,3 +203,34 @@ BEFORE DELETE ON users
         CALL throw( 'Use hard_delete_user for permanent deletion');
     END IF;
 END;
+
+DROP TRIGGER IF EXISTS on_remove_of_log;
+
+CREATE TRIGGER on_remove_of_log
+    BEFORE DELETE ON logs
+    FOR EACH ROW
+BEGIN
+    INSERT INTO backup_logs (
+        id,
+        user_id,
+        action,
+        severity,
+        table_name,
+        record_id,
+        old_data,
+        new_data,
+        created_at,
+        deleted_at
+    ) VALUES (
+                 OLD.id,
+                 OLD.user_id,
+                 OLD.action,
+                 OLD.severity,
+                 OLD.table_name,
+                 OLD.record_id,
+                 OLD.old_data,
+                 OLD.new_data,
+                 OLD.created_at,
+                 NOW()
+             );
+END;
