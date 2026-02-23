@@ -125,10 +125,26 @@ END;
 
 DROP PROCEDURE IF EXISTS soft_delete_user;
 
-CREATE PROCEDURE soft_delete_user(IN user_id INT)
+CREATE PROCEDURE soft_delete_user(IN p_user_id INT)
 BEGIN
-    IF has_user(user_id) = FALSE THEN
+    DECLARE v_status BOOLEAN;
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        RESIGNAL;
+    END;
+
+    SET v_status = has_user(p_user_id);
+
+    IF v_status IS NULL THEN
         CALL throw('User does not exist');
     END IF;
-    UPDATE users SET deleted_at = NOW() WHERE id = user_id;
+
+    IF v_status = FALSE THEN
+        CALL throw('User is already deleted');
+    END IF;
+
+    START TRANSACTION;
+        UPDATE users SET deleted_at = NOW() WHERE id = p_user_id;
+    COMMIT;
 END;
