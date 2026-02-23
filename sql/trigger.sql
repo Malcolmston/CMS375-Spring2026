@@ -144,3 +144,18 @@ AFTER DELETE ON users
                NULL
            );
 END;
+
+DROP TRIGGER IF EXISTS trg_log_role_insert;
+
+CREATE TRIGGER trg_log_role_insert
+    AFTER INSERT ON user_role
+    FOR EACH ROW BEGIN
+    INSERT INTO logs (user_id, action, table_name, record_id, new_data)
+    VALUES (
+               NEW.user_id,
+               'ROLE_ASSIGNED',
+               'user_role',
+               NEW.user_id,
+               JSON_OBJECT('role', NEW.role, 'assigned_at', NEW.assigned_at)
+    );
+END ;
