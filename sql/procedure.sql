@@ -148,3 +148,29 @@ BEGIN
         UPDATE users SET deleted_at = NOW() WHERE id = p_user_id;
     COMMIT;
 END;
+
+DROP PROCEDURE IF EXISTS hard_delete_user;
+
+CREATE PROCEDURE hard_delete_user(IN p_user_id INT)
+BEGIN
+   DECLARE v_status BOOLEAN;
+   DECLARE EXIT HANDLER FOR SQLEXCEPTION
+       BEGIN
+        ROLLBACK;
+        SET @hard_delete_user = NULL;
+        RESIGNAL;
+      END;
+
+   SET v_status = has_user(p_user_id);
+
+   IF v_status IS NULL THEN
+       CALL throw('User does not exist');
+   END IF;
+
+   SET @hard_delete_user = TRUE;
+   START TRANSACTION;
+       DELETE FROM user_role WHERE user_id = p_user_id;
+       DELETE FROM users WHERE id = p_user_id;
+   COMMIT;
+   SET @hard_delete_user = NULL;
+END;
