@@ -1,19 +1,26 @@
 DROP FUNCTION IF EXISTS has_user;
 
-CREATE FUNCTION has_user(p_id VARCHAR(255))
+CREATE FUNCTION has_user(p_id INT)
     RETURNS BOOLEAN
-    DETERMINISTIC
     READS SQL DATA
 BEGIN
-    DECLARE v_has_role BOOLEAN DEFAULT FALSE;
+    DECLARE v_result BOOLEAN DEFAULT NULL;
 
-    SELECT TRUE
-    INTO v_has_role
+    SELECT TRUE INTO v_result
     FROM view_users
     WHERE id = p_id
     LIMIT 1;
 
-    RETURN COALESCE(v_has_role, FALSE);
+    IF v_result IS NOT NULL THEN
+        RETURN TRUE;
+    END IF;
+
+    SELECT FALSE INTO v_result
+    FROM view_deleted_users
+    WHERE id = p_id
+    LIMIT 1;
+
+    RETURN v_result;
 END;
 
 -- ============================================================
