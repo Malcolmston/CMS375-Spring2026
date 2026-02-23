@@ -1,3 +1,8 @@
+CREATE PROCEDURE throw(IN p_message VARCHAR(255))
+BEGIN
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = p_message;
+END ;
+
 -- ============================================================
 -- insert_user inserts a new user and returns the generated id
 -- - employid / adminid are set by BEFORE INSERT triggers
