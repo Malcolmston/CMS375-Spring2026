@@ -174,3 +174,20 @@ CREATE TRIGGER trg_log_role_delete
                JSON_OBJECT('role', OLD.role)
            );
 END ;
+
+DROP TRIGGER IF EXISTS trg_log_password_change;
+
+CREATE TRIGGER trg_log_password_change
+AFTER UPDATE ON users
+    FOR EACH ROW BEGIN
+    IF OLD.password <> NEW.password AND OLD.deleted_at IS NULL THEN
+        INSERT INTO logs (user_id, action, table_name, record_id, new_data)
+        VALUES (
+                   NEW.id,
+                   'PASSWORD_CHANGE',
+                   'users',
+                   NEW.id,
+                   JSON_OBJECT('changed', TRUE)
+               );
+    END IF;
+END;
