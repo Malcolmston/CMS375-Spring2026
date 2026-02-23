@@ -73,7 +73,7 @@ BEGIN
     DECLARE v_has_role BOOLEAN DEFAULT FALSE;
 
     SELECT TRUE INTO v_has_role
-    FROM usser_role
+    FROM user_role
         WHERE userid = p_user_id
           AND role = p_role
         LIMIT 1;
