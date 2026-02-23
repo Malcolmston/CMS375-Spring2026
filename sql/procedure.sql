@@ -122,3 +122,13 @@ BEGIN
         SET is_deleted = NULL;
     END IF;
 END;
+
+DROP PROCEDURE IF EXISTS soft_delete_user;
+
+CREATE PROCEDURE soft_delete_user(IN user_id INT)
+BEGIN
+    IF has_user(user_id) = FALSE THEN
+        CALL throw('User does not exist');
+    END IF;
+    UPDATE users SET deleted_at = NOW() WHERE id = user_id;
+END;
