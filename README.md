@@ -24,3 +24,9 @@ Include a rough sketch of your idea (if available).
 ![notation](allergy.png)
 
 How will the tasks be distributed among teammates?
+
+we will all take 5 tables and make the php associated with them
+
+Malcom - user, log, backup_log, drug_schedule, vaccines
+Dylan - doctor_visit, visit, institution, allergy, user_allergy
+Alex - perscription, perscription_item, parent, medicine, medicine_interaction
