@@ -2,19 +2,19 @@
 
 class Point
 {
-    private float $x {
+    public float $x {
         get {
             return $this->x;
         }
-        set {
+        private set {
             $this->x = $value;
         }
     }
-    private float $y {
+    public float $y {
         get {
             return $this->y;
         }
-        set {
+        private set {
             $this->y = $value;
         }
     }
@@ -34,6 +34,7 @@ class Point
     }
     public function __construct(float $x, float $y) {
         $this->x = $x;
+        $this->y = $y;
     }
 
     public function getLocation(): Point {
