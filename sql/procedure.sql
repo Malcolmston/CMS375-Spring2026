@@ -32,12 +32,20 @@ CREATE PROCEDURE insert_user(
     IN  p_loc_y      DECIMAL(10,6),
     IN  p_email      VARCHAR(255),
     IN  p_age        INTEGER,
-    IN  p_blood      VARCHAR(5),
+    IN  p_blood      ENUM('O','O+','O-','A','A+','A-','B','B+','B-','AB','AB+','AB-'),
     IN  p_password   VARCHAR(255),
     IN  p_extra      VARCHAR(2000),
     OUT p_user_id    INT
 )
 BEGIN
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        RESIGNAL;
+    END;
+
+    START TRANSACTION;
+
     SET @insert_user_role = p_user_role;
 
     INSERT INTO users (
@@ -51,9 +59,9 @@ BEGIN
 
     SET p_user_id = LAST_INSERT_ID();
 
-    INSERT INTO user_role (
-        user_id, role
-    ) VALUES (p_user_id, p_user_role);
+    INSERT INTO user_role (user_id, role) VALUES (p_user_id, p_user_role);
+
+    COMMIT;
 END;
 
 -- ============================================================
