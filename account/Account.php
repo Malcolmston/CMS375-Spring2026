@@ -37,6 +37,42 @@ abstract class Account extends Connect
     protected bool $isDeleted;
 
     /**
+     * @throws \Exception iff SQL con is invalid
+     */
+    public function __construct(
+        ?string $firstName  = null,
+        ?string $lastName   = null,
+        ?string $middleName = null,
+        ?prefix $prefix     = null,
+        ?suffix $suffix     = null,
+        ?role   $role       = null,
+        ?string $gender     = null,
+        ?string $phone      = null,
+        ?Point  $location   = null,
+        ?string $email      = null,
+        ?int    $age        = null,
+        ?blood  $blood      = null,
+        ?string $password   = null,
+        ?string $extra      = null,
+    ) {
+        parent::__construct();
+        if ($firstName  !== null) $this->firstName  = $firstName;
+        if ($lastName   !== null) $this->lastName   = $lastName;
+        if ($middleName !== null) $this->middleName = $middleName;
+        if ($prefix     !== null) $this->prefix     = $prefix;
+        if ($suffix     !== null) $this->suffix     = $suffix;
+        if ($role       !== null) $this->role       = $role;
+        if ($gender     !== null) $this->gender     = $gender;
+        if ($phone      !== null) $this->phone      = $phone;
+        if ($location   !== null) $this->location   = $location;
+        if ($email      !== null) $this->email      = $email;
+        if ($age        !== null) $this->age        = $age;
+        if ($blood      !== null) $this->blood      = $blood;
+        if ($password   !== null) $this->password   = $password;
+        if ($extra      !== null) $this->extra      = $extra;
+    }
+
+    /**
      * Encrypts the provided plain-text password using the bcrypt hashing algorithm.
      *
      * @param string $password The plain-text password to be encrypted.
