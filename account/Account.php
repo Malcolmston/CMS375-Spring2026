@@ -2,12 +2,14 @@
 
 namespace account;
 
+use AllowDynamicProperties;
 use Connect;
 use DateTime;
 
 /**
  * Account management class
  */
+#[AllowDynamicProperties]
 abstract class Account extends Connect
 {
     protected int $id;
