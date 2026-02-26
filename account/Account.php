@@ -9,6 +9,27 @@ use Connect;
  */
 abstract class Account extends Connect
 {
+    protected int $id;
+    protected string $firstName;
+    protected string $lastName;
+    protected string $middleName;
+    protected suffix $suffix;
+    protected prefix $prefix;
+    protected string $gender;
+    protected string $phone;
+    protected string $location;
+    protected string $email;
+    protected int $age;
+    protected string $password;
+    protected role $role;
+    protected string $status;
+
+    protected DateTime $createdAt;
+    protected DateTime $updatedAt;
+    protected DateTime $deletedAt;
+
+    protected bool $isDeleted;
+
     /**
      * Encrypts the provided plain-text password using the bcrypt hashing algorithm.
      *
