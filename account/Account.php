@@ -190,4 +190,20 @@ abstract class Account extends Connect
         $this->id = (int) $row['id'];
         return $this->id > 0;
     }
+
+    /**
+     * Authenticates a user using the provided username and password.
+     *
+     * @param string $username The username of the user attempting to log in.
+     * @param string $password The password associated with the provided username.
+     * @return bool Returns true if authentication is successful, otherwise false.
+     */
+    abstract function login(string $username, string $password): bool;
+
+    /**
+     * Registers an entity or performs a registration process.
+     *
+     * @return bool Returns true if the registration is successful, otherwise false.
+     */
+    abstract function register(): bool;
 }
