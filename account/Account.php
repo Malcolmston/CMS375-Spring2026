@@ -92,4 +92,19 @@ abstract class Account extends Connect
         return $instance;
     }
 
+    /**
+     * Determines whether a user exists based on the specified criteria.
+     *
+     * @return bool Returns true if a user exists, otherwise false.
+     */
+    protected function hasUser (): bool
+    {
+       $sql = "CALL has_user(?)";
+       $stmt = $this->getConnection()->prepare($sql);
+       $stmt->bind_param("i", $this->id);
+       $stmt->execute();
+       $result = $stmt->get_result();
+       return $result->num_rows > 0;
+    }
+
 }
