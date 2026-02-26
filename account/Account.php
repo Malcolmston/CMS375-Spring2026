@@ -18,10 +18,13 @@ abstract class Account extends Connect
     protected prefix $prefix;
     protected string $gender;
     protected string $phone;
-    protected string $location;
+    protected float $locationX;
+    protected float $locationY;
     protected string $email;
     protected int $age;
+    protected blood $blood;
     protected string $password;
+    protected string $extra;
     protected role $role;
     protected string $status;
 
@@ -150,5 +153,39 @@ abstract class Account extends Connect
         $stmt->execute();
         $result = $stmt->get_result();
         return $result->num_rows > 0;
+    }
+
+    /**
+     * Inserts a new user record into the database using the provided details.
+     *
+     * @return bool Returns true if the user was successfully inserted, otherwise false.
+     */
+    protected function insert(): bool
+    {
+        $sql = "CALL insert_user(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, @p_user_id)";
+        $stmt = $this->getConnection()->prepare($sql);
+        $stmt->bind_param(
+            "sssssssddsisss",
+            $this->firstName,
+            $this->lastName,
+            $this->middleName,
+            $this->prefix->value,
+            $this->suffix->value,
+            $this->role->value,
+            $this->gender,
+            $this->phone,
+            $this->locationX,
+            $this->locationY,
+            $this->email,
+            $this->age,
+            $this->blood->value,
+            $this->password,
+            $this->extra
+        );
+        $stmt->execute();
+
+        $row = $this->getConnection()->query("SELECT @p_user_id AS id")->fetch_assoc();
+        $this->id = (int) $row['id'];
+        return $this->id > 0;
     }
 }
