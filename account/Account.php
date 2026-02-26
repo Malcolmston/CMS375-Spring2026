@@ -3,6 +3,7 @@
 namespace account;
 
 use Connect;
+use DateTime;
 
 /**
  * Account management class
@@ -52,4 +53,43 @@ abstract class Account extends Connect
     {
         return password_verify($password, $hash);
     }
+
+    /**
+     * Retrieves a user record by its unique identifier.
+     *
+     * @param int $id The unique identifier of the user to retrieve.
+     * @return static Returns an instance of the class populated with the user's data.
+     * @throws \DateMalformedStringException
+     */
+    public static function getUserById(int $id): static
+    {
+        $instance = new static();
+        $sql = "SELECT * FROM view_user_roles WHERE id = ? LIMIT 1";
+        $stmt = $instance->getConnection()->prepare($sql);
+        $stmt->bind_param("i", $id);
+        $stmt->execute();
+        $row = $stmt->get_result()->fetch_assoc();
+
+        $instance->id         = $row['id'];
+        $instance->firstName  = $row['first_name'];
+        $instance->lastName   = $row['last_name'];
+        $instance->middleName = $row['middle_name'];
+        $instance->suffix     = suffix::from($row['suffix']);
+        $instance->prefix     = prefix::from($row['prefix']);
+        $instance->gender     = $row['gender'];
+        $instance->phone      = $row['phone'];
+        $instance->location   = $row['location'];
+        $instance->email      = $row['email'];
+        $instance->age        = (int) $row['age'];
+        $instance->password   = $row['password'];
+        $instance->role       = role::from($row['role']);
+        $instance->status     = $row['status'];
+        $instance->createdAt  = new DateTime($row['created_at']);
+        $instance->updatedAt  = new DateTime($row['updated_at']);
+        $instance->deletedAt  = new DateTime($row['deleted_at']);
+        $instance->isDeleted  = (bool) $row['is_deleted'];
+
+        return $instance;
+    }
+
 }
