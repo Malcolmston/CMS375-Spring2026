@@ -24,6 +24,27 @@ BEGIN
 END;
 
 -- ============================================================
+-- Is deleted checks if a user has been soft-deleted
+-- - p_id is the user's id
+-- - Returns true if deleted_at is set, false otherwise
+-- ============================================================
+DROP FUNCTION IF EXISTS is_deleted;
+
+CREATE FUNCTION is_deleted(p_id INT)
+    RETURNS BOOLEAN
+    READS SQL DATA
+BEGIN
+    DECLARE v_result BOOLEAN DEFAULT FALSE;
+
+    SELECT TRUE INTO v_result
+    FROM view_deleted_users
+    WHERE id = p_id
+    LIMIT 1;
+
+    RETURN COALESCE(v_result, FALSE);
+END;
+
+-- ============================================================
 -- Has role checks if a user with a given role exists
 -- - p_user_id is the user's id
 -- - p_role is the role to check for
