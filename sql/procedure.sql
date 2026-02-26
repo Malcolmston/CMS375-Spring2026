@@ -136,6 +136,8 @@ BEGIN
         RESIGNAL;
     END;
 
+    START TRANSACTION;
+
     SET v_status = has_user(p_user_id);
 
     IF v_status IS NULL THEN
@@ -146,7 +148,6 @@ BEGIN
         CALL throw('User is already deleted');
     END IF;
 
-    START TRANSACTION;
         UPDATE users SET deleted_at = NOW() WHERE id = p_user_id;
     COMMIT;
 END;
