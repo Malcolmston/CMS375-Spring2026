@@ -136,4 +136,19 @@ abstract class Account extends Connect
         $result = $stmt->get_result();
         return $result->num_rows > 0;
     }
+
+    /**
+     * Restores a user based on the specified criteria.
+     *
+     * @return bool Returns true if the user was successfully restored, otherwise false.
+     */
+    protected function restore(): bool
+    {
+        $sql = "CALL restore_user(?)";
+        $stmt = $this->getConnection()->prepare($sql);
+        $stmt->bind_param("i", $this->id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        return $result->num_rows > 0;
+    }
 }
