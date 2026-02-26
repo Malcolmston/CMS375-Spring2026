@@ -6,7 +6,7 @@ class Point
         get {
             return $this->x;
         }
-        private set {
+        set {
             $this->x = $value;
         }
     }
@@ -14,7 +14,7 @@ class Point
         get {
             return $this->y;
         }
-        private set {
+        set {
             $this->y = $value;
         }
     }
