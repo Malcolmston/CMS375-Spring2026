@@ -5,6 +5,7 @@ namespace account;
 use AllowDynamicProperties;
 use Connect;
 use DateTime;
+use Point;
 
 /**
  * Account management class
@@ -20,8 +21,7 @@ abstract class Account extends Connect
     protected prefix $prefix;
     protected string $gender;
     protected string $phone;
-    protected float $locationX;
-    protected float $locationY;
+    protected Point $location;
     protected string $email;
     protected int $age;
     protected blood $blood;
@@ -69,7 +69,7 @@ abstract class Account extends Connect
     public static function getUserById(int $id): static
     {
         $instance = new static();
-        $sql = "SELECT * FROM view_user_roles WHERE id = ? LIMIT 1";
+        $sql = "SELECT *, ST_X(location) AS loc_x, ST_Y(location) AS loc_y FROM view_user_roles WHERE id = ? LIMIT 1";
         $stmt = $instance->getConnection()->prepare($sql);
         $stmt->bind_param("i", $id);
         $stmt->execute();
@@ -83,7 +83,7 @@ abstract class Account extends Connect
         $instance->prefix     = prefix::from($row['prefix']);
         $instance->gender     = $row['gender'];
         $instance->phone      = $row['phone'];
-        $instance->location   = $row['location'];
+        $instance->location   = new Point((float) $row['loc_x'], (float) $row['loc_y']);
         $instance->email      = $row['email'];
         $instance->age        = (int) $row['age'];
         $instance->password   = $row['password'];
@@ -176,8 +176,8 @@ abstract class Account extends Connect
             $this->role->value,
             $this->gender,
             $this->phone,
-            $this->locationX,
-            $this->locationY,
+            $this->location->x,
+            $this->location->y,
             $this->email,
             $this->age,
             $this->blood->value,
