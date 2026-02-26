@@ -122,4 +122,18 @@ abstract class Account extends Connect
         return $result->num_rows > 0;
     }
 
+    /**
+     * Performs a soft delete operation on a user, marking the user as deleted without removing their data.
+     *
+     * @return bool Returns true if the soft delete operation was successful, otherwise false.
+     */
+    protected function softDelete(): bool
+    {
+        $sql = "CALL soft_delete_user(?)";
+        $stmt = $this->getConnection()->prepare($sql);
+        $stmt->bind_param("i", $this->id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        return $result->num_rows > 0;
+    }
 }
