@@ -107,4 +107,19 @@ abstract class Account extends Connect
        return $result->num_rows > 0;
     }
 
+    /**
+     * Checks if the specified entity is marked as deleted.
+     *
+     * @return bool Returns true if the entity is marked as deleted, otherwise false.
+     */
+    protected function isDeleted (): bool
+    {
+        $sql = "CALL is_deleted(?)";
+        $stmt = $this->getConnection()->prepare($sql);
+        $stmt->bind_param("i", $this->id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        return $result->num_rows > 0;
+    }
+
 }
