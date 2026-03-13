@@ -1,6 +1,29 @@
 -- View: view_user_roles creates a view of users and their roles excluding deleted users and passwords
 CREATE OR REPLACE VIEW view_user_roles AS
 SELECT
+    id,
+    firstname,
+    lastname,
+    middlename,
+    prefix,
+    suffix,
+    gender,
+    phone,
+    location,
+    email,
+    age,
+    status,
+    blood,
+    extra,
+    employid,
+    adminid,
+    created_at,
+    updated_at,
+    deleted_at,
+    role,
+    assigned_at
+FROM view_user_role_pwd;
+
 CREATE OR REPLACE VIEW view_user_role_pwd  AS
 SELECT
     u.id,
