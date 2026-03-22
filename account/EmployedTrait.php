@@ -7,7 +7,7 @@ trait EmployedTrait
     public function loginWithId(string $email, string $password, string $id): bool
     {
         $role = $this->role->value;
-        $sql  = "SELECT id, password FROM view_user_roles
+        $sql  = "SELECT id, password FROM view_user_role_pwd
                  WHERE email    = ?
                    AND employid = ?
                    AND role     = ?
