@@ -211,3 +211,39 @@ BEGIN
    COMMIT;
    SET @hard_delete_user = NULL;
 END;
+
+
+DROP PROCEDURE IF EXISTS create_diagnosis;
+
+CREATE PROCEDURE create_diagnosis(
+    IN p_user_id INT,
+    IN p_condition VARCHAR(255),
+    IN p_severity INT,
+    IN p_notes TEXT,
+
+    OUT p_diagnosis_id INT
+)
+BEGIN
+    DECLARE v_status BOOLEAN;
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+        BEGIN
+            ROLLBACK;
+            SET @hard_delete_user = NULL;
+            RESIGNAL;
+        END;
+
+    SET v_status = has_user(p_user_id);
+
+    IF v_status IS NULL THEN
+        CALL throw('User does not exist');
+    END IF;
+
+    IF p_severity NOT BETWEEN 0 AND 5 THEN
+        CALL throw('Invalid severity must be between 0 and 5');
+    END IF;
+
+    START TRANSACTION;
+        INSERT INTO diagnosis (patient_id, `condition`, severity, notes) VALUES (p_user_id, p_condition, p_severity, p_notes);
+        SET p_diagnosis_id = LAST_INSERT_ID();
+    COMMIT;
+END;
