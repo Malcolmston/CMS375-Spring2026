@@ -32,4 +32,22 @@ trait EmployedTrait
         $this->id = $userId;
         return true;
     }
+
+    public static function resolveRole(string $email, string $employid): ?string
+    {
+        $sql  = "SELECT role FROM view_user_role_pwd
+                 WHERE email    = ?
+                   AND employid = ?
+                 LIMIT 1";
+
+        $conn = (new \Connect())->getConnection();
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param('ss', $email, $employid);
+        $stmt->execute();
+        $stmt->bind_result($role);
+        $found = $stmt->fetch();
+        $stmt->close();
+
+        return $found ? $role : null;
+    }
 }
