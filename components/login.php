@@ -123,3 +123,10 @@ function resolve_staff_role(string $email, string $employid): ?string
 
     return $found ? $role : null;
 }
+
+function redirect_back(string $error): never
+{
+    $_SESSION['login_error'] = $error;
+    header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? '/'));
+    exit;
+}
