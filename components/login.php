@@ -26,6 +26,16 @@ match ($uri) {
     default                    => abort(404),
 };
 
+/**
+ * Handles the authentication and session initialization for a patient.
+ *
+ * This method processes login credentials submitted via a POST request.
+ * It validates the email and password, attempts to authenticate the patient,
+ * and sets up the session upon successful login. If authentication fails
+ * or credentials are missing, the user is redirected back with an appropriate error message.
+ *
+ * @return void
+ */
 function handle_patient(): void
 {
     $email    = trim($_POST['email']    ?? '');
@@ -47,6 +57,13 @@ function handle_patient(): void
     exit;
 }
 
+/**
+ * Handles staff authentication by verifying login credentials and determining the role of the user.
+ * If authentication is successful, initiates a session and redirects to the staff dashboard.
+ * If authentication fails, redirects back with an appropriate error message.
+ *
+ * @return void
+ */
 function handle_staff(): void
 {
     $email    = trim($_POST['email']    ?? '');
@@ -79,6 +96,11 @@ function handle_staff(): void
     exit;
 }
 
+/**
+ * Handles the administrative login process by validating and authenticating the provided credentials.
+ *
+ * @return void
+ */
 function handle_admin(): void
 {
     $email    = trim($_POST['email']    ?? '');
@@ -101,6 +123,12 @@ function handle_admin(): void
     exit;
 }
 
+/**
+ * Redirects the user back to the referring page and sets a session error message.
+ *
+ * @param string $error The error message to be stored in the session.
+ * @return never This method does not return a value as it terminates script execution with exit().
+ */
 function redirect_back(string $error): never
 {
     $_SESSION['login_error'] = $error;
@@ -108,6 +136,12 @@ function redirect_back(string $error): never
     exit;
 }
 
+/**
+ * Terminates the script execution and sends the specified HTTP response code.
+ *
+ * @param int $code The HTTP response code to be sent before exiting.
+ * @return never This method does not return a value as it terminates the script using exit.
+ */
 function abort(int $code): never
 {
     http_response_code($code);
