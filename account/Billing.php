@@ -8,6 +8,7 @@ require_once __DIR__ . '/EmployedTrait.php';
 
 class Billing extends Account implements Employed
 {
+    use EmployedTrait;
 
     /**
      * @inheritDoc
