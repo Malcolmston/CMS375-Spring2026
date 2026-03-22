@@ -1,5 +1,7 @@
 <?php
 
+namespace account;
+
 trait DiagnosibleTrait
 {
     public function diagnose(

@@ -1,5 +1,7 @@
 <?php
 
+namespace account;
+
 interface Diagnosible
 {
     /**
