@@ -15,7 +15,31 @@ class Billing extends Account implements Employed
      */
     function login(string $username, string $password): bool
     {
-        // TODO: Implement login() method.
+        $role = role::BILLING->value;
+        $sql  = "SELECT id, password FROM view_user_role_pwd
+                 WHERE email = ?
+                   AND role  = ?
+                 LIMIT 1";
+
+        if (!($stmt = $this->getConnection()->prepare($sql))) {
+            return false;
+        }
+
+        $stmt->bind_param('ss', $username, $role);
+        $stmt->execute();
+        $stmt->bind_result($userId, $hash);
+        if (!$stmt->fetch()) {
+            $stmt->close();
+            return false;
+        }
+        $stmt->close();
+
+        if (!self::verifyPassword($password, $hash)) {
+            return false;
+        }
+
+        $this->id = $userId;
+        return true;
     }
 
     /**
@@ -23,7 +47,9 @@ class Billing extends Account implements Employed
      */
     function register(): bool
     {
-        // TODO: Implement register() method.
+        $this->role     = role::BILLING;
+        $this->password = self::encryptPassword($this->password);
+        return $this->insert();
     }
 
     /**
@@ -31,6 +57,31 @@ class Billing extends Account implements Employed
      */
     public function loginWithId(string $email, string $password, string $id): bool
     {
-        // TODO: Implement loginWithId() method.
+        $role = $this->role->value;
+        $sql  = "SELECT id, password FROM view_user_role_pwd
+                 WHERE email   = ?
+                   AND adminid = ?
+                   AND role    = ?
+                 LIMIT 1";
+
+        if (!($stmt = $this->getConnection()->prepare($sql))) {
+            return false;
+        }
+
+        $stmt->bind_param('sss', $email, $id, $role);
+        $stmt->execute();
+        $stmt->bind_result($userId, $hash);
+        if (!$stmt->fetch()) {
+            $stmt->close();
+            return false;
+        }
+        $stmt->close();
+
+        if (!self::verifyPassword($password, $hash)) {
+            return false;
+        }
+
+        $this->id = $userId;
+        return true;
     }
 }
