@@ -26,5 +26,5 @@ interface Diagnosible
     /**
      * Get all diagnoses recorded by this provider.
      */
-    public function getMyDiagnoses(): array;
+    //public function getMyDiagnoses(): array;
 }
