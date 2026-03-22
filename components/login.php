@@ -1,6 +1,5 @@
 <?php
 
-require_once __DIR__ . '/../Connect.php';
 require_once __DIR__ . '/../account/Patient.php';
 require_once __DIR__ . '/../account/Admin.php';
 require_once __DIR__ . '/../account/Billing.php';
@@ -42,7 +41,7 @@ function handle_patient(): void
     }
 
     session_regenerate_id(true);
-    $_SESSION['user_id'] = $patient->id;
+    $_SESSION['user_id'] = $patient->getId();
     $_SESSION['role']    = 'PATIENT';
     header('Location: /patient/dashboard');
     exit;
@@ -58,7 +57,7 @@ function handle_staff(): void
         redirect_back('Missing credentials.');
     }
 
-    $role = resolve_staff_role($email, $employid);
+    $role = Billing::resolveRole($email, $employid);
     if ($role === null) {
         redirect_back('Invalid credentials.');
     }
@@ -74,7 +73,7 @@ function handle_staff(): void
     }
 
     session_regenerate_id(true);
-    $_SESSION['user_id'] = $account->id;
+    $_SESSION['user_id'] = $account->getId();
     $_SESSION['role']    = $role;
     header('Location: /staff/dashboard');
     exit;
@@ -96,32 +95,10 @@ function handle_admin(): void
     }
 
     session_regenerate_id(true);
-    $_SESSION['user_id'] = $admin->id;
+    $_SESSION['user_id'] = $admin->getId();
     $_SESSION['role']    = 'ADMIN';
     header('Location: /admin/dashboard');
     exit;
-}
-
-/**
- * Looks up the role for a staff member by email and employid
- * so the correct account class can be instantiated.
- */
-function resolve_staff_role(string $email, string $employid): ?string
-{
-    $sql  = "SELECT role FROM view_user_role_pwd
-             WHERE email    = ?
-               AND employid = ?
-             LIMIT 1";
-
-    $conn = (new Connect())->getConnection();
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param('ss', $email, $employid);
-    $stmt->execute();
-    $stmt->bind_result($role);
-    $found = $stmt->fetch();
-    $stmt->close();
-
-    return $found ? $role : null;
 }
 
 function redirect_back(string $error): never
