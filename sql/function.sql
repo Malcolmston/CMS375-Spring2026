@@ -70,3 +70,29 @@ BEGIN
     RETURN COALESCE(v_has_role, FALSE);
 END;
 
+DROP FUNCTION IF EXISTS my_diagnosis;
+
+CREATE FUNCTION my_diagnosis (
+    user_id INT
+)
+    RETURNS JSON
+    READS SQL DATA
+BEGIN
+    DECLARE v_result JSON;
+
+    SELECT JSON_ARRAYAGG(
+               JSON_OBJECT(
+                   'id',         id,
+                   'condition',  `condition`,
+                   'severity',   severity,
+                   'notes',      notes,
+                   'created_at', created_at,
+                   'updated_at', updated_at
+               )
+           ) INTO v_result
+    FROM diagnosis
+    WHERE patient_id = user_id
+      AND deleted_at IS NULL;
+
+    RETURN COALESCE(v_result, JSON_ARRAY());
+END;
