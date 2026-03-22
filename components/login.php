@@ -130,3 +130,9 @@ function redirect_back(string $error): never
     header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? '/'));
     exit;
 }
+
+function abort(int $code): never
+{
+    http_response_code($code);
+    exit;
+}
