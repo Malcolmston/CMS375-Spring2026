@@ -29,4 +29,10 @@ interface Employed
      * in addition to email and password.
      */
     public function loginWithId(string $email, string $password, string $id): bool;
+
+    /**
+     * Resolve the role of a staff member by email and employid
+     * before the correct account class can be instantiated.
+     */
+    public static function resolveRole(string $email, string $employid): ?string;
 }
