@@ -36,6 +36,105 @@ abstract class Account extends Connect
 
     protected bool $isDeleted;
 
+    public function getId(): int
+    {
+        return $this->id;
+    }
+
+    public function getFirstName(): string
+    {
+        return $this->firstName;
+    }
+
+    public function getLastName(): string
+    {
+        return $this->lastName;
+    }
+
+    public function getMiddleName(): string
+    {
+        return $this->middleName;
+    }
+
+    public function getSuffix(): suffix
+    {
+        return $this->suffix;
+    }
+
+    public function getPrefix(): prefix
+    {
+        return $this->prefix;
+    }
+
+    public function getGender(): string
+    {
+        return $this->gender;
+    }
+
+    public function getPhone(): string
+    {
+        return $this->phone;
+    }
+
+    public function getLocation(): Point
+    {
+        return $this->location;
+    }
+
+    public function getEmail(): string
+    {
+        return $this->email;
+    }
+
+    public function getAge(): int
+    {
+        return $this->age;
+    }
+
+    public function getBlood(): blood
+    {
+        return $this->blood;
+    }
+
+    public function getPassword(): string
+    {
+        return $this->password;
+    }
+
+    public function getExtra(): string
+    {
+        return $this->extra;
+    }
+
+    public function getRole(): role
+    {
+        return $this->role;
+    }
+
+    public function getStatus(): string
+    {
+        return $this->status;
+    }
+
+    public function getCreatedAt(): DateTime
+    {
+        return $this->createdAt;
+    }
+
+    public function getUpdatedAt(): DateTime
+    {
+        return $this->updatedAt;
+    }
+
+    public function getDeletedAt(): DateTime
+    {
+        return $this->deletedAt;
+    }
+
+    public function getIsDeleted(): bool
+    {
+        return $this->isDeleted;
+    }
     /**
      * @throws \Exception iff SQL con is invalid
      */
