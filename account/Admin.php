@@ -50,7 +50,7 @@ class Admin extends Account implements Employed
      */
     public function loginWithId(string $email, string $password, string $id): bool
     {
-        $role = $this->role->value;
+        $role = role::ADMIN->value;
         $sql  = "SELECT id, password FROM view_user_role_pwd
                  WHERE email   = ?
                    AND adminid = ?
