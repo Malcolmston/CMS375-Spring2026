@@ -42,6 +42,9 @@ trait EmployedTrait
 
         $conn = (new \Connect())->getConnection();
         $stmt = $conn->prepare($sql);
+        if ($stmt === false) {
+            return null;
+        }
         $stmt->bind_param('ss', $email, $employid);
         $stmt->execute();
         $stmt->bind_result($role);
