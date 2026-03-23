@@ -2,6 +2,13 @@
 
 namespace account;
 
+require_once __DIR__ . '/../Connect.php';
+require_once __DIR__ . '/../Point.php';
+require_once __DIR__ . '/blood.php';
+require_once __DIR__ . '/prefix.php';
+require_once __DIR__ . '/suffix.php';
+require_once __DIR__ . '/role.php';
+
 use AllowDynamicProperties;
 use Connect;
 use DateTime;
@@ -211,9 +218,9 @@ abstract class Account extends Connect
         $row = $stmt->get_result()->fetch_assoc();
 
         $instance->id         = $row['id'];
-        $instance->firstName  = $row['first_name'];
-        $instance->lastName   = $row['last_name'];
-        $instance->middleName = $row['middle_name'];
+        $instance->firstName  = $row['firstname'];
+        $instance->lastName   = $row['lastname'];
+        $instance->middleName = $row['middlename'];
         $instance->suffix     = suffix::from($row['suffix']);
         $instance->prefix     = prefix::from($row['prefix']);
         $instance->gender     = $row['gender'];
@@ -221,13 +228,12 @@ abstract class Account extends Connect
         $instance->location   = new Point((float) $row['loc_x'], (float) $row['loc_y']);
         $instance->email      = $row['email'];
         $instance->age        = (int) $row['age'];
-        $instance->password   = $row['password'];
         $instance->role       = role::from($row['role']);
         $instance->status     = $row['status'];
         $instance->createdAt  = new DateTime($row['created_at']);
         $instance->updatedAt  = new DateTime($row['updated_at']);
-        $instance->deletedAt  = new DateTime($row['deleted_at']);
-        $instance->isDeleted  = (bool) $row['is_deleted'];
+        $instance->deletedAt  = new DateTime($row['deleted_at'] ?? 'now');
+        $instance->isDeleted  = $row['deleted_at'] !== null;
 
         return $instance;
     }
@@ -299,23 +305,30 @@ abstract class Account extends Connect
      */
     protected function insert(): bool
     {
+        $prefix   = $this->prefix->value;
+        $suffix   = $this->suffix->value;
+        $role     = $this->role->value;
+        $blood    = $this->blood->value;
+        $locX     = $this->location->x;
+        $locY     = $this->location->y;
+
         $sql = "CALL insert_user(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, @p_user_id)";
         $stmt = $this->getConnection()->prepare($sql);
         $stmt->bind_param(
-            "sssssssddsisss",
+            "ssssssssddsisss",
             $this->firstName,
             $this->lastName,
             $this->middleName,
-            $this->prefix->value,
-            $this->suffix->value,
-            $this->role->value,
+            $prefix,
+            $suffix,
+            $role,
             $this->gender,
             $this->phone,
-            $this->location->x,
-            $this->location->y,
+            $locX,
+            $locY,
             $this->email,
             $this->age,
-            $this->blood->value,
+            $blood,
             $this->password,
             $this->extra
         );
