@@ -24,6 +24,27 @@ BEGIN
 END;
 
 -- ============================================================
+-- Is deleted checks if a user has been soft-deleted
+-- - p_id is the user's id
+-- - Returns true if deleted_at is set, false otherwise
+-- ============================================================
+DROP FUNCTION IF EXISTS is_deleted;
+
+CREATE FUNCTION is_deleted(p_id INT)
+    RETURNS BOOLEAN
+    READS SQL DATA
+BEGIN
+    DECLARE v_result BOOLEAN DEFAULT FALSE;
+
+    SELECT TRUE INTO v_result
+    FROM view_deleted_users
+    WHERE id = p_id
+    LIMIT 1;
+
+    RETURN COALESCE(v_result, FALSE);
+END;
+
+-- ============================================================
 -- Has role checks if a user with a given role exists
 -- - p_user_id is the user's id
 -- - p_role is the role to check for
@@ -49,3 +70,29 @@ BEGIN
     RETURN COALESCE(v_has_role, FALSE);
 END;
 
+DROP FUNCTION IF EXISTS my_diagnosis;
+
+CREATE FUNCTION my_diagnosis (
+    user_id INT
+)
+    RETURNS JSON
+    READS SQL DATA
+BEGIN
+    DECLARE v_result JSON;
+
+    SELECT JSON_ARRAYAGG(
+               JSON_OBJECT(
+                   'id',         id,
+                   'condition',  `condition`,
+                   'severity',   severity,
+                   'notes',      notes,
+                   'created_at', created_at,
+                   'updated_at', updated_at
+               )
+           ) INTO v_result
+    FROM diagnosis
+    WHERE patient_id = user_id
+      AND deleted_at IS NULL;
+
+    RETURN COALESCE(v_result, JSON_ARRAY());
+END;

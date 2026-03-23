@@ -32,12 +32,20 @@ CREATE PROCEDURE insert_user(
     IN  p_loc_y      DECIMAL(10,6),
     IN  p_email      VARCHAR(255),
     IN  p_age        INTEGER,
-    IN  p_blood      VARCHAR(5),
+    IN  p_blood      ENUM('O','O+','O-','A','A+','A-','B','B+','B-','AB','AB+','AB-'),
     IN  p_password   VARCHAR(255),
     IN  p_extra      VARCHAR(2000),
     OUT p_user_id    INT
 )
 BEGIN
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        RESIGNAL;
+    END;
+
+    START TRANSACTION;
+
     SET @insert_user_role = p_user_role;
 
     INSERT INTO users (
@@ -51,9 +59,9 @@ BEGIN
 
     SET p_user_id = LAST_INSERT_ID();
 
-    INSERT INTO user_role (
-        user_id, role
-    ) VALUES (p_user_id, p_user_role);
+    INSERT INTO user_role (user_id, role) VALUES (p_user_id, p_user_role);
+
+    COMMIT;
 END;
 
 -- ============================================================
@@ -136,6 +144,8 @@ BEGIN
         RESIGNAL;
     END;
 
+    START TRANSACTION;
+
     SET v_status = has_user(p_user_id);
 
     IF v_status IS NULL THEN
@@ -146,8 +156,34 @@ BEGIN
         CALL throw('User is already deleted');
     END IF;
 
-    START TRANSACTION;
         UPDATE users SET deleted_at = NOW() WHERE id = p_user_id;
+    COMMIT;
+END;
+
+DROP PROCEDURE IF EXISTS restore_user;
+
+CREATE PROCEDURE restore_user(IN p_user_id INT)
+BEGIN
+    DECLARE v_status BOOLEAN;
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        RESIGNAL;
+    END;
+
+    START TRANSACTION;
+
+    SET v_status = has_user(p_user_id);
+
+    IF v_status IS NULL THEN
+        CALL throw('User does not exist');
+    END IF;
+
+    IF v_status = TRUE THEN
+        CALL throw('User is not deleted');
+    END IF;
+
+        UPDATE users SET deleted_at = NULL WHERE id = p_user_id;
     COMMIT;
 END;
 
@@ -174,4 +210,40 @@ BEGIN
        DELETE FROM users WHERE id = p_user_id;
    COMMIT;
    SET @hard_delete_user = NULL;
+END;
+
+
+DROP PROCEDURE IF EXISTS create_diagnosis;
+
+CREATE PROCEDURE create_diagnosis(
+    IN p_user_id INT,
+    IN p_condition VARCHAR(255),
+    IN p_severity INT,
+    IN p_notes TEXT,
+
+    OUT p_diagnosis_id INT
+)
+BEGIN
+    DECLARE v_status BOOLEAN;
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+        BEGIN
+            ROLLBACK;
+            SET @hard_delete_user = NULL;
+            RESIGNAL;
+        END;
+
+    SET v_status = has_user(p_user_id);
+
+    IF v_status IS NULL THEN
+        CALL throw('User does not exist');
+    END IF;
+
+    IF p_severity NOT BETWEEN 0 AND 5 THEN
+        CALL throw('Invalid severity must be between 0 and 5');
+    END IF;
+
+    START TRANSACTION;
+        INSERT INTO diagnosis (patient_id, `condition`, severity, notes) VALUES (p_user_id, p_condition, p_severity, p_notes);
+        SET p_diagnosis_id = LAST_INSERT_ID();
+    COMMIT;
 END;
