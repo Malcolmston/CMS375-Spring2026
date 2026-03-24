@@ -49,7 +49,9 @@ class Billing extends Account implements Employed
     {
         $this->role     = role::BILLING;
         $this->password = self::encryptPassword($this->password);
-        return $this->insert();
+        $ok = $this->insert();
+        if ($ok) $this->fetchEmployeeIds();
+        return $ok;
     }
 
     /**
