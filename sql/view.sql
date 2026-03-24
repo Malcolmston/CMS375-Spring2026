@@ -158,3 +158,25 @@ FROM prescription_item     pi
     INNER JOIN medicine m ON m.id  = pi.medicine_id
     INNER JOIN view_prescriptions vp ON vp.id = pi.prescription_id;
 
+CREATE OR REPLACE VIEW view_drug_interactions AS
+SELECT
+    -- Medicine interaction details
+    mi.id,
+    mi.severity,
+    mi.description,
+    mi.recommendation,
+
+    -- Medicine details for each side of the interaction
+
+    -- Medicine 1
+    m1.id           AS medicine_1_id,
+    m1.generic_name AS medicine_1_generic,
+    m1.brand_name   AS medicine_1_brand,
+
+    -- Medicine 2
+    m2.id           AS medicine_2_id,
+    m2.generic_name AS medicine_2_generic,
+    m2.brand_name   AS medicine_2_brand
+FROM medicine_interaction mi
+    INNER JOIN medicine m1 ON m1.id = mi.medicine_1
+    INNER JOIN medicine m2 ON m2.id = mi.medicine_2;
