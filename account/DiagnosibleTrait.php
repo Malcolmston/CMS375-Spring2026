@@ -7,22 +7,22 @@ trait DiagnosibleTrait
     public function diagnose(
         int    $patient_id,
         string $condition,
-        int    $severity,
+        string $severity,
         string $notes
     ): bool {
         $sql = "CALL create_diagnosis(?, ?, ?, ?, @p_diagnosis_id)";
         $stmt = $this->getConnection()->prepare($sql);
-        $stmt->bind_param('isis', $patient_id, $condition, $severity, $notes);
+        $stmt->bind_param('isss', $patient_id, $condition, $severity, $notes);
         $stmt->execute();
         $stmt->close();
         return $stmt->affected_rows > 0;
     }
 
-    public function updateDiagnosis(int $diagnosis_id, int $severity, string $notes): bool
+    public function updateDiagnosis(int $diagnosis_id, string $severity, string $notes): bool
     {
         $sql = "UPDATE diagnosis SET severity = ?, notes = ? WHERE id = ?";
         $stmt = $this->getConnection()->prepare($sql);
-        $stmt->bind_param('isi', $severity, $notes, $diagnosis_id);
+        $stmt->bind_param('ssi', $severity, $notes, $diagnosis_id);
         $stmt->execute();
         $stmt->close();
         return $stmt->affected_rows > 0;
