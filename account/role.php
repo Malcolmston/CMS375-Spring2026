@@ -16,4 +16,9 @@ enum role: string
     case BILLING      = "BILLING";
     case EMS          = "EMS";
     case THERAPIST    = "THERAPIST";
+
+    public static function isValid(mixed $role): bool
+    {
+        return in_array($role, self::cases());
+    }
 }
