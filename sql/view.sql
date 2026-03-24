@@ -180,3 +180,61 @@ SELECT
 FROM medicine_interaction mi
     INNER JOIN medicine m1 ON m1.id = mi.medicine_1
     INNER JOIN medicine m2 ON m2.id = mi.medicine_2;
+
+
+-- View Visits
+
+CREATE OR REPLACE VIEW view_visits AS
+SELECT
+    v.id,
+    v.patient_id,
+    CONCAT(u.firstname, ' ', u.lastname) AS patient_name,
+    v.institution_id,
+    i.name AS institution_name,
+    i.institution_type,
+    v.visit_type,
+    v.scheduled_at,
+    v.status,
+    v.reason,
+    v.notes,
+    v.created_at,
+    v.updated_at
+FROM visit v
+JOIN users u ON v.patient_id = u.id
+JOIN institution i ON v.institution_id = i.id
+WHERE v.deleted_at IS NULL
+  AND i.deleted_at IS NULL;
+
+-- View Doctor Visits
+
+CREATE OR REPLACE VIEW view_doctor_visits AS
+SELECT
+    dv.id,
+    dv.visit_id,
+    dv.doctor_id,
+    CONCAT(d.firstname, ' ', d.lastname) AS doctor_name,
+    dv.doctor_notes,
+    dv.diagnosis_summary,
+    dv.created_at,
+    dv.updated_at
+FROM doctor_visit dv
+JOIN users d ON dv.doctor_id = d.id;
+
+-- View Allergies
+
+CREATE OR REPLACE VIEW view_user_allergies AS
+SELECT
+    ua.id,
+    ua.user_id,
+    CONCAT(u.firstname, ' ', u.lastname) AS user_name,
+    ua.allergy_id,
+    a.allergy_name,
+    a.allergy_type,
+    ua.reaction,
+    ua.severity,
+    ua.notes,
+    ua.recorded_at
+FROM user_allergy ua
+JOIN users u ON ua.user_id = u.id
+JOIN allergy a ON ua.allergy_id = a.id
+WHERE a.deleted_at IS NULL;

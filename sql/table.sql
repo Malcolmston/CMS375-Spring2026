@@ -266,4 +266,119 @@ CREATE TABLE IF NOT EXISTS medicine_interaction(
     CONSTRAINT enforce_id_order
         CHECK (medicine_1 < medicine_2)
     );
+    
+    CREATE TABLE IF NOT EXISTS institution (
+    id INTEGER PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(255) NOT NULL,
+    institution_type ENUM(
+        'HOSPITAL',
+        'CLINIC',
+        'URGENT_CARE',
+        'PHARMACY',
+        'LAB',
+        'OTHER'
+    ) NOT NULL DEFAULT 'OTHER',
+    phone VARCHAR(45) DEFAULT NULL,
+    email VARCHAR(255) DEFAULT NULL,
+    address VARCHAR(255) DEFAULT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP DEFAULT NULL
+);
+
+CREATE TABLE IF NOT EXISTS visit (
+    id INTEGER PRIMARY KEY AUTO_INCREMENT,
+    patient_id INTEGER NOT NULL,
+    institution_id INTEGER NOT NULL,
+    visit_type ENUM(
+        'CHECKUP',
+        'FOLLOW_UP',
+        'EMERGENCY',
+        'SPECIALIST',
+        'LAB',
+        'THERAPY',
+        'OTHER'
+    ) NOT NULL DEFAULT 'OTHER',
+    scheduled_at DATETIME NOT NULL,
+    status ENUM(
+        'SCHEDULED',
+        'COMPLETED',
+        'CANCELLED',
+        'NO_SHOW'
+    ) NOT NULL DEFAULT 'SCHEDULED',
+    reason VARCHAR(255) DEFAULT NULL,
+    notes TEXT DEFAULT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP DEFAULT NULL,
+
+    CONSTRAINT fk_visit_patient
+        FOREIGN KEY (patient_id) REFERENCES users(id)
+        ON DELETE CASCADE ON UPDATE CASCADE,
+
+    CONSTRAINT fk_visit_institution
+        FOREIGN KEY (institution_id) REFERENCES institution(id)
+        ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS doctor_visit (
+    id INTEGER PRIMARY KEY AUTO_INCREMENT,
+    visit_id INTEGER NOT NULL,
+    doctor_id INTEGER NOT NULL,
+    doctor_notes TEXT DEFAULT NULL,
+    diagnosis_summary VARCHAR(255) DEFAULT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_doctor_visit_visit
+        FOREIGN KEY (visit_id) REFERENCES visit(id)
+        ON DELETE CASCADE ON UPDATE CASCADE,
+
+    CONSTRAINT fk_doctor_visit_doctor
+        FOREIGN KEY (doctor_id) REFERENCES users(id)
+        ON DELETE CASCADE ON UPDATE CASCADE,
+
+    CONSTRAINT uq_doctor_visit UNIQUE (visit_id, doctor_id)
+);
+
+CREATE TABLE IF NOT EXISTS allergy (
+    id INTEGER PRIMARY KEY AUTO_INCREMENT,
+    allergy_name VARCHAR(255) NOT NULL UNIQUE,
+    allergy_type ENUM(
+        'MEDICATION',
+        'FOOD',
+        'ENVIRONMENTAL',
+        'INSECT',
+        'LATEX',
+        'OTHER'
+    ) NOT NULL DEFAULT 'OTHER',
+    description VARCHAR(255) DEFAULT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP DEFAULT NULL
+);
+
+CREATE TABLE IF NOT EXISTS user_allergy (
+    id INTEGER PRIMARY KEY AUTO_INCREMENT,
+    user_id INTEGER NOT NULL,
+    allergy_id INTEGER NOT NULL,
+    reaction VARCHAR(255) DEFAULT NULL,
+    severity ENUM(
+        'MILD',
+        'MODERATE',
+        'SEVERE'
+    ) NOT NULL DEFAULT 'MILD',
+    notes VARCHAR(255) DEFAULT NULL,
+    recorded_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_user_allergy_user
+        FOREIGN KEY (user_id) REFERENCES users(id)
+        ON DELETE CASCADE ON UPDATE CASCADE,
+
+    CONSTRAINT fk_user_allergy_allergy
+        FOREIGN KEY (allergy_id) REFERENCES allergy(id)
+        ON DELETE CASCADE ON UPDATE CASCADE,
+
+    CONSTRAINT uq_user_allergy UNIQUE (user_id, allergy_id)
+);
 

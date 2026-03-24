@@ -296,3 +296,70 @@ BEGIN
         SET p_is_expired = TRUE;
     END IF;
 END;
+
+DELIMITER $$
+
+DROP PROCEDURE IF EXISTS create_institution $$
+CREATE PROCEDURE create_institution(
+    IN p_name VARCHAR(255),
+    IN p_institution_type VARCHAR(50),
+    IN p_phone VARCHAR(45),
+    IN p_email VARCHAR(255),
+    IN p_address VARCHAR(255)
+)
+BEGIN
+    INSERT INTO institution (name, institution_type, phone, email, address)
+    VALUES (p_name, p_institution_type, p_phone, p_email, p_address);
+END $$
+
+DROP PROCEDURE IF EXISTS create_visit $$
+CREATE PROCEDURE create_visit(
+    IN p_patient_id INTEGER,
+    IN p_institution_id INTEGER,
+    IN p_visit_type VARCHAR(50),
+    IN p_scheduled_at DATETIME,
+    IN p_reason VARCHAR(255),
+    IN p_notes TEXT
+)
+BEGIN
+    INSERT INTO visit (patient_id, institution_id, visit_type, scheduled_at, reason, notes)
+    VALUES (p_patient_id, p_institution_id, p_visit_type, p_scheduled_at, p_reason, p_notes);
+END $$
+
+DROP PROCEDURE IF EXISTS create_doctor_visit $$
+CREATE PROCEDURE create_doctor_visit(
+    IN p_visit_id INTEGER,
+    IN p_doctor_id INTEGER,
+    IN p_doctor_notes TEXT,
+    IN p_diagnosis_summary VARCHAR(255)
+)
+BEGIN
+    INSERT INTO doctor_visit (visit_id, doctor_id, doctor_notes, diagnosis_summary)
+    VALUES (p_visit_id, p_doctor_id, p_doctor_notes, p_diagnosis_summary);
+END $$
+
+DROP PROCEDURE IF EXISTS create_allergy $$
+CREATE PROCEDURE create_allergy(
+    IN p_allergy_name VARCHAR(255),
+    IN p_allergy_type VARCHAR(50),
+    IN p_description VARCHAR(255)
+)
+BEGIN
+    INSERT INTO allergy (allergy_name, allergy_type, description)
+    VALUES (p_allergy_name, p_allergy_type, p_description);
+END $$
+
+DROP PROCEDURE IF EXISTS create_user_allergy $$
+CREATE PROCEDURE create_user_allergy(
+    IN p_user_id INTEGER,
+    IN p_allergy_id INTEGER,
+    IN p_reaction VARCHAR(255),
+    IN p_severity VARCHAR(50),
+    IN p_notes VARCHAR(255)
+)
+BEGIN
+    INSERT INTO user_allergy (user_id, allergy_id, reaction, severity, notes)
+    VALUES (p_user_id, p_allergy_id, p_reaction, p_severity, p_notes);
+END $$
+
+DELIMITER ;
