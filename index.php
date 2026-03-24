@@ -94,10 +94,16 @@
 
     <script>
         $(document).ready(function() {
-            $('.nav-item, .dropdown-item').on('click', function(e) {
+            // Nav click handler - only for divs, not anchor links
+            $('.nav-item').on('click', function(e) {
                 e.preventDefault();
                 const text = $(this).text().toLowerCase().trim();
                 console.log('Navigating to:', text);
+            });
+
+            // Let dropdown-item links navigate normally (don't block anchor clicks)
+            $('.dropdown-item[href]').on('click', function(e) {
+                // Allow default navigation
             });
 
             $('.nav-item').hover(
