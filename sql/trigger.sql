@@ -245,3 +245,22 @@ BEGIN
    SET deleted_at = NOW()
    WHERE id = OLD.id AND deleted_at IS NULL;
 END;
+
+DROP TRIGGER IF EXISTS trg_log_diagnosis_insert;
+
+CREATE TRIGGER trg_log_diagnosis_insert
+AFTER INSERT ON diagnosis
+    FOR EACH ROW BEGIN
+    INSERT INTO logs (user_id, action, table_name, record_id, new_data)
+    VALUES (
+               NEW.patient_id,
+               'CREATE',
+               'diagnosis',
+               NEW.id,
+               JSON_OBJECT(
+                   'condition', NEW.condition,
+                   'severity',  NEW.severity,
+                   'notes',     NEW.notes
+               )
+           );
+END;
