@@ -104,3 +104,57 @@ SELECT
 FROM prescription p
     INNER JOIN view_users patient ON patient.id = p.patient_id
     INNER JOIN view_users doctor  ON doctor.id  = p.doctor_id;
+
+-- View: view_prescription_detail expands each prescription line item
+-- with full medicine info and patient/doctor names from view_prescriptions.
+CREATE OR REPLACE VIEW view_prescription_detail AS
+SELECT
+    -- Prescription item
+    pi.id                  AS item_id,
+    pi.prescription_id,
+    pi.dosage,
+    pi.frequency,
+    pi.route,
+    pi.duration_days,
+    pi.quantity_prescribed,
+    pi.instructions,
+    pi.filled_date,
+
+    -- Medicine
+    m.id                   AS medicine_id,
+    m.generic_name,
+    m.brand_name,
+    m.drug_class,
+    m.form,
+    m.standard_dose,
+    m.controlled_substance,
+    m.requires_prescription,
+    m.stock_quantity,
+    m.unit_of_measure,
+    m.manufacturer,
+    m.storage_requirements,
+
+    -- Prescription header (from view_prescriptions for patient/doctor names)
+    vp.status,
+    vp.issue_date,
+    vp.expire_date,
+    vp.notes              AS prescription_notes,
+
+    -- Patient details
+    vp.patient_id,
+    vp.patient_firstname,
+    vp.patient_lastname,
+    vp.patient_age,
+    vp.patient_status,
+
+    -- Doctor details
+    vp.doctor_id,
+    vp.doctor_prefix,
+    vp.doctor_firstname,
+    vp.doctor_lastname
+
+
+FROM prescription_item     pi
+    INNER JOIN medicine m ON m.id  = pi.medicine_id
+    INNER JOIN view_prescriptions vp ON vp.id = pi.prescription_id;
+
