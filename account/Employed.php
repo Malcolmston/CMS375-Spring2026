@@ -25,12 +25,6 @@ interface Employed
     //public function getEmployeesByInstitution(int $institution_id): array;
 
     /**
-     * Login using the employee's unique ID (employid for staff, adminid for admin)
-     * in addition to email and password.
-     */
-    public function loginWithId(string $email, string $password, string $id): bool;
-
-    /**
      * Resolve the role of a staff member by email and employid
      * before the correct account class can be instantiated.
      */
