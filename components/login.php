@@ -17,13 +17,13 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 session_start();
 
-$uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+$route = $_POST['route'] ?? '';
 
-match ($uri) {
-    '/login', '/patient/login' => handle_patient(),
-    '/staff/login'             => handle_staff(),
-    '/admin/login'             => handle_admin(),
-    default                    => abort(404),
+match ($route) {
+    'patient' => handle_patient(),
+    'staff'   => handle_staff(),
+    'admin'   => handle_admin(),
+    default   => abort(404),
 };
 
 /**
