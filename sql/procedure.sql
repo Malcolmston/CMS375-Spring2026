@@ -247,3 +247,42 @@ BEGIN
         SET p_diagnosis_id = LAST_INSERT_ID();
     COMMIT;
 END;
+
+
+DROP PROCEDURE IF EXISTS check_prescription_expired;
+
+-- ============================================================
+-- Check prescription expired compares expire_date to today
+-- and updates status to expired if it has passed
+-- - p_prescription_id is the prescription's id
+-- - Returns true if it was expired, false otherwise
+-- ============================================================
+
+CREATE PROCEDURE check_prescription_expired (
+    IN p_prescription_id INT,
+    OUT p_is_expired BOOLEAN
+)
+BEGIN
+    DECLARE v_expire_date DATE;
+    DECLARE v_status VARCHAR(20);
+
+    SET p_is_expired = FALSE;
+
+    SELECT expire_date, status INTO v_expire_date, v_status
+    FROM prescription
+    WHERE id = p_prescription_id
+    LIMIT 1;
+    IF v_status != 'active' THEN
+        RETURN p_is_expired;
+    END IF;
+    IF v_expire_date IS NOT NULL AND v_expire_date < CURDATE() THEN
+        UPDATE prescription
+        SET status = 'expired'
+        WHERE id = p_prescription_id;
+
+        SET p_is_expired = TRUE;
+
+        RETURN p_is_expired;
+    END IF;
+    RETURN p_is_expired;
+END;
