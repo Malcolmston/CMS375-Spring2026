@@ -264,7 +264,13 @@ CREATE PROCEDURE check_prescription_expired (
 )
 BEGIN
     DECLARE v_expire_date DATE;
-    DECLARE v_status VARCHAR(20);
+    DECLARE v_status      VARCHAR(20);
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        RESIGNAL;
+    END;
 
     SET p_is_expired = FALSE;
 
@@ -272,17 +278,21 @@ BEGIN
     FROM prescription
     WHERE id = p_prescription_id
     LIMIT 1;
-    IF v_status != 'active' THEN
-        RETURN p_is_expired;
+
+    IF v_status IS NULL THEN
+        CALL throw('Prescription does not exist');
     END IF;
-    IF v_expire_date IS NOT NULL AND v_expire_date < CURDATE() THEN
-        UPDATE prescription
-        SET status = 'expired'
-        WHERE id = p_prescription_id;
+
+    IF v_expire_date IS NOT NULL
+        AND v_expire_date < CURDATE()
+        AND v_status IN ('active', 'partially filled') THEN
+
+        START TRANSACTION;
+            UPDATE prescription
+            SET status = 'expired'
+            WHERE id = p_prescription_id;
+        COMMIT;
 
         SET p_is_expired = TRUE;
-
-        RETURN p_is_expired;
     END IF;
-    RETURN p_is_expired;
 END;
