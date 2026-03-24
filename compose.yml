@@ -1,4 +1,21 @@
 services:
+  web:
+    build: .
+    container_name: spring2026-web
+    ports:
+      - "8080:80"
+    volumes:
+      - .:/var/www/html
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USER: app
+      DB_PASS: app
+      DB_NAME: med_helth
+
   mysql:
     image: mysql:8.0
     container_name: spring2026-mysql
