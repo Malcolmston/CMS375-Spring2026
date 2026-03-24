@@ -6,4 +6,6 @@ RewriteRule ^staff/login\.html$ components/staff/login.html [L]
 RewriteRule ^admin/login\.html$ components/admin/login.html [L]
 RewriteRule ^login\.html$ components/patient/login.html [L]
 
+RewriteRule ^login$ components/login.php [L]
+RewriteRule ^dashboard$ components/dashboard/index.php [L]
 RewriteRule ^dashboard\.php$ components/dashboard/index.php [L]
