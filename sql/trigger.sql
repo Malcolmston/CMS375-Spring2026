@@ -264,3 +264,30 @@ AFTER INSERT ON diagnosis
                )
            );
 END;
+
+DROP TRIGGER IF EXISTS trg_log_diagnosis_update;
+
+CREATE TRIGGER trg_log_diagnosis_update
+    AFTER UPDATE ON diagnosis
+    FOR EACH ROW BEGIN
+    IF OLD.deleted_at IS NULL AND NEW.deleted_at IS NULL THEN
+        INSERT INTO logs (user_id, action, table_name, record_id, old_data, new_data)
+        VALUES (
+                   NEW.patient_id,
+                   'UPDATE',
+                   'diagnosis',
+                   NEW.id,
+                   JSON_OBJECT(
+                           'condition', OLD.condition,
+                           'severity',  OLD.severity,
+                           'notes',     OLD.notes
+                   ),
+                   JSON_OBJECT(
+                           'condition', NEW.condition,
+                           'severity',  NEW.severity,
+                           'notes',     NEW.notes
+                   )
+               );
+    END IF;
+END;
+
