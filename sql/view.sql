@@ -73,3 +73,34 @@ SELECT
     old_data, new_data, created_at,
     deleted_at
 FROM backup_logs;
+
+
+CREATE OR REPLACE VIEW view_active_diagnoses AS
+    SELECT * FROM diagnosis d
+    WHERE d.deleted_at IS NULL;
+
+
+CREATE OR REPLACE VIEW view_prescriptions AS
+SELECT
+    -- Prescription details
+    p.id,
+    p.status,
+    p.issue_date,
+    p.expire_date,
+    p.notes,
+
+    -- Patient details
+    p.patient_id,
+    patient.firstname  AS patient_firstname,
+    patient.lastname   AS patient_lastname,
+    patient.age        AS patient_age,
+    patient.status     AS patient_status,
+
+    -- Doctor details
+    p.doctor_id,
+    doctor.prefix      AS doctor_prefix,
+    doctor.firstname   AS doctor_firstname,
+    doctor.lastname    AS doctor_lastname
+FROM prescription p
+    INNER JOIN view_users patient ON patient.id = p.patient_id
+    INNER JOIN view_users doctor  ON doctor.id  = p.doctor_id;
