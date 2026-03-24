@@ -234,3 +234,14 @@ BEGIN
                  NOW()
              );
 END;
+
+DROP TRIGGER IF EXISTS diagnosis_soft_delete;
+
+CREATE TRIGGER diagnosis_soft_delete
+    BEFORE DELETE ON diagnosis
+    FOR EACH ROW
+BEGIN
+   UPDATE diagnosis
+   SET deleted_at = NOW()
+   WHERE id = OLD.id AND deleted_at IS NULL;
+END;
