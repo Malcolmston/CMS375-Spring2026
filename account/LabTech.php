@@ -45,6 +45,8 @@ class LabTech extends Account implements Diagnosible, Employed
     {
         $this->role     = role::LAB_TECH;
         $this->password = self::encryptPassword($this->password);
-        return $this->insert();
+        $ok = $this->insert();
+        if ($ok) $this->fetchEmployeeIds();
+        return $ok;
     }
 }

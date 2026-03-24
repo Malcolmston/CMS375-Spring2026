@@ -36,6 +36,8 @@ abstract class Account extends Connect
     protected string $extra;
     protected role $role;
     protected string $status;
+    protected ?string $employid = null;
+    protected ?string $adminid  = null;
 
     protected DateTime $createdAt;
     protected DateTime $updatedAt;
@@ -121,6 +123,16 @@ abstract class Account extends Connect
     public function getStatus(): string
     {
         return $this->status;
+    }
+
+    public function getEmployid(): ?string
+    {
+        return $this->employid;
+    }
+
+    public function getAdminid(): ?string
+    {
+        return $this->adminid;
     }
 
     public function getCreatedAt(): DateTime
