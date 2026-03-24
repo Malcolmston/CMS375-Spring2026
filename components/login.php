@@ -9,6 +9,7 @@ use account\Patient;
 use account\Admin;
 use account\Billing;
 use account\LabTech;
+use account\role;
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
@@ -53,7 +54,7 @@ function handle_patient(): void
     session_regenerate_id(true);
     $_SESSION['user_id'] = $patient->getId();
     $_SESSION['role']    = 'PATIENT';
-    header('Location: /patient/dashboard');
+    header('Location: dashboard');
     exit;
 }
 
@@ -80,8 +81,8 @@ function handle_staff(): void
     }
 
     $account = match ($role) {
-        'BILLING'  => new Billing(),
-        'LAB_TECH' => new LabTech(),
+        Role::BILLING->value => new Billing(),
+        Role::LAB_TECH->value => new LabTech(),
         default    => null,
     };
 
@@ -92,7 +93,7 @@ function handle_staff(): void
     session_regenerate_id(true);
     $_SESSION['user_id'] = $account->getId();
     $_SESSION['role']    = $role;
-    header('Location: /staff/dashboard');
+    header('Location: dashboard');
     exit;
 }
 
@@ -119,7 +120,7 @@ function handle_admin(): void
     session_regenerate_id(true);
     $_SESSION['user_id'] = $admin->getId();
     $_SESSION['role']    = 'ADMIN';
-    header('Location: /admin/dashboard');
+    header('Location: dashboard');
     exit;
 }
 
