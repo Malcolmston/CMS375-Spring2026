@@ -109,7 +109,7 @@ BEGIN
     DECLARE v_result JSON;
     SELECT JSON_ARRAYAGG(
                JSON_OBJECT(
-                   'prescription_id', prescription_id,
+                   'id', id,
                    'doctor_id',       doctor_id,
                    'issue_date',      issue_date,
                    'expire_date',     expire_date,
@@ -120,36 +120,9 @@ BEGIN
     FROM prescription
     WHERE patient_id = p_patient_id
       AND status = 'active';
-    RETURN COALESCE(v_result, JSON_ARRAY());
+    RETURN v_result;
 END;
--- ============================================================
--- Check prescription expired compares expire_date to today
--- and updates status to expired if it has passed
--- - p_prescription_id is the prescription's id
--- - Returns true if it was expired, false otherwise
--- ============================================================
-DROP FUNCTION IF EXISTS check_prescription_expired;
-CREATE FUNCTION check_prescription_expired(p_prescription_id INT)
-    RETURNS BOOLEAN
-    READS SQL DATA
-BEGIN
-    DECLARE v_expire_date DATE;
-    DECLARE v_status VARCHAR(20);
-    SELECT expire_date, status INTO v_expire_date, v_status
-    FROM prescription
-    WHERE prescription_id = p_prescription_id
-    LIMIT 1;
-    IF v_status != 'active' THEN
-        RETURN FALSE;
-    END IF;
-    IF v_expire_date IS NOT NULL AND v_expire_date < CURDATE() THEN
-        UPDATE prescription
-        SET status = 'expired'
-        WHERE prescription_id = p_prescription_id;
-        RETURN TRUE;
-    END IF;
-    RETURN FALSE;
-END;
+
 -- ============================================================
 -- Get items for prescription returns all medicine line items
 -- on a given prescription as JSON
@@ -163,7 +136,7 @@ BEGIN
     DECLARE v_result JSON;
     SELECT JSON_ARRAYAGG(
                JSON_OBJECT(
-                   'prescription_item_id', prescription_item_id,
+                   'id', id,
                    'medicine_id',          medicine_id,
                    'dosage',               dosage,
                    'frequency',            frequency,
@@ -191,7 +164,7 @@ BEGIN
     DECLARE v_result JSON;
     SELECT JSON_ARRAYAGG(
                JSON_OBJECT(
-                   'medicine_id',   medicine_id,
+                   'id',   id,
                    'generic_name',  generic_name,
                    'brand_name',    brand_name,
                    'stock_quantity', stock_quantity
@@ -214,7 +187,7 @@ BEGIN
     DECLARE v_result JSON;
     SELECT JSON_ARRAYAGG(
                JSON_OBJECT(
-                   'medicine_id',   medicine_id,
+                   'id',   id,
                    'generic_name',  generic_name,
                    'brand_name',    brand_name,
                    'form',          form,
@@ -241,16 +214,16 @@ BEGIN
     DECLARE v_low  INT DEFAULT LEAST(p_medicine_id_1, p_medicine_id_2);
     DECLARE v_high INT DEFAULT GREATEST(p_medicine_id_1, p_medicine_id_2);
     SELECT JSON_OBJECT(
-               'interaction_id',  interaction_id,
-               'medicine_id_1',   medicine_id_1,
-               'medicine_id_2',   medicine_id_2,
+               'id',  id,
+               'medicine1',   medicine_1,
+               'medicine2',   medicine_2,
                'severity',        severity,
                'description',     description,
                'recommendation',  recommendation
            ) INTO v_result
     FROM medicine_interaction
-    WHERE medicine_id_1 = v_low
-      AND medicine_id_2 = v_high
+    WHERE medicine_1 = v_low
+      AND medicine_2 = v_high
     LIMIT 1;
     RETURN COALESCE(v_result, JSON_OBJECT());
 END;
