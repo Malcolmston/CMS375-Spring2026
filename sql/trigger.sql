@@ -319,3 +319,31 @@ CREATE TRIGGER trg_log_diagnosis_soft_delete
                );
     END IF;
 END;
+
+DROP TRIGGER IF EXISTS trg_log_diagnosis_recover;
+
+CREATE TRIGGER trg_log_diagnosis_recover
+    AFTER UPDATE ON diagnosis
+    FOR EACH ROW BEGIN
+    IF OLD.deleted_at IS NOT NULL AND NEW.deleted_at IS NULL THEN
+        INSERT INTO logs (user_id, action, table_name, record_id, old_data, new_data)
+        VALUES (
+                   NEW.patient_id,
+                   'RECOVER',
+                   'diagnosis',
+                   NEW.id,
+                   JSON_OBJECT(
+                           'condition',  OLD.condition,
+                           'severity',   OLD.severity,
+                           'notes',      OLD.notes,
+                           'deleted_at', OLD.deleted_at
+                   ),
+                   JSON_OBJECT(
+                           'condition',  NEW.condition,
+                           'severity',   NEW.severity,
+                           'notes',      NEW.notes,
+                           'deleted_at', NEW.deleted_at
+                   )
+               );
+    END IF;
+END;
