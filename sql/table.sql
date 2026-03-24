@@ -267,7 +267,7 @@ CREATE TABLE IF NOT EXISTS medicine_interaction(
         CHECK (medicine_1 < medicine_2)
     );
     
-    CREATE TABLE IF NOT EXISTS institution (
+CREATE TABLE IF NOT EXISTS institution (
     id INTEGER PRIMARY KEY AUTO_INCREMENT,
     name VARCHAR(255) NOT NULL,
     institution_type ENUM(
