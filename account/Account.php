@@ -306,7 +306,7 @@ abstract class Account extends Connect
     protected function insert(): bool
     {
         $prefix   = $this->prefix->value;
-        $suffix   = $this->suffix->value;
+        $suffix   = isset($this->suffix) ? $this->suffix->value : null;
         $role     = $this->role->value;
         $blood    = $this->blood->value;
         $locX     = $this->location->x;
