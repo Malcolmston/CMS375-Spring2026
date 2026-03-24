@@ -2,22 +2,8 @@
 
 class Point
 {
-    public float $x {
-        get {
-            return $this->x;
-        }
-        set {
-            $this->x = $value;
-        }
-    }
-    public float $y {
-        get {
-            return $this->y;
-        }
-        set {
-            $this->y = $value;
-        }
-    }
+    public float $x;
+    public float $y;
 
     /**
      * Calculates the Euclidean distance between two points.
@@ -60,5 +46,4 @@ class Point
     public function distanceTo(self $other): float {
         return Point::distance($this, $other);
     }
-
 }
