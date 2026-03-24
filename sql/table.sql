@@ -94,12 +94,12 @@ CREATE TABLE IF NOT EXISTS logs (
     action ENUM(
         'CREATE','UPDATE','DELETE','LOGIN','LOGOUT',
         'ROLE_ASSIGNED','ROLE_REMOVED','PASSWORD_CHANGE',
-        'HARD_DELETE','FAILED'
+        'HARD_DELETE','FAILED','RECOVER'
         ) NOT NULL COMMENT 'action performed',
 
     severity INT AS (
         CASE
-            WHEN action IN ('CREATE','UPDATE','DELETE')    THEN 1
+            WHEN action IN ('CREATE','UPDATE','DELETE','RECOVER')    THEN 1
             WHEN action IN ('LOGIN','LOGOUT')              THEN 2
             WHEN action IN ('ROLE_ASSIGNED','ROLE_REMOVED') THEN 3
             WHEN action IN ('PASSWORD_CHANGE')             THEN 4
@@ -124,10 +124,10 @@ CREATE TABLE IF NOT EXISTS logs (
 CREATE TABLE IF NOT EXISTS backup_logs (
      id INTEGER NOT NULL,
      user_id INTEGER NOT NULL,
-     action ENUM(
+    action ENUM(
          'CREATE','UPDATE','DELETE','LOGIN','LOGOUT',
          'ROLE_ASSIGNED','ROLE_REMOVED','PASSWORD_CHANGE',
-         'HARD_DELETE','FAILED'
+         'HARD_DELETE','FAILED','RECOVER'
          ) NOT NULL,
      severity TINYINT NOT NULL,
      table_name VARCHAR(64) NOT NULL,
