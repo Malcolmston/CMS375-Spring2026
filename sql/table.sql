@@ -139,7 +139,7 @@ CREATE TABLE IF NOT EXISTS backup_logs (
 )  ENGINE=ARCHIVE;
 
 CREATE TABLE IF NOT EXISTS prescription(
-    prescription_id INTEGER PRIMARY KEY AUTO_INCREMENT,
+    id INTEGER PRIMARY KEY AUTO_INCREMENT,
     patient_id INTEGER NOT NULL,
     doctor_id INTEGER NOT NULL,
     issue_date DATE NOT NULL,
@@ -148,13 +148,55 @@ CREATE TABLE IF NOT EXISTS prescription(
     notes VARCHAR(500),
 
     CONSTRAINT fk_prescription_patient8
-        FOREIGN KEY (patient_id) REFERENCES user(user_id),
+        FOREIGN KEY (patient_id) REFERENCES users(id),
     CONSTRAINT fk_prescription_doctor
-        FOREIGN KEY (doctor_id) REFERENCES user(user_id)
+        FOREIGN KEY (doctor_id) REFERENCES users(id)
     );
 
+CREATE TABLE IF NOT EXISTS medicine(
+                                       id INTEGER PRIMARY KEY AUTO_INCREMENT,
+                                       generic_name VARCHAR(50),
+                                       brand_name VARCHAR(50),
+                                       drug_class VARCHAR(50),
+                                       form ENUM(
+                                           'tablet',
+                                           'capsule',
+                                           'liquid',
+                                           'injection',
+                                           'patch',
+                                           'inhaler',
+                                           'cream',
+                                           'ointment',
+                                           'drops',
+                                           'suppository'
+                                           ),
+                                       standard_dose VARCHAR(20),
+                                       controlled_substance BOOLEAN,
+                                       requires_prescription BOOLEAN,
+                                       stock_quantity INTEGER,
+                                       unit_of_measure ENUM(
+                                           'mg',
+                                           'mcg',
+                                           'g',
+                                           'ml',
+                                           'units',
+                                           'tablets',
+                                           'capsules',
+                                           'puffs'
+                                           ),
+                                       manufacturer VARCHAR(50),
+                                       storage_requirements ENUM(
+                                           'room temperature',
+                                           'refrigerate',
+                                           'freeze',
+                                           'keep away from light',
+                                           'keep dry',
+                                           'refrigerate, keep away from light'
+                                           )
+);
+
 CREATE TABLE IF NOT EXISTS prescription_item(
-    prescription_item_id INTEGER PRIMARY KEY AUTO_INCREMENT,
+    id INTEGER PRIMARY KEY AUTO_INCREMENT,
     prescription_id INTEGER NOT NULL,
     medicine_id INTEGER NOT NULL,
     dosage VARCHAR(50) NOT NULL,
@@ -190,9 +232,9 @@ CREATE TABLE IF NOT EXISTS prescription_item(
     filled_date DATE,
     
     CONSTRAINT fk_prescription_id
-        FOREIGN KEY (prescription_id) REFERENCES prescription(prescription_id),
+        FOREIGN KEY (prescription_id) REFERENCES prescription(id),
     CONSTRAINT fk_medicine_id
-        FOREIGN KEY (medicine_id) REFERENCES medicine(medicine_id)
+        FOREIGN KEY (medicine_id) REFERENCES medicine(id)
     );
 
 CREATE TABLE IF NOT EXISTS parent_relationship(
@@ -202,68 +244,26 @@ CREATE TABLE IF NOT EXISTS parent_relationship(
     relationship ENUM('Mother', 'Father', 'Legal Guardian') NOT NULL,
 
     CONSTRAINT fk_parent_id
-        FOREIGN KEY (parent_id) REFERENCES user(user_id),
+        FOREIGN KEY (parent_id) REFERENCES users(id),
     CONSTRAINT fk_patient_id
-        FOREIGN KEY (patient_id) REFERENCES user(user_id)
-    );
-
-CREATE TABLE IF NOT EXISTS medicine(
-    medicine_id INTEGER PRIMARY KEY AUTO_INCREMENT,
-    generic_name VARCHAR(50),
-    brand_name VARCHAR(50),
-    drug_class VARCHAR(50),
-    form ENUM(
-            'tablet',
-            'capsule',
-            'liquid',
-            'injection',
-            'patch',
-            'inhaler',
-            'cream',
-            'ointment',
-            'drops',
-            'suppository'
-        ),
-    standard_dose VARCHAR(20),
-    controlled_substance BOOLEAN,
-    requires_prescription BOOLEAN,
-    stock_quantity INTEGER,
-    unit_of_measure ENUM(
-                        'mg',
-                        'mcg',
-                        'g',
-                        'ml',
-                        'units',
-                        'tablets',
-                        'capsules',
-                        'puffs'
-                    ),
-    manufacturer VARCHAR(50),
-    storage_requirements ENUM(
-                             'room temperature',
-                             'refrigerate',
-                             'freeze',
-                             'keep away from light',
-                             'keep dry',
-                             'refrigerate, keep away from light'
-                           )
+        FOREIGN KEY (patient_id) REFERENCES users(id)
     );
 
 CREATE TABLE IF NOT EXISTS medicine_interaction(
-    interaction_id INTEGER PRIMARY KEY AUTO_INCREMENT,
-    medicine_id_1 INTEGER NOT NULL,
-    medicine_id_2 INTEGER NOT NULL,
+    id INTEGER PRIMARY KEY AUTO_INCREMENT,
+    medicine_1 INTEGER NOT NULL,
+    medicine_2 INTEGER NOT NULL,
     severity VARCHAR(50),
     description VARCHAR(500),
     recommendation VARCHAR(500),
 
     CONSTRAINT fk_medicine_id_1
-        FOREIGN KEY (medicine_id_1) REFERENCES medicine(medicine_id),
+        FOREIGN KEY (medicine_1) REFERENCES medicine(id),
     CONSTRAINT fk_medicine_id_2
-        FOREIGN KEY (medicine_id_2) REFERENCES medicine(medicine_id),
+        FOREIGN KEY (medicine_2) REFERENCES medicine(id),
     CONSTRAINT avoid_duplicate_interaction
-        UNIQUE (medicine_id_1, medicine_id_2),
+        UNIQUE (medicine_1, medicine_2),
     CONSTRAINT enforce_id_order
-        CHECK (medicine_id_1 < medicine_id_2)
+        CHECK (medicine_1 < medicine_2)
     );
 
