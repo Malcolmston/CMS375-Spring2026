@@ -326,3 +326,34 @@ BEGIN
 
     RETURN COALESCE(v_result, JSON_ARRAY());
 END;
+-- ============================================================
+-- Get visits for patient returns all non-deleted visits for a patient.
+-- ============================================================
+DROP FUNCTION IF EXISTS get_visits_for_patient;
+
+CREATE FUNCTION get_visits_for_patient(p_patient_id INT)
+    RETURNS JSON
+    READS SQL DATA
+BEGIN
+    DECLARE v_result JSON;
+
+    SELECT JSON_ARRAYAGG(
+               JSON_OBJECT(
+                   'visit_id', v.id,
+                   'institution_id', v.institution_id,
+                   'visit_type', v.visit_type,
+                   'scheduled_at', v.scheduled_at,
+                   'status', v.status,
+                   'reason', v.reason,
+                   'notes', v.notes,
+                   'created_at', v.created_at
+               )
+           ) INTO v_result
+    FROM visit v
+    WHERE v.patient_id = p_patient_id
+      AND v.deleted_at IS NULL
+    ORDER BY v.scheduled_at DESC;
+
+    RETURN COALESCE(v_result, JSON_ARRAY());
+END;
+
