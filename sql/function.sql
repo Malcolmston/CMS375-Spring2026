@@ -489,6 +489,46 @@ BEGIN
 
     RETURN v_name;
 END;
+
+-- ============================================================
+-- check_allergy_medication_conflict checks if a patient has an allergy
+-- to a medicine (by matching drug class or generic name)
+-- ============================================================
+DROP FUNCTION IF EXISTS check_allergy_medication_conflict;
+
+CREATE FUNCTION check_allergy_medication_conflict(p_patient_id INT, p_medicine_id INT)
+    RETURNS JSON
+    READS SQL DATA
+BEGIN
+    DECLARE v_conflict JSON DEFAULT JSON_OBJECT();
+
+    SELECT JSON_OBJECT(
+               'has_conflict', TRUE,
+               'allergy_id', ua.allergy_id,
+               'allergy_name', a.allergy_name,
+               'allergy_type', a.allergy_type,
+               'reaction', ua.reaction,
+               'severity', ua.severity,
+               'medicine_id', m.id,
+               'generic_name', m.generic_name,
+               'brand_name', m.brand_name,
+               'drug_class', m.drug_class
+           ) INTO v_conflict
+    FROM user_allergy ua
+    JOIN allergy a ON a.id = ua.allergy_id
+    JOIN medicine m ON m.id = p_medicine_id
+    WHERE ua.user_id = p_patient_id
+      AND a.deleted_at IS NULL
+      AND (m.drug_class = a.allergy_name OR m.generic_name = a.allergy_name)
+    LIMIT 1;
+
+    IF v_conflict IS NOT NULL AND JSON_KEYS(v_conflict) IS NOT NULL THEN
+        RETURN v_conflict;
+    END IF;
+
+    RETURN JSON_OBJECT('has_conflict', FALSE);
+END;
+
 -- ============================================================
 -- get_visits_for_patient returns all visits for a patient as JSON
 -- ============================================================
