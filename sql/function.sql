@@ -399,6 +399,27 @@ BEGIN
 END;
 
 -- ============================================================
+-- Count active visits returns the number of SCHEDULED visits.
+-- ============================================================
+DROP FUNCTION IF EXISTS count_active_visits;
+
+CREATE FUNCTION count_active_visits(p_patient_id INT)
+    RETURNS INT
+    READS SQL DATA
+BEGIN
+    DECLARE v_count INT DEFAULT 0;
+
+    SELECT COUNT(*) INTO v_count
+    FROM visit
+    WHERE patient_id = p_patient_id
+      AND deleted_at IS NULL
+      AND status = 'SCHEDULED'
+      AND scheduled_at >= NOW();
+
+    RETURN v_count;
+END;
+
+-- ============================================================
 -- Prescription is expired returns TRUE if prescription is expired.
 -- ============================================================
 DROP FUNCTION IF EXISTS prescription_is_expired;
