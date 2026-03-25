@@ -362,4 +362,123 @@ BEGIN
     VALUES (p_user_id, p_allergy_id, p_reaction, p_severity, p_notes);
 END $$
 
+-- ============================================================
+-- VACCINE Procedures (CRUD)
+-- ============================================================
+DROP PROCEDURE IF EXISTS create_vaccine $$
+CREATE PROCEDURE create_vaccine(
+    IN p_name VARCHAR(1024),
+    IN p_cvx_code VARCHAR(20),
+    IN p_status VARCHAR(50),
+    IN p_last_updated_date DATE,
+    IN p_manufacturer VARCHAR(255),
+    IN p_type VARCHAR(50),
+    IN p_development VARCHAR(50),
+    IN p_recommended_age VARCHAR(100),
+    IN p_dose_count INTEGER,
+    IN p_lethal_dose_mg_per_kg DECIMAL(10,2),
+    IN p_lethal_dose_route VARCHAR(50),
+    IN p_lethal_dose_source VARCHAR(50),
+    IN p_extra JSON
+)
+BEGIN
+    INSERT INTO vaccine (name, cvx_code, status, last_updated_date, manufacturer, type, development, recommended_age, dose_count, lethal_dose_mg_per_kg, lethal_dose_route, lethal_dose_source, extra)
+    VALUES (p_name, p_cvx_code, p_status, p_last_updated_date, p_manufacturer, p_type, p_development, p_recommended_age, p_dose_count, p_lethal_dose_mg_per_kg, p_lethal_dose_route, p_lethal_dose_source, p_extra);
+END $$
+
+DROP PROCEDURE IF EXISTS get_vaccine_by_id $$
+CREATE PROCEDURE get_vaccine_by_id(
+    IN p_vaccine_id INTEGER
+)
+BEGIN
+    SELECT * FROM vaccine v
+    WHERE v.id = p_vaccine_id
+      AND v.deleted_at IS NULL;
+END $$
+
+DROP PROCEDURE IF EXISTS update_vaccine $$
+CREATE PROCEDURE update_vaccine(
+    IN p_vaccine_id INTEGER,
+    IN p_name VARCHAR(1024),
+    IN p_cvx_code VARCHAR(20),
+    IN p_status VARCHAR(50),
+    IN p_last_updated_date DATE,
+    IN p_manufacturer VARCHAR(255),
+    IN p_type VARCHAR(50),
+    IN p_development VARCHAR(50),
+    IN p_recommended_age VARCHAR(100),
+    IN p_dose_count INTEGER
+)
+BEGIN
+    UPDATE vaccine v
+    SET v.name = p_name,
+        v.cvx_code = p_cvx_code,
+        v.status = p_status,
+        v.last_updated_date = p_last_updated_date,
+        v.manufacturer = p_manufacturer,
+        v.type = p_type,
+        v.development = p_development,
+        v.recommended_age = p_recommended_age,
+        v.dose_count = p_dose_count
+    WHERE v.id = p_vaccine_id;
+END $$
+
+DROP PROCEDURE IF EXISTS soft_delete_vaccine $$
+CREATE PROCEDURE soft_delete_vaccine(
+    IN p_vaccine_id INTEGER
+)
+BEGIN
+    UPDATE vaccine v
+    SET v.deleted_at = NOW()
+    WHERE v.id = p_vaccine_id;
+END $$
+
+DROP PROCEDURE IF EXISTS restore_vaccine $$
+CREATE PROCEDURE restore_vaccine(
+    IN p_vaccine_id INTEGER
+)
+BEGIN
+    UPDATE vaccine v
+    SET v.deleted_at = NULL
+    WHERE v.id = p_vaccine_id;
+END $$
+
+DROP PROCEDURE IF EXISTS hard_delete_vaccine $$
+CREATE PROCEDURE hard_delete_vaccine(
+    IN p_vaccine_id INTEGER
+)
+BEGIN
+    DELETE FROM vaccine v WHERE v.id = p_vaccine_id;
+END $$
+
+DROP PROCEDURE IF EXISTS list_vaccines $$
+CREATE PROCEDURE list_vaccines()
+BEGIN
+    SELECT * FROM vaccine v
+    WHERE v.deleted_at IS NULL
+    ORDER BY v.name;
+END $$
+
+DROP PROCEDURE IF EXISTS list_vaccines_by_type $$
+CREATE PROCEDURE list_vaccines_by_type(
+    IN p_type VARCHAR(50)
+)
+BEGIN
+    SELECT * FROM vaccine v
+    WHERE v.type = p_type
+      AND v.deleted_at IS NULL
+    ORDER BY v.name;
+END $$
+
+DROP PROCEDURE IF EXISTS list_vaccines_by_development $$
+CREATE PROCEDURE list_vaccines_by_development(
+    IN p_development VARCHAR(50)
+)
+BEGIN
+    SELECT * FROM vaccine v
+    WHERE v.development = p_development
+      AND v.deleted_at IS NULL
+    ORDER BY v.name;
+END $$
+
 DELIMITER ;
