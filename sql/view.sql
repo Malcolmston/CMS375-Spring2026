@@ -402,3 +402,79 @@ SELECT
 FROM prescription p
 WHERE p.expire_date < NOW()
    OR p.status = 'expired';
+
+-- View: view_active_vaccines - returns all active (non-deleted) vaccines
+CREATE OR REPLACE VIEW view_active_vaccines AS
+SELECT * FROM vaccine v
+WHERE v.deleted_at IS NULL;
+
+-- View: view_vaccine_details - returns vaccine details with status info
+CREATE OR REPLACE VIEW view_vaccine_details AS
+SELECT
+    v.id,
+    v.name,
+    v.cvx_code,
+    v.status,
+    v.last_updated_date,
+    v.manufacturer,
+    v.type,
+    v.development,
+    v.recommended_age,
+    v.dose_count,
+    v.lethal_dose_mg_per_kg,
+    v.lethal_dose_route,
+    v.lethal_dose_source,
+    v.extra,
+    v.created_at,
+    v.updated_at
+FROM view_active_vaccines v;
+
+-- View: view_vaccines_by_type - returns vaccines grouped by type
+CREATE OR REPLACE VIEW view_vaccines_by_type AS
+SELECT
+    v.type,
+    COUNT(*) AS vaccine_count,
+    JSON_ARRAYAGG(
+        JSON_OBJECT(
+            'id', v.id,
+            'name', v.name,
+            'cvx_code', v.cvx_code,
+            'status', v.status,
+            'development', v.development
+        )
+    ) AS vaccines
+FROM view_active_vaccines v
+GROUP BY v.type;
+
+-- View: view_vaccines_by_development - returns vaccines grouped by development status
+CREATE OR REPLACE VIEW view_vaccines_by_development AS
+SELECT
+    v.development,
+    COUNT(*) AS vaccine_count,
+    JSON_ARRAYAGG(
+        JSON_OBJECT(
+            'id', v.id,
+            'name', v.name,
+            'cvx_code', v.cvx_code,
+            'type', v.type
+        )
+    ) AS vaccines
+FROM view_active_vaccines v
+GROUP BY v.development;
+
+-- View: view_active_vaccines
+CREATE OR REPLACE VIEW view_active_vaccines AS
+SELECT * FROM vaccine
+WHERE deleted_at IS NULL;
+
+-- View: view_vaccine_by_type
+CREATE OR REPLACE VIEW view_vaccine_by_type AS
+SELECT id, name, cvx_code, status, type, development, manufacturer, recommended_age
+FROM vaccine
+WHERE deleted_at IS NULL;
+
+-- View: view_discontinued_vaccines
+CREATE OR REPLACE VIEW view_discontinued_vaccines AS
+SELECT id, name, cvx_code, status, type, development, manufacturer, last_updated_date
+FROM vaccine
+WHERE development = 'DISCONTINUED' AND deleted_at IS NULL;
