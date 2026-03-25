@@ -21,3 +21,14 @@ BEGIN
       AND status IN ('active', 'partially filled');
 END;
 
+DROP EVENT IF EXISTS cancel_no_show_visits;
+
+CREATE EVENT cancel_no_show_visits
+ON SCHEDULE EVERY 2 HOUR
+DO
+BEGIN
+    UPDATE visit
+    SET status = 'cancelled'
+    WHERE scheduled_at < DATE_SUB(NOW(), INTERVAL 30 MINUTE)
+      AND status IN ('SCHEDULED', 'NO_SHOW');
+END;
