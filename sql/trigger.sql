@@ -596,3 +596,28 @@ AFTER INSERT ON allergy
                )
            );
 END;
+DROP TRIGGER IF EXISTS trg_log_allergy_update;
+
+CREATE TRIGGER trg_log_allergy_update
+AFTER UPDATE ON allergy
+    FOR EACH ROW BEGIN
+    IF OLD.deleted_at IS NULL AND NEW.deleted_at IS NULL THEN
+        INSERT INTO logs (user_id, action, table_name, record_id, old_data, new_data)
+        VALUES (
+                   1,
+                   'UPDATE',
+                   'allergy',
+                   NEW.id,
+                   JSON_OBJECT(
+                           'allergy_name', OLD.allergy_name,
+                           'allergy_type', OLD.allergy_type,
+                           'description', OLD.description
+                   ),
+                   JSON_OBJECT(
+                           'allergy_name', NEW.allergy_name,
+                           'allergy_type', NEW.allergy_type,
+                           'description', NEW.description
+                   )
+               );
+    END IF;
+END;
