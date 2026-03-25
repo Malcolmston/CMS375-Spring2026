@@ -326,6 +326,47 @@ BEGIN
 
     RETURN COALESCE(v_result, JSON_ARRAY());
 END;
+
+-- ============================================================
+-- Check allergy-medication conflict checks if a prescribed medicine
+-- conflicts with any of the patient's recorded allergies.
+-- Returns JSON with conflict details or empty object if no conflict.
+-- ============================================================
+DROP FUNCTION IF EXISTS check_allergy_medication_conflict;
+
+CREATE FUNCTION check_allergy_medication_conflict(p_patient_id INT, p_medicine_id INT)
+    RETURNS JSON
+    READS SQL DATA
+BEGIN
+    DECLARE v_result JSON;
+
+    SELECT JSON_OBJECT(
+               'has_conflict', TRUE,
+               'medicine_id', m.id,
+               'generic_name', m.generic_name,
+               'brand_name', m.brand_name,
+               'drug_class', m.drug_class,
+               'conflict_with', JSON_ARRAYAGG(
+                   JSON_OBJECT(
+                       'allergy_id', a.id,
+                       'allergy_name', a.allergy_name,
+                       'allergy_type', a.allergy_type,
+                       'reaction', ua.reaction,
+                       'severity', ua.severity
+                   )
+               )
+           ) INTO v_result
+    FROM user_allergy ua
+    JOIN allergy a ON a.id = ua.allergy_id
+    JOIN medicine m ON m.id = p_medicine_id
+    WHERE ua.user_id = p_patient_id
+      AND a.deleted_at IS NULL
+      AND (m.drug_class IS NOT NULL AND a.allergy_name LIKE CONCAT('%', m.drug_class, '%'))
+    LIMIT 1;
+
+    RETURN COALESCE(v_result, JSON_OBJECT('has_conflict', FALSE));
+END;
+
 -- ============================================================
 -- Get visits for patient returns all non-deleted visits for a patient.
 -- ============================================================
