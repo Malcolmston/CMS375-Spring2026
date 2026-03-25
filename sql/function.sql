@@ -629,3 +629,291 @@ BEGIN
 
     RETURN v_name;
 END;
+
+-- ============================================================
+-- get_vaccine returns vaccine details by ID
+-- ============================================================
+DROP FUNCTION IF EXISTS get_vaccine;
+
+CREATE FUNCTION get_vaccine(p_vaccine_id INT)
+    RETURNS JSON
+    READS SQL DATA
+BEGIN
+    RETURN (
+        SELECT JSON_OBJECT(
+            'id', v.id,
+            'name', v.name,
+            'cvx_code', v.cvx_code,
+            'status', v.status,
+            'last_updated_date', v.last_updated_date,
+            'manufacturer', v.manufacturer,
+            'type', v.type,
+            'development', v.development,
+            'recommended_age', v.recommended_age,
+            'dose_count', v.dose_count
+        )
+        FROM vaccine v
+        WHERE v.id = p_vaccine_id
+          AND v.deleted_at IS NULL
+    );
+END;
+
+-- ============================================================
+-- get_vaccines_by_type returns all vaccines of a specific type
+-- ============================================================
+DROP FUNCTION IF EXISTS get_vaccines_by_type;
+
+CREATE FUNCTION get_vaccines_by_type(p_type VARCHAR(50))
+    RETURNS JSON
+    READS SQL DATA
+BEGIN
+    RETURN (
+        SELECT JSON_ARRAYAGG(
+            JSON_OBJECT(
+                'id', v.id,
+                'name', v.name,
+                'cvx_code', v.cvx_code,
+                'status', v.status,
+                'development', v.development,
+                'recommended_age', v.recommended_age
+            )
+        )
+        FROM vaccine v
+        WHERE v.type = p_type
+          AND v.deleted_at IS NULL
+    );
+END;
+
+-- ============================================================
+-- get_vaccines_by_development returns all vaccines with a specific development status
+-- ============================================================
+DROP FUNCTION IF EXISTS get_vaccines_by_development;
+
+CREATE FUNCTION get_vaccines_by_development(p_development VARCHAR(50))
+    RETURNS JSON
+    READS SQL DATA
+BEGIN
+    RETURN (
+        SELECT JSON_ARRAYAGG(
+            JSON_OBJECT(
+                'id', v.id,
+                'name', v.name,
+                'cvx_code', v.cvx_code,
+                'type', v.type,
+                'status', v.status
+            )
+        )
+        FROM vaccine v
+        WHERE v.development = p_development
+          AND v.deleted_at IS NULL
+    );
+END;
+
+-- ============================================================
+-- vaccine_exists checks if a vaccine exists by ID
+-- ============================================================
+DROP FUNCTION IF EXISTS vaccine_exists;
+
+CREATE FUNCTION vaccine_exists(p_vaccine_id INT)
+    RETURNS BOOLEAN
+    READS SQL DATA
+BEGIN
+    DECLARE v_exists BOOLEAN DEFAULT FALSE;
+
+    SELECT EXISTS(SELECT 1 FROM vaccine v WHERE v.id = p_vaccine_id AND v.deleted_at IS NULL) INTO v_exists;
+
+    RETURN v_exists;
+END;
+
+-- ============================================================
+-- count_vaccines_by_type returns count of vaccines by type
+-- ============================================================
+DROP FUNCTION IF EXISTS count_vaccines_by_type;
+
+CREATE FUNCTION count_vaccines_by_type(p_type VARCHAR(50))
+    RETURNS INT
+    READS SQL DATA
+BEGIN
+    DECLARE v_count INT DEFAULT 0;
+
+    SELECT COUNT(*) INTO v_count
+    FROM vaccine v
+    WHERE v.type = p_type
+      AND v.deleted_at IS NULL;
+
+    RETURN v_count;
+END;
+
+-- ============================================================
+-- get_vaccine returns vaccine details by ID
+-- ============================================================
+DROP FUNCTION IF EXISTS get_vaccine;
+
+CREATE FUNCTION get_vaccine(p_vaccine_id INT)
+    RETURNS JSON
+    READS SQL DATA
+BEGIN
+    DECLARE v_result JSON;
+
+    SELECT JSON_OBJECT(
+        'id', id,
+        'name', name,
+        'cvx_code', cvx_code,
+        'status', status,
+        'last_updated_date', last_updated_date,
+        'manufacturer', manufacturer,
+        'type', type,
+        'development', development,
+        'recommended_age', recommended_age,
+        'dose_count', dose_count,
+        'lethal_dose_mg_per_kg', lethal_dose_mg_per_kg,
+        'lethal_dose_route', lethal_dose_route,
+        'lethal_dose_source', lethal_dose_source
+    ) INTO v_result
+    FROM view_active_vaccines
+    WHERE id = p_vaccine_id;
+
+    RETURN v_result;
+END;
+
+-- ============================================================
+-- get_vaccines_by_type returns all vaccines of a specific type
+-- ============================================================
+DROP FUNCTION IF EXISTS get_vaccines_by_type;
+
+CREATE FUNCTION get_vaccines_by_type(p_type VARCHAR(50))
+    RETURNS JSON
+    READS SQL DATA
+BEGIN
+    DECLARE v_result JSON;
+
+    SELECT COALESCE(
+        JSON_ARRAYAGG(
+            JSON_OBJECT(
+                'id', id,
+                'name', name,
+                'cvx_code', cvx_code,
+                'status', status,
+                'development', development,
+                'recommended_age', recommended_age
+            )
+        ),
+        JSON_ARRAY()
+    ) INTO v_result
+    FROM view_active_vaccines
+    WHERE type = p_type;
+
+    RETURN v_result;
+END;
+
+-- ============================================================
+-- get_vaccines_by_development returns all vaccines with a specific development status
+-- ============================================================
+DROP FUNCTION IF EXISTS get_vaccines_by_development;
+
+CREATE FUNCTION get_vaccines_by_development(p_development VARCHAR(50))
+    RETURNS JSON
+    READS SQL DATA
+BEGIN
+    DECLARE v_result JSON;
+
+    SELECT COALESCE(
+        JSON_ARRAYAGG(
+            JSON_OBJECT(
+                'id', id,
+                'name', name,
+                'cvx_code', cvx_code,
+                'type', type,
+                'status', status,
+                'recommended_age', recommended_age
+            )
+        ),
+        JSON_ARRAY()
+    ) INTO v_result
+    FROM view_active_vaccines
+    WHERE development = p_development;
+
+    RETURN v_result;
+END;
+
+-- ============================================================
+-- get_vaccine_by_cvx returns vaccine details by CVX code
+-- ============================================================
+DROP FUNCTION IF EXISTS get_vaccine_by_cvx;
+
+CREATE FUNCTION get_vaccine_by_cvx(p_cvx_code VARCHAR(20))
+    RETURNS JSON
+    READS SQL DATA
+BEGIN
+    DECLARE v_result JSON;
+
+    SELECT JSON_OBJECT(
+        'id', id,
+        'name', name,
+        'cvx_code', cvx_code,
+        'status', status,
+        'manufacturer', manufacturer,
+        'type', type,
+        'development', development,
+        'recommended_age', recommended_age,
+        'dose_count', dose_count
+    ) INTO v_result
+    FROM view_active_vaccines
+    WHERE cvx_code = p_cvx_code;
+
+    RETURN v_result;
+END;
+
+-- ============================================================
+-- has_vaccine checks if a vaccine exists by ID
+-- ============================================================
+DROP FUNCTION IF EXISTS has_vaccine;
+
+CREATE FUNCTION has_vaccine(p_vaccine_id INT)
+    RETURNS INT
+    READS SQL DATA
+BEGIN
+    DECLARE v_exists INT;
+
+    SELECT COUNT(*) INTO v_exists
+    FROM view_active_vaccines
+    WHERE id = p_vaccine_id;
+
+    RETURN v_exists;
+END;
+
+-- ============================================================
+-- count_vaccines_by_type counts vaccines by type
+-- ============================================================
+DROP FUNCTION IF EXISTS count_vaccines_by_type;
+
+CREATE FUNCTION count_vaccines_by_type(p_type VARCHAR(50))
+    RETURNS INT
+    READS SQL DATA
+BEGIN
+    DECLARE v_count INT;
+
+    SELECT COUNT(*) INTO v_count
+    FROM view_active_vaccines
+    WHERE type = p_type;
+
+    RETURN v_count;
+END;
+
+-- ============================================================
+-- count_released_vaccines counts all released vaccines
+-- ============================================================
+DROP FUNCTION IF EXISTS count_released_vaccines;
+
+CREATE FUNCTION count_released_vaccines()
+    RETURNS INT
+    READS SQL DATA
+BEGIN
+    DECLARE v_count INT;
+
+    SELECT COUNT(*) INTO v_count
+    FROM view_active_vaccines
+    WHERE development = 'RELEASED';
+
+    RETURN v_count;
+END;
