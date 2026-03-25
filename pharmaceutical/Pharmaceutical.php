@@ -20,7 +20,7 @@ abstract class Pharmaceutical extends Connect
     /**
      * @throws \Exception
      */
-    public function __construct(string $manufacturer, string $name, string $manufacturing_date)
+    public function __construct(string $name, string $manufacturer)
     {
         parent::__construct();
         $this->manufacturer = $manufacturer;
