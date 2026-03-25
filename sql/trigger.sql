@@ -371,3 +371,32 @@ AFTER INSERT ON institution
                )
            );
 END;
+DROP TRIGGER IF EXISTS trg_log_institution_update;
+
+CREATE TRIGGER trg_log_institution_update
+AFTER UPDATE ON institution
+    FOR EACH ROW BEGIN
+    IF OLD.deleted_at IS NULL AND NEW.deleted_at IS NULL THEN
+        INSERT INTO logs (user_id, action, table_name, record_id, old_data, new_data)
+        VALUES (
+                   1,
+                   'UPDATE',
+                   'institution',
+                   NEW.id,
+                   JSON_OBJECT(
+                           'name', OLD.name,
+                           'institution_type', OLD.institution_type,
+                           'phone', OLD.phone,
+                           'email', OLD.email,
+                           'address', OLD.address
+                   ),
+                   JSON_OBJECT(
+                           'name', NEW.name,
+                           'institution_type', NEW.institution_type,
+                           'phone', NEW.phone,
+                           'email', NEW.email,
+                           'address', NEW.address
+                   )
+               );
+    END IF;
+END;
