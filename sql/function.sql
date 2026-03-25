@@ -271,3 +271,31 @@ BEGIN
     WHERE parent_id = p_parent_id;
     RETURN COALESCE(v_result, JSON_ARRAY());
 END;
+
+
+DROP FUNCTION IF EXISTS has_diagnosis;
+
+CREATE FUNCTION has_diagnosis(p_diagnosis_id INT)
+    RETURNS BOOLEAN
+    READS SQL DATA
+BEGIN
+    DECLARE v_result BOOLEAN DEFAULT NULL;
+
+    SELECT TRUE INTO v_result
+    FROM diagnosis
+    WHERE id = p_diagnosis_id
+      AND deleted_at IS NULL
+    LIMIT 1;
+
+    IF v_result IS NOT NULL THEN
+        RETURN TRUE;
+    END IF;
+
+    SELECT FALSE INTO v_result
+    FROM diagnosis
+    WHERE id = p_diagnosis_id
+      AND deleted_at IS NOT NULL
+    LIMIT 1;
+
+    RETURN v_result;
+END;
