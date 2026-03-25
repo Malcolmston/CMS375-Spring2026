@@ -371,6 +371,7 @@ AFTER INSERT ON institution
                )
            );
 END;
+
 DROP TRIGGER IF EXISTS trg_log_institution_update;
 
 CREATE TRIGGER trg_log_institution_update
@@ -400,6 +401,7 @@ AFTER UPDATE ON institution
                );
     END IF;
 END;
+
 DROP TRIGGER IF EXISTS trg_log_institution_soft_delete;
 
 CREATE TRIGGER trg_log_institution_soft_delete
@@ -425,6 +427,7 @@ AFTER UPDATE ON institution
                );
     END IF;
 END;
+
 DROP TRIGGER IF EXISTS trg_log_institution_recover;
 
 CREATE TRIGGER trg_log_institution_recover
@@ -450,6 +453,7 @@ AFTER UPDATE ON institution
                );
     END IF;
 END;
+
 DROP TRIGGER IF EXISTS institution_soft_delete;
 
 CREATE TRIGGER institution_soft_delete
@@ -460,6 +464,7 @@ BEFORE DELETE ON institution
         CALL throw('Use hard_delete_institution for permanent deletion');
     END IF;
 END;
+
 -- ============================================================
 -- VISIT Triggers
 -- ============================================================
@@ -484,6 +489,7 @@ AFTER INSERT ON visit
                )
            );
 END;
+
 DROP TRIGGER IF EXISTS trg_log_visit_update;
 
 CREATE TRIGGER trg_log_visit_update
@@ -511,6 +517,7 @@ AFTER UPDATE ON visit
                );
     END IF;
 END;
+
 DROP TRIGGER IF EXISTS trg_log_visit_soft_delete;
 
 CREATE TRIGGER trg_log_visit_soft_delete
@@ -538,6 +545,7 @@ AFTER UPDATE ON visit
                );
     END IF;
 END;
+
 DROP TRIGGER IF EXISTS trg_log_visit_recover;
 
 CREATE TRIGGER trg_log_visit_recover
@@ -565,6 +573,7 @@ AFTER UPDATE ON visit
                );
     END IF;
 END;
+
 DROP TRIGGER IF EXISTS visit_soft_delete;
 
 CREATE TRIGGER visit_soft_delete
@@ -575,6 +584,7 @@ BEFORE DELETE ON visit
         CALL throw('Use hard_delete_visit for permanent deletion');
     END IF;
 END;
+
 -- ============================================================
 -- ALLERGY Triggers
 -- ============================================================
@@ -596,6 +606,7 @@ AFTER INSERT ON allergy
                )
            );
 END;
+
 DROP TRIGGER IF EXISTS trg_log_allergy_update;
 
 CREATE TRIGGER trg_log_allergy_update
@@ -621,6 +632,7 @@ AFTER UPDATE ON allergy
                );
     END IF;
 END;
+
 DROP TRIGGER IF EXISTS trg_log_allergy_soft_delete;
 
 CREATE TRIGGER trg_log_allergy_soft_delete
@@ -646,6 +658,7 @@ AFTER UPDATE ON allergy
                );
     END IF;
 END;
+
 DROP TRIGGER IF EXISTS trg_log_allergy_recover;
 
 CREATE TRIGGER trg_log_allergy_recover
@@ -671,6 +684,7 @@ AFTER UPDATE ON allergy
                );
     END IF;
 END;
+
 DROP TRIGGER IF EXISTS allergy_soft_delete;
 
 CREATE TRIGGER allergy_soft_delete
