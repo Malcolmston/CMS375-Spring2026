@@ -398,3 +398,34 @@ BEGIN
 
     RETURN v_name;
 END;
+-- ============================================================
+-- get_visits_for_patient returns all visits for a patient as JSON
+-- ============================================================
+DROP FUNCTION IF EXISTS get_visits_for_patient;
+
+CREATE FUNCTION get_visits_for_patient(p_patient_id INT)
+    RETURNS JSON
+    READS SQL DATA
+BEGIN
+    DECLARE v_result JSON;
+
+    SELECT JSON_ARRAYAGG(
+               JSON_OBJECT(
+                   'id',            v.id,
+                   'institution_id', v.institution_id,
+                   'institution_name', i.name,
+                   'visit_type',    v.visit_type,
+                   'scheduled_at',  v.scheduled_at,
+                   'status',        v.status,
+                   'reason',        v.reason,
+                   'notes',         v.notes,
+                   'created_at',    v.created_at
+               )
+           ) INTO v_result
+    FROM visit v
+    JOIN institution i ON v.institution_id = i.id
+    WHERE v.patient_id = p_patient_id
+      AND v.deleted_at IS NULL;
+
+    RETURN COALESCE(v_result, JSON_ARRAY());
+END;
