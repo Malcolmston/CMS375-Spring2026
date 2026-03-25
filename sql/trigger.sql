@@ -575,3 +575,24 @@ BEFORE DELETE ON visit
         CALL throw('Use hard_delete_visit for permanent deletion');
     END IF;
 END;
+-- ============================================================
+-- ALLERGY Triggers
+-- ============================================================
+DROP TRIGGER IF EXISTS trg_log_allergy_insert;
+
+CREATE TRIGGER trg_log_allergy_insert
+AFTER INSERT ON allergy
+    FOR EACH ROW BEGIN
+    INSERT INTO logs (user_id, action, table_name, record_id, new_data)
+    VALUES (
+               1,
+               'CREATE',
+               'allergy',
+               NEW.id,
+               JSON_OBJECT(
+                       'allergy_name', NEW.allergy_name,
+                       'allergy_type', NEW.allergy_type,
+                       'description', NEW.description
+               )
+           );
+END;
