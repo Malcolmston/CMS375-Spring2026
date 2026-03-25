@@ -460,3 +460,27 @@ BEFORE DELETE ON institution
         CALL throw('Use hard_delete_institution for permanent deletion');
     END IF;
 END;
+-- ============================================================
+-- VISIT Triggers
+-- ============================================================
+DROP TRIGGER IF EXISTS trg_log_visit_insert;
+
+CREATE TRIGGER trg_log_visit_insert
+AFTER INSERT ON visit
+    FOR EACH ROW BEGIN
+    INSERT INTO logs (user_id, action, table_name, record_id, new_data)
+    VALUES (
+               NEW.patient_id,
+               'CREATE',
+               'visit',
+               NEW.id,
+               JSON_OBJECT(
+                       'patient_id', NEW.patient_id,
+                       'institution_id', NEW.institution_id,
+                       'visit_type', NEW.visit_type,
+                       'scheduled_at', NEW.scheduled_at,
+                       'status', NEW.status,
+                       'reason', NEW.reason
+               )
+           );
+END;
