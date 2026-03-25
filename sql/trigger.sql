@@ -1233,3 +1233,91 @@ AFTER DELETE ON parent_relationship
     INSERT INTO logs (user_id, action, table_name, record_id, old_data)
     VALUES (OLD.parent_id, 'DELETE', 'parent_relationship', OLD.parent_relationship_id, JSON_OBJECT('parent_id', OLD.parent_id, 'patient_id', OLD.patient_id));
 END;
+
+-- ============================================================
+-- VACCINE Triggers (INSERT, UPDATE, DELETE, RECOVER)
+-- ============================================================
+DROP TRIGGER IF EXISTS trg_log_vaccine_insert;
+
+CREATE TRIGGER trg_log_vaccine_insert
+AFTER INSERT ON vaccine
+    FOR EACH ROW BEGIN
+    INSERT INTO logs (user_id, action, table_name, record_id, new_data)
+    VALUES (NEW.id, 'CREATE', 'vaccine', NEW.id, JSON_OBJECT('name', NEW.name, 'cvx_code', NEW.cvx_code, 'type', NEW.type, 'development', NEW.development));
+END;
+
+DROP TRIGGER IF EXISTS trg_log_vaccine_update;
+
+CREATE TRIGGER trg_log_vaccine_update
+AFTER UPDATE ON vaccine
+    FOR EACH ROW BEGIN
+    IF OLD.deleted_at IS NULL AND NEW.deleted_at IS NULL THEN
+        INSERT INTO logs (user_id, action, table_name, record_id, old_data, new_data)
+        VALUES (NEW.id, 'UPDATE', 'vaccine', NEW.id, JSON_OBJECT('name', OLD.name, 'cvx_code', OLD.cvx_code), JSON_OBJECT('name', NEW.name, 'cvx_code', NEW.cvx_code));
+    END IF;
+END;
+
+DROP TRIGGER IF EXISTS trg_log_vaccine_delete;
+
+CREATE TRIGGER trg_log_vaccine_delete
+AFTER DELETE ON vaccine
+    FOR EACH ROW BEGIN
+    INSERT INTO logs (user_id, action, table_name, record_id, old_data)
+    VALUES (OLD.id, 'HARD_DELETE', 'vaccine', OLD.id, JSON_OBJECT('name', OLD.name, 'cvx_code', OLD.cvx_code));
+END;
+
+-- ============================================================
+-- VACCINE Triggers (INSERT, UPDATE, DELETE, SOFT_DELETE, RECOVER)
+-- ============================================================
+DROP TRIGGER IF EXISTS trg_log_vaccine_insert;
+
+CREATE TRIGGER trg_log_vaccine_insert
+AFTER INSERT ON vaccine
+    FOR EACH ROW BEGIN
+    INSERT INTO logs (user_id, action, table_name, record_id, new_data)
+    VALUES (NEW.id, 'CREATE', 'vaccine', NEW.id, JSON_OBJECT('name', NEW.name, 'cvx_code', NEW.cvx_code, 'type', NEW.type));
+END;
+
+DROP TRIGGER IF EXISTS trg_log_vaccine_update;
+
+CREATE TRIGGER trg_log_vaccine_update
+AFTER UPDATE ON vaccine
+    FOR EACH ROW BEGIN
+    IF OLD.deleted_at IS NULL AND NEW.deleted_at IS NULL THEN
+        INSERT INTO logs (user_id, action, table_name, record_id, old_data, new_data)
+        VALUES (NEW.id, 'UPDATE', 'vaccine', NEW.id,
+            JSON_OBJECT('name', OLD.name, 'cvx_code', OLD.cvx_code, 'type', OLD.type, 'status', OLD.status),
+            JSON_OBJECT('name', NEW.name, 'cvx_code', NEW.cvx_code, 'type', NEW.type, 'status', NEW.status));
+    END IF;
+END;
+
+DROP TRIGGER IF EXISTS trg_log_vaccine_delete;
+
+CREATE TRIGGER trg_log_vaccine_delete
+AFTER DELETE ON vaccine
+    FOR EACH ROW BEGIN
+    INSERT INTO logs (user_id, action, table_name, record_id, old_data)
+    VALUES (OLD.id, 'HARD_DELETE', 'vaccine', OLD.id, JSON_OBJECT('name', OLD.name, 'cvx_code', OLD.cvx_code));
+END;
+
+DROP TRIGGER IF EXISTS trg_log_vaccine_soft_delete;
+
+CREATE TRIGGER trg_log_vaccine_soft_delete
+AFTER UPDATE ON vaccine
+    FOR EACH ROW BEGIN
+    IF OLD.deleted_at IS NULL AND NEW.deleted_at IS NOT NULL THEN
+        INSERT INTO logs (user_id, action, table_name, record_id, old_data)
+        VALUES (NEW.id, 'DELETE', 'vaccine', NEW.id, JSON_OBJECT('name', OLD.name, 'cvx_code', OLD.cvx_code));
+    END IF;
+END;
+
+DROP TRIGGER IF EXISTS trg_log_vaccine_recover;
+
+CREATE TRIGGER trg_log_vaccine_recover
+AFTER UPDATE ON vaccine
+    FOR EACH ROW BEGIN
+    IF OLD.deleted_at IS NOT NULL AND NEW.deleted_at IS NULL THEN
+        INSERT INTO logs (user_id, action, table_name, record_id, new_data)
+        VALUES (NEW.id, 'RECOVER', 'vaccine', NEW.id, JSON_OBJECT('name', NEW.name, 'cvx_code', NEW.cvx_code));
+    END IF;
+END;
