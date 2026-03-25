@@ -1,6 +1,6 @@
 <?php
 
-require_once __DIR__ . '/../../account/role.php';
+require_once __DIR__ . '/../account/role.php';
 
 use account\role;
 
@@ -108,7 +108,7 @@ if (!Role::isValid($role)) {
         <div class="bg-white/95 backdrop-blur-md border border-slate-200/60 rounded-2xl shadow-lg">
             <div class="px-5 py-3 flex items-center justify-between">
                 <!-- Logo -->
-                <?php include __DIR__ . '/../home/logo.html'; ?>
+                <?php include __DIR__ . '/home/logo.html'; ?>
 
                 <!-- Nav Items -->
                 <div class="flex items-center gap-1">
@@ -116,7 +116,7 @@ if (!Role::isValid($role)) {
                     <div class="nav-item relative px-4 py-2 text-slate-700 font-medium text-sm cursor-pointer hover:text-slate-900 rounded-lg transition-all duration-200">Dashboard</div>
 
                     <!-- Logout -->
-                    <a href="logout.php" class="nav-item relative px-4 py-2 text-slate-700 font-medium text-sm cursor-pointer hover:text-slate-900 rounded-lg transition-all duration-200 hover:bg-red-50 hover:text-red-600">Logout</a>
+                    <a href="/logout" class="nav-item relative px-4 py-2 text-slate-700 font-medium text-sm cursor-pointer hover:text-slate-900 rounded-lg transition-all duration-200 hover:bg-red-50 hover:text-red-600">Logout</a>
                 </div>
             </div>
         </div>
