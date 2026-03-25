@@ -442,6 +442,35 @@ BEGIN
 
     RETURN v_status = 'expired' OR v_expire_date < CURDATE();
 END;
+
+-- ============================================================
+-- Get institution returns institution details as JSON.
+-- ============================================================
+DROP FUNCTION IF EXISTS get_institution;
+
+CREATE FUNCTION get_institution(p_institution_id INT)
+    RETURNS JSON
+    READS SQL DATA
+BEGIN
+    DECLARE v_result JSON;
+
+    SELECT JSON_OBJECT(
+               'id', id,
+               'name', name,
+               'institution_type', institution_type,
+               'phone', phone,
+               'email', email,
+               'address', address,
+               'created_at', created_at,
+               'updated_at', updated_at,
+               'deleted_at', deleted_at
+           ) INTO v_result
+    FROM institution
+    WHERE id = p_institution_id;
+
+    RETURN v_result;
+END;
+
 -- ============================================================
 -- Full name returns a user's full name (firstname + lastname).
 -- ============================================================
