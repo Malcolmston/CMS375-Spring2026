@@ -337,3 +337,8 @@ CREATE OR REPLACE VIEW view_full_visit AS
     SELECT * FROM view_visits v
     LEFT JOIN view_doctor_visits dv
         ON v.id = dv.visit_id;
+
+CREATE OR REPLACE VIEW view_active_allergies AS
+    SELECT * FROM user_allergy ua
+    JOIN allergy a ON ua.allergy_id = a.id
+    WHERE a.deleted_at IS NULL;
