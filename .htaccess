@@ -14,6 +14,12 @@ RewriteRule ^dashboard$ components/dashboard.php [L]
 
 RewriteRule ^logout$ logout.php [L,PT]
 
+# Block access to the account folder
+RewriteRule ^account/.*$ - [F,L]
+
+# Block access to the sql folder
+RewriteRule ^sql/.*$ - [F,L]
+
 # Error Pages
 ErrorDocument 400 /error/400.html
 ErrorDocument 401 /error/401.html
