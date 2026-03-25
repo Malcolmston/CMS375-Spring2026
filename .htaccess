@@ -26,6 +26,9 @@ RewriteRule ^account/.*$ - [F,L]
 # Block access to the sql folder
 RewriteRule ^sql/.*$ - [F,L]
 
+# Block sensitive project files
+RewriteRule ^(Dockerfile|compose\.yml|README\.md|cms\ 350\ db\.pdf|docs/.*)$ - [F,L]
+
 # Error Pages
 ErrorDocument 400 /error/400.html
 ErrorDocument 401 /error/401.html
