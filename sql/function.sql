@@ -299,3 +299,30 @@ BEGIN
 
     RETURN v_result;
 END;
+
+DROP FUNCTION IF EXISTS get_patient_allergies;
+
+CREATE FUNCTION get_patient_allergies(p_patient_id INT)
+    RETURNS JSON
+    READS SQL DATA
+BEGIN
+    DECLARE v_result JSON;
+
+    SELECT JSON_ARRAYAGG(
+               JSON_OBJECT(
+                   'allergy_id',   ua.allergy_id,
+                   'allergy_name', a.allergy_name,
+                   'allergy_type', a.allergy_type,
+                   'reaction',     ua.reaction,
+                   'severity',     ua.severity,
+                   'notes',        ua.notes,
+                   'recorded_at',  ua.recorded_at
+               )
+           ) INTO v_result
+    FROM user_allergy ua
+    JOIN allergy a ON a.id = ua.allergy_id
+    WHERE ua.user_id = p_patient_id
+      AND a.deleted_at IS NULL;
+
+    RETURN COALESCE(v_result, JSON_ARRAY());
+END;
