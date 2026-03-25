@@ -366,3 +366,21 @@ SELECT
 FROM parent_relationship pr
 JOIN users parent ON pr.parent_id = parent.id
 JOIN users patient ON pr.patient_id = patient.id;
+
+CREATE OR REPLACE VIEW view_expired_prescriptions AS
+SELECT
+    p.id,
+    p.patient_id,
+    CONCAT(patient.firstname, ' ', patient.lastname) AS patient_name,
+    p.doctor_id,
+    CONCAT(doctor.firstname, ' ', doctor.lastname) AS doctor_name,
+    p.issue_date,
+    p.expire_date,
+    p.status,
+    p.notes,
+    DATEDIFF(NOW(), p.expire_date) AS days_since_expired
+FROM prescription p
+JOIN users patient ON p.patient_id = patient.id
+JOIN users doctor ON p.doctor_id = doctor.id
+WHERE p.expire_date < NOW()
+   OR p.status = 'expired';
