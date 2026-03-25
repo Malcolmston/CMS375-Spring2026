@@ -671,3 +671,13 @@ AFTER UPDATE ON allergy
                );
     END IF;
 END;
+DROP TRIGGER IF EXISTS allergy_soft_delete;
+
+CREATE TRIGGER allergy_soft_delete
+BEFORE DELETE ON allergy
+    FOR EACH ROW BEGIN
+    IF @hard_delete_allergy IS NOT TRUE THEN
+        UPDATE allergy SET deleted_at = NOW() WHERE id = OLD.id AND deleted_at IS NULL;
+        CALL throw('Use hard_delete_allergy for permanent deletion');
+    END IF;
+END;
