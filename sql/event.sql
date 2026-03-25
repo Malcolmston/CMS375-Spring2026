@@ -32,3 +32,42 @@ BEGIN
     WHERE scheduled_at < DATE_SUB(NOW(), INTERVAL 30 MINUTE)
       AND status IN ('SCHEDULED', 'NO_SHOW');
 END;
+
+DROP EVENT IF EXISTS alert_low_stock;
+
+CREATE EVENT alert_low_stock
+ON SCHEDULE EVERY 1 DAY
+DO
+BEGIN
+    INSERT INTO logs (user_id, action, table_name, record_id, new_data)
+    SELECT
+        1,
+        'FAILED',
+        'medicine',
+        id,
+        JSON_OBJECT(
+            'generic_name', generic_name,
+            'brand_name', brand_name,
+            'stock_quantity', stock_quantity,
+            'alert', 'Low stock warning'
+        )
+    FROM medicine
+    WHERE stock_quantity <= 10
+      AND controlled_substance = FALSE;
+
+    INSERT INTO logs (user_id, action, table_name, record_id, new_data)
+    SELECT
+        1,
+        'FAILED',
+        'medicine',
+        id,
+        JSON_OBJECT(
+            'generic_name', generic_name,
+            'brand_name', brand_name,
+            'stock_quantity', stock_quantity,
+            'alert', 'Low stock warning - controlled substance'
+        )
+    FROM medicine
+    WHERE stock_quantity <= 20
+      AND controlled_substance = TRUE;
+END;
