@@ -339,6 +339,18 @@ CREATE OR REPLACE VIEW view_full_visit AS
         ON v.id = dv.visit_id;
 
 CREATE OR REPLACE VIEW view_active_allergies AS
-    SELECT * FROM user_allergy ua
-    JOIN allergy a ON ua.allergy_id = a.id
-    WHERE a.deleted_at IS NULL;
+SELECT
+    ua.id,
+    ua.user_id,
+    CONCAT(u.firstname, ' ', u.lastname) AS user_name,
+    ua.allergy_id,
+    a.allergy_name,
+    a.allergy_type,
+    ua.reaction,
+    ua.severity,
+    ua.notes,
+    ua.recorded_at
+FROM user_allergy ua
+JOIN users u ON ua.user_id = u.id
+JOIN allergy a ON ua.allergy_id = a.id
+WHERE a.deleted_at IS NULL;
