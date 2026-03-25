@@ -4,6 +4,12 @@ RewriteEngine On
 RewriteCond %{HTTPS} off
 RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
+# Cookie Management - Defense-in-Depth
+# Ensures all cookies (including non-PHP) are secure, even if PHP misses them
+<IfModule mod_headers.c>
+    Header edit Set-Cookie ^(.*)$ "$1; HttpOnly; Secure; SameSite=Strict"
+</IfModule>
+
 # Block directory traversal and dotfile access
 RewriteCond %{REQUEST_URI} \.\. [OR]
 RewriteCond %{REQUEST_URI} ^.*/\..*$
