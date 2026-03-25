@@ -484,3 +484,30 @@ AFTER INSERT ON visit
                )
            );
 END;
+DROP TRIGGER IF EXISTS trg_log_visit_update;
+
+CREATE TRIGGER trg_log_visit_update
+AFTER UPDATE ON visit
+    FOR EACH ROW BEGIN
+    IF OLD.deleted_at IS NULL AND NEW.deleted_at IS NULL THEN
+        INSERT INTO logs (user_id, action, table_name, record_id, old_data, new_data)
+        VALUES (
+                   NEW.patient_id,
+                   'UPDATE',
+                   'visit',
+                   NEW.id,
+                   JSON_OBJECT(
+                           'visit_type', OLD.visit_type,
+                           'scheduled_at', OLD.scheduled_at,
+                           'status', OLD.status,
+                           'reason', OLD.reason
+                   ),
+                   JSON_OBJECT(
+                           'visit_type', NEW.visit_type,
+                           'scheduled_at', NEW.scheduled_at,
+                           'status', NEW.status,
+                           'reason', NEW.reason
+                   )
+               );
+    END IF;
+END;
