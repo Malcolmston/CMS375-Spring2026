@@ -271,3 +271,380 @@ BEGIN
     WHERE parent_id = p_parent_id;
     RETURN COALESCE(v_result, JSON_ARRAY());
 END;
+
+
+DROP FUNCTION IF EXISTS has_diagnosis;
+
+CREATE FUNCTION has_diagnosis(p_diagnosis_id INT)
+    RETURNS BOOLEAN
+    READS SQL DATA
+BEGIN
+    DECLARE v_result BOOLEAN DEFAULT NULL;
+
+    SELECT TRUE INTO v_result
+    FROM diagnosis
+    WHERE id = p_diagnosis_id
+      AND deleted_at IS NULL
+    LIMIT 1;
+
+    IF v_result IS NOT NULL THEN
+        RETURN TRUE;
+    END IF;
+
+    SELECT FALSE INTO v_result
+    FROM diagnosis
+    WHERE id = p_diagnosis_id
+      AND deleted_at IS NOT NULL
+    LIMIT 1;
+
+    RETURN v_result;
+END;
+
+DROP FUNCTION IF EXISTS get_patient_allergies;
+
+CREATE FUNCTION get_patient_allergies(p_patient_id INT)
+    RETURNS JSON
+    READS SQL DATA
+BEGIN
+    DECLARE v_result JSON;
+
+    SELECT JSON_ARRAYAGG(
+               JSON_OBJECT(
+                   'allergy_id',   ua.allergy_id,
+                   'allergy_name', a.allergy_name,
+                   'allergy_type', a.allergy_type,
+                   'reaction',     ua.reaction,
+                   'severity',     ua.severity,
+                   'notes',        ua.notes,
+                   'recorded_at',  ua.recorded_at
+               )
+           ) INTO v_result
+    FROM user_allergy ua
+    JOIN allergy a ON a.id = ua.allergy_id
+    WHERE ua.user_id = p_patient_id
+      AND a.deleted_at IS NULL;
+
+    RETURN COALESCE(v_result, JSON_ARRAY());
+END;
+
+-- ============================================================
+-- Check allergy-medication conflict checks if a prescribed medicine
+-- conflicts with any of the patient's recorded allergies.
+-- Returns JSON with conflict details or empty object if no conflict.
+-- ============================================================
+DROP FUNCTION IF EXISTS check_allergy_medication_conflict;
+
+CREATE FUNCTION check_allergy_medication_conflict(p_patient_id INT, p_medicine_id INT)
+    RETURNS JSON
+    READS SQL DATA
+BEGIN
+    DECLARE v_result JSON;
+
+    SELECT JSON_OBJECT(
+               'has_conflict', TRUE,
+               'medicine_id', m.id,
+               'generic_name', m.generic_name,
+               'brand_name', m.brand_name,
+               'drug_class', m.drug_class,
+               'conflict_with', JSON_ARRAYAGG(
+                   JSON_OBJECT(
+                       'allergy_id', a.id,
+                       'allergy_name', a.allergy_name,
+                       'allergy_type', a.allergy_type,
+                       'reaction', ua.reaction,
+                       'severity', ua.severity
+                   )
+               )
+           ) INTO v_result
+    FROM user_allergy ua
+    JOIN allergy a ON a.id = ua.allergy_id
+    JOIN medicine m ON m.id = p_medicine_id
+    WHERE ua.user_id = p_patient_id
+      AND a.deleted_at IS NULL
+      AND (m.drug_class IS NOT NULL AND a.allergy_name LIKE CONCAT('%', m.drug_class, '%'))
+    LIMIT 1;
+
+    RETURN COALESCE(v_result, JSON_OBJECT('has_conflict', FALSE));
+END;
+
+-- ============================================================
+-- Get visits for patient returns all non-deleted visits for a patient.
+-- ============================================================
+DROP FUNCTION IF EXISTS get_visits_for_patient;
+
+CREATE FUNCTION get_visits_for_patient(p_patient_id INT)
+    RETURNS JSON
+    READS SQL DATA
+BEGIN
+    DECLARE v_result JSON;
+
+    SELECT JSON_ARRAYAGG(
+               JSON_OBJECT(
+                   'visit_id', v.id,
+                   'institution_id', v.institution_id,
+                   'visit_type', v.visit_type,
+                   'scheduled_at', v.scheduled_at,
+                   'status', v.status,
+                   'reason', v.reason,
+                   'notes', v.notes,
+                   'created_at', v.created_at
+               )
+           ) INTO v_result
+    FROM visit v
+    WHERE v.patient_id = p_patient_id
+      AND v.deleted_at IS NULL
+    ORDER BY v.scheduled_at DESC;
+
+    RETURN COALESCE(v_result, JSON_ARRAY());
+END;
+
+-- ============================================================
+-- Count active visits returns the number of SCHEDULED visits.
+-- ============================================================
+DROP FUNCTION IF EXISTS count_active_visits;
+
+CREATE FUNCTION count_active_visits(p_patient_id INT)
+    RETURNS INT
+    READS SQL DATA
+BEGIN
+    DECLARE v_count INT DEFAULT 0;
+
+    SELECT COUNT(*) INTO v_count
+    FROM visit
+    WHERE patient_id = p_patient_id
+      AND deleted_at IS NULL
+      AND status = 'SCHEDULED'
+      AND scheduled_at >= NOW();
+
+    RETURN v_count;
+END;
+
+-- ============================================================
+-- Prescription is expired returns TRUE if prescription is expired.
+-- ============================================================
+DROP FUNCTION IF EXISTS prescription_is_expired;
+
+CREATE FUNCTION prescription_is_expired(p_prescription_id INT)
+    RETURNS BOOLEAN
+    READS SQL DATA
+BEGIN
+    DECLARE v_status VARCHAR(20);
+    DECLARE v_expire_date DATE;
+
+    SELECT status, expire_date INTO v_status, v_expire_date
+    FROM prescription
+    WHERE id = p_prescription_id
+    LIMIT 1;
+
+    IF v_status IS NULL THEN
+        RETURN NULL;
+    END IF;
+
+    RETURN v_status = 'expired' OR v_expire_date < CURDATE();
+END;
+
+-- ============================================================
+-- Get institution returns institution details as JSON.
+-- ============================================================
+DROP FUNCTION IF EXISTS get_institution;
+
+CREATE FUNCTION get_institution(p_institution_id INT)
+    RETURNS JSON
+    READS SQL DATA
+BEGIN
+    DECLARE v_result JSON;
+
+    SELECT JSON_OBJECT(
+               'id', id,
+               'name', name,
+               'institution_type', institution_type,
+               'phone', phone,
+               'email', email,
+               'address', address,
+               'created_at', created_at,
+               'updated_at', updated_at,
+               'deleted_at', deleted_at
+           ) INTO v_result
+    FROM institution
+    WHERE id = p_institution_id;
+
+    RETURN v_result;
+END;
+
+-- ============================================================
+-- Full name returns a user's full name (firstname + lastname).
+-- ============================================================
+DROP FUNCTION IF EXISTS full_name;
+
+CREATE FUNCTION full_name(p_user_id INT)
+    RETURNS VARCHAR(511)
+    READS SQL DATA
+BEGIN
+    DECLARE v_name VARCHAR(511);
+
+    SELECT CONCAT(firstname, ' ', lastname) INTO v_name
+    FROM users
+    WHERE id = p_user_id
+    LIMIT 1;
+
+    RETURN v_name;
+END;
+
+-- ============================================================
+-- check_allergy_medication_conflict checks if a patient has an allergy
+-- to a medicine (by matching drug class or generic name)
+-- ============================================================
+DROP FUNCTION IF EXISTS check_allergy_medication_conflict;
+
+CREATE FUNCTION check_allergy_medication_conflict(p_patient_id INT, p_medicine_id INT)
+    RETURNS JSON
+    READS SQL DATA
+BEGIN
+    DECLARE v_conflict JSON DEFAULT JSON_OBJECT();
+
+    SELECT JSON_OBJECT(
+               'has_conflict', TRUE,
+               'allergy_id', ua.allergy_id,
+               'allergy_name', a.allergy_name,
+               'allergy_type', a.allergy_type,
+               'reaction', ua.reaction,
+               'severity', ua.severity,
+               'medicine_id', m.id,
+               'generic_name', m.generic_name,
+               'brand_name', m.brand_name,
+               'drug_class', m.drug_class
+           ) INTO v_conflict
+    FROM user_allergy ua
+    JOIN allergy a ON a.id = ua.allergy_id
+    JOIN medicine m ON m.id = p_medicine_id
+    WHERE ua.user_id = p_patient_id
+      AND a.deleted_at IS NULL
+      AND (m.drug_class = a.allergy_name OR m.generic_name = a.allergy_name)
+    LIMIT 1;
+
+    IF v_conflict IS NOT NULL AND JSON_KEYS(v_conflict) IS NOT NULL THEN
+        RETURN v_conflict;
+    END IF;
+
+    RETURN JSON_OBJECT('has_conflict', FALSE);
+END;
+
+-- ============================================================
+-- get_visits_for_patient returns all visits for a patient as JSON
+-- ============================================================
+DROP FUNCTION IF EXISTS get_visits_for_patient;
+
+CREATE FUNCTION get_visits_for_patient(p_patient_id INT)
+    RETURNS JSON
+    READS SQL DATA
+BEGIN
+    DECLARE v_result JSON;
+
+    SELECT JSON_ARRAYAGG(
+               JSON_OBJECT(
+                   'id',            v.id,
+                   'institution_id', v.institution_id,
+                   'institution_name', i.name,
+                   'visit_type',    v.visit_type,
+                   'scheduled_at',  v.scheduled_at,
+                   'status',        v.status,
+                   'reason',        v.reason,
+                   'notes',         v.notes,
+                   'created_at',    v.created_at
+               )
+           ) INTO v_result
+    FROM visit v
+    JOIN institution i ON v.institution_id = i.id
+    WHERE v.patient_id = p_patient_id
+      AND v.deleted_at IS NULL;
+
+    RETURN COALESCE(v_result, JSON_ARRAY());
+END;
+
+-- ============================================================
+-- count_active_visits returns the number of scheduled visits for a patient
+-- ============================================================
+DROP FUNCTION IF EXISTS count_active_visits;
+
+CREATE FUNCTION count_active_visits(p_patient_id INT)
+    RETURNS INT
+    READS SQL DATA
+BEGIN
+    DECLARE v_count INT DEFAULT 0;
+
+    SELECT COUNT(*) INTO v_count
+    FROM visit
+    WHERE patient_id = p_patient_id
+      AND deleted_at IS NULL
+      AND status = 'SCHEDULED'
+      AND scheduled_at >= NOW();
+
+    RETURN v_count;
+END;
+
+-- ============================================================
+-- prescription_is_expired returns TRUE if prescription is expired
+-- ============================================================
+DROP FUNCTION IF EXISTS prescription_is_expired;
+
+CREATE FUNCTION prescription_is_expired(p_prescription_id INT)
+    RETURNS BOOLEAN
+    READS SQL DATA
+BEGIN
+    DECLARE v_expire_date DATE;
+    DECLARE v_status ENUM('active', 'filled', 'partially filled', 'cancelled', 'expired');
+
+    SELECT expire_date, status INTO v_expire_date, v_status
+    FROM prescription
+    WHERE id = p_prescription_id;
+
+    IF v_status = 'expired' OR v_expire_date < CURDATE() THEN
+        RETURN TRUE;
+    END IF;
+
+    RETURN FALSE;
+END;
+
+-- ============================================================
+-- get_institution returns institution details as JSON
+-- ============================================================
+DROP FUNCTION IF EXISTS get_institution;
+
+CREATE FUNCTION get_institution(p_institution_id INT)
+    RETURNS JSON
+    READS SQL DATA
+BEGIN
+    DECLARE v_result JSON;
+
+    SELECT JSON_OBJECT(
+               'id', i.id,
+               'name', i.name,
+               'institution_type', i.institution_type,
+               'phone', i.phone,
+               'email', i.email,
+               'address', i.address,
+               'deleted_at', i.deleted_at
+           ) INTO v_result
+    FROM institution i
+    WHERE i.id = p_institution_id;
+
+    RETURN COALESCE(v_result, JSON_OBJECT());
+END;
+
+-- ============================================================
+-- full_name returns user's full name (firstname + lastname)
+-- ============================================================
+DROP FUNCTION IF EXISTS full_name;
+
+CREATE FUNCTION full_name(p_user_id INT)
+    RETURNS VARCHAR(512)
+    READS SQL DATA
+BEGIN
+    DECLARE v_name VARCHAR(512);
+
+    SELECT CONCAT(firstname, ' ', lastname) INTO v_name
+    FROM users
+    WHERE id = p_user_id;
+
+    RETURN v_name;
+END;
