@@ -116,7 +116,9 @@ if (!Role::isValid($role)) {
                     <div class="nav-item relative px-4 py-2 text-slate-700 font-medium text-sm cursor-pointer hover:text-slate-900 rounded-lg transition-all duration-200">Dashboard</div>
 
                     <!-- Logout -->
-                    <a href="/logout" class="nav-item relative px-4 py-2 text-slate-700 font-medium text-sm cursor-pointer hover:text-slate-900 rounded-lg transition-all duration-200 hover:bg-red-50 hover:text-red-600">Logout</a>
+                    <form method="POST" action="../logout.php" class="inline">
+                        <button type="submit" class="nav-item relative px-4 py-2 text-slate-700 font-medium text-sm cursor-pointer hover:text-slate-900 rounded-lg transition-all duration-200 hover:bg-red-50 hover:text-red-600">Logout</button>
+                    </form>
                 </div>
             </div>
         </div>
