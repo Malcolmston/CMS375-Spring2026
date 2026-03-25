@@ -16,6 +16,16 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
+session_set_cookie_params([
+    'lifetime' => 0,
+    'path' => '/',
+    'domain' => 'localhost',
+    'secure' => true,      // ONLY over HTTPS
+    'httponly' => true,    // JS cannot access cookie
+    'samesite' => 'Strict' // or 'Lax'
+]);
+
+
 session_start();
 
 $route = $_POST['route'] ?? '';
