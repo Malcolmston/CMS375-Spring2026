@@ -380,3 +380,21 @@ BEGIN
 
     RETURN v_status = 'expired' OR v_expire_date < CURDATE();
 END;
+-- ============================================================
+-- Full name returns a user's full name (firstname + lastname).
+-- ============================================================
+DROP FUNCTION IF EXISTS full_name;
+
+CREATE FUNCTION full_name(p_user_id INT)
+    RETURNS VARCHAR(511)
+    READS SQL DATA
+BEGIN
+    DECLARE v_name VARCHAR(511);
+
+    SELECT CONCAT(firstname, ' ', lastname) INTO v_name
+    FROM users
+    WHERE id = p_user_id
+    LIMIT 1;
+
+    RETURN v_name;
+END;
