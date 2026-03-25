@@ -30,6 +30,23 @@ session_start();
 
 $route = $_POST['route'] ?? '';
 
+$_SESSION['ip'] = $_SERVER['REMOTE_ADDR'];
+$_SESSION['user_agent'] = $_SERVER['HTTP_USER_AGENT'];
+
+if (!isset($_SESSION['ip']) || !isset($_SESSION['user_agent'])) {
+    abort(400, 'Session initialization failed');
+}
+
+$timeout = 1800; // 30 minutes
+
+if (isset($_SESSION['last_activity']) &&
+    (time() - $_SESSION['last_activity']) > $timeout) {
+    session_unset();
+    session_destroy();
+}
+
+$_SESSION['last_activity'] = time();
+
 match ($route) {
     'patient' => handle_patient(),
     'staff'   => handle_staff(),
