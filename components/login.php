@@ -47,6 +47,13 @@ if (isset($_SESSION['last_activity']) &&
 
 $_SESSION['last_activity'] = time();
 
+if (!isset($_SESSION['created'])) {
+    $_SESSION['created'] = time();
+} elseif (time() - $_SESSION['created'] > 300) { // every 5 min
+    session_regenerate_id(true);
+    $_SESSION['created'] = time();
+}
+
 match ($route) {
     'patient' => handle_patient(),
     'staff'   => handle_staff(),
