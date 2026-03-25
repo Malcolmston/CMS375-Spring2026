@@ -451,3 +451,47 @@ BEGIN
 
     RETURN FALSE;
 END;
+
+-- ============================================================
+-- get_institution returns institution details as JSON
+-- ============================================================
+DROP FUNCTION IF EXISTS get_institution;
+
+CREATE FUNCTION get_institution(p_institution_id INT)
+    RETURNS JSON
+    READS SQL DATA
+BEGIN
+    DECLARE v_result JSON;
+
+    SELECT JSON_OBJECT(
+               'id', i.id,
+               'name', i.name,
+               'institution_type', i.institution_type,
+               'phone', i.phone,
+               'email', i.email,
+               'address', i.address,
+               'deleted_at', i.deleted_at
+           ) INTO v_result
+    FROM institution i
+    WHERE i.id = p_institution_id;
+
+    RETURN COALESCE(v_result, JSON_OBJECT());
+END;
+
+-- ============================================================
+-- full_name returns user's full name (firstname + lastname)
+-- ============================================================
+DROP FUNCTION IF EXISTS full_name;
+
+CREATE FUNCTION full_name(p_user_id INT)
+    RETURNS VARCHAR(512)
+    READS SQL DATA
+BEGIN
+    DECLARE v_name VARCHAR(512);
+
+    SELECT CONCAT(firstname, ' ', lastname) INTO v_name
+    FROM users
+    WHERE id = p_user_id;
+
+    RETURN v_name;
+END;
