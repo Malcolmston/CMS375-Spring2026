@@ -11,3 +11,5 @@ RewriteRule ^login\.html$ components/patient/login.html [L]
 
 RewriteRule ^login$ components/login.php [L]
 RewriteRule ^dashboard$ components/dashboard.php [L]
+
+RewriteRule ^logout$ logout.php [L,PT]
