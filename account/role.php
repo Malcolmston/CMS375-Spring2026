@@ -19,6 +19,6 @@ enum role: string
 
     public static function isValid(mixed $role): bool
     {
-        return in_array($role, self::cases());
+        return role::tryFrom($role) !== null;
     }
 }

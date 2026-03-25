@@ -1,5 +1,7 @@
 <?php
 
+require_once __DIR__ . '/../../account/role.php';
+
 use account\role;
 
 session_start();
