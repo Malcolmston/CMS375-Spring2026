@@ -109,9 +109,14 @@ if (!Role::isValid($role)) {
     <!-- Dashboard Content -->
     <section class="pt-32 pb-20 px-10">
         <div class="max-w-7xl mx-auto">
-            <h1 class="text-4xl font-serif font-light text-slate-800 mb-8 animate__animated animate__fadeInUp">
-                Welcome to Your Dashboard
-            </h1>
+            <div class="flex items-center gap-4 mb-8 animate__animated animate__fadeInUp">
+                <h1 class="text-4xl font-serif font-light text-slate-800">
+                    Welcome to Your Dashboard
+                </h1>
+                <span class="px-4 py-1.5 bg-slate-800 text-white text-sm font-medium rounded-full">
+                    <?php echo htmlspecialchars($role); ?>
+                </span>
+            </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <!-- Dashboard cards will go here -->
