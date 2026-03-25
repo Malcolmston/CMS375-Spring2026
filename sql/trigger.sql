@@ -681,3 +681,26 @@ BEFORE DELETE ON allergy
         CALL throw('Use hard_delete_allergy for permanent deletion');
     END IF;
 END;
+DROP TRIGGER IF EXISTS trg_log_prescription_update;
+
+CREATE TRIGGER trg_log_prescription_update
+AFTER UPDATE ON prescription
+    FOR EACH ROW BEGIN
+    INSERT INTO logs (user_id, action, table_name, record_id, old_data, new_data)
+    VALUES (
+               NEW.doctor_id,
+               'UPDATE',
+               'prescription',
+               NEW.id,
+               JSON_OBJECT(
+                       'status', OLD.status,
+                       'expire_date', OLD.expire_date,
+                       'notes', OLD.notes
+               ),
+               JSON_OBJECT(
+                       'status', NEW.status,
+                       'expire_date', NEW.expire_date,
+                       'notes', NEW.notes
+               )
+           );
+END;
