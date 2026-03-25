@@ -1,5 +1,10 @@
 RewriteEngine On
 
+# Block directory traversal and dotfile access
+RewriteCond %{REQUEST_URI} \.\. [OR]
+RewriteCond %{REQUEST_URI} ^.*/\..*$
+RewriteRule ^.*$ - [F,L]
+
 # Redirect /index to home dashboard.php
 RewriteRule ^index\.php$ /index [R=301,L]
 RewriteRule ^index$ index.php [L]
