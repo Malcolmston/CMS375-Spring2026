@@ -182,6 +182,96 @@ FROM medicine_interaction mi
     INNER JOIN medicine m2 ON m2.id = mi.medicine_2;
 
 
+-- View: view_patient_summary gives one row per active patient with their
+-- active diagnoses, active prescriptions, allergies, and upcoming visits
+-- aggregated as JSON arrays.
+CREATE OR REPLACE VIEW view_patient_summary AS
+SELECT
+    u.id                                                        AS patient_id,
+    u.firstname,
+    u.lastname,
+    u.middlename,
+    u.prefix,
+    u.age,
+    u.status                                                    AS age_group,
+    u.blood,
+    u.gender,
+    u.phone,
+    u.email,
+
+    COALESCE(
+        (SELECT JSON_ARRAYAGG(
+            JSON_OBJECT(
+                'id',         d.id,
+                'condition',  d.`condition`,
+                'severity',   d.severity,
+                'notes',      d.notes,
+                'created_at', d.created_at
+            )
+        )
+        FROM diagnosis d
+        WHERE d.patient_id = u.id
+          AND d.deleted_at IS NULL),
+        JSON_ARRAY()
+    )                                                           AS active_diagnoses,
+
+    COALESCE(
+        (SELECT JSON_ARRAYAGG(
+            JSON_OBJECT(
+                'id',          p.id,
+                'doctor_id',   p.doctor_id,
+                'issue_date',  p.issue_date,
+                'expire_date', p.expire_date,
+                'status',      p.status,
+                'notes',       p.notes
+            )
+        )
+        FROM prescription p
+        WHERE p.patient_id = u.id
+          AND p.status = 'active'),
+        JSON_ARRAY()
+    )                                                           AS active_prescriptions,
+
+    COALESCE(
+        (SELECT JSON_ARRAYAGG(
+            JSON_OBJECT(
+                'allergy_id',   a.id,
+                'allergy_name', a.allergy_name,
+                'allergy_type', a.allergy_type,
+                'reaction',     ua.reaction,
+                'severity',     ua.severity
+            )
+        )
+        FROM user_allergy ua
+        JOIN allergy a ON a.id = ua.allergy_id
+        WHERE ua.user_id = u.id
+          AND a.deleted_at IS NULL),
+        JSON_ARRAY()
+    )                                                           AS allergies,
+
+    COALESCE(
+        (SELECT JSON_ARRAYAGG(
+            JSON_OBJECT(
+                'visit_id',       v.id,
+                'institution_id', v.institution_id,
+                'visit_type',     v.visit_type,
+                'scheduled_at',   v.scheduled_at,
+                'reason',         v.reason
+            )
+        )
+        FROM visit v
+        WHERE v.patient_id = u.id
+          AND v.deleted_at IS NULL
+          AND v.status = 'SCHEDULED'
+          AND v.scheduled_at >= NOW()),
+        JSON_ARRAY()
+    )                                                           AS upcoming_visits
+
+FROM view_users u
+WHERE u.id IN (
+    SELECT user_id FROM user_role WHERE role = 'PATIENT'
+);
+
 -- View Visits
 
 CREATE OR REPLACE VIEW view_visits AS
@@ -238,3 +328,12 @@ FROM user_allergy ua
 JOIN users u ON ua.user_id = u.id
 JOIN allergy a ON ua.allergy_id = a.id
 WHERE a.deleted_at IS NULL;
+
+CREATE OR REPLACE VIEW view_active_institutions AS
+    SELECT * FROM institution i
+    WHERE i.deleted_at IS NULL;
+
+CREATE OR REPLACE VIEW view_full_visit AS
+    SELECT * FROM view_visits v
+    LEFT JOIN view_doctor_visits dv
+        ON v.id = dv.visit_id;
