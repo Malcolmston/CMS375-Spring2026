@@ -472,25 +472,6 @@ BEGIN
 END;
 
 -- ============================================================
--- Full name returns a user's full name (firstname + lastname).
--- ============================================================
-DROP FUNCTION IF EXISTS full_name;
-
-CREATE FUNCTION full_name(p_user_id INT)
-    RETURNS VARCHAR(511)
-    READS SQL DATA
-BEGIN
-    DECLARE v_name VARCHAR(511);
-
-    SELECT CONCAT(firstname, ' ', lastname) INTO v_name
-    FROM users
-    WHERE id = p_user_id
-    LIMIT 1;
-
-    RETURN v_name;
-END;
-
--- ============================================================
 -- check_allergy_medication_conflict checks if a patient has an allergy
 -- to a medicine (by matching drug class or generic name)
 -- ============================================================
