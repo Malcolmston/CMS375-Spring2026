@@ -450,3 +450,13 @@ AFTER UPDATE ON institution
                );
     END IF;
 END;
+DROP TRIGGER IF EXISTS institution_soft_delete;
+
+CREATE TRIGGER institution_soft_delete
+BEFORE DELETE ON institution
+    FOR EACH ROW BEGIN
+    IF @hard_delete_institution IS NOT TRUE THEN
+        UPDATE institution SET deleted_at = NOW() WHERE id = OLD.id AND deleted_at IS NULL;
+        CALL throw('Use hard_delete_institution for permanent deletion');
+    END IF;
+END;
