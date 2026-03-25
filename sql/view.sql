@@ -334,9 +334,31 @@ CREATE OR REPLACE VIEW view_active_institutions AS
     WHERE i.deleted_at IS NULL;
 
 CREATE OR REPLACE VIEW view_full_visit AS
-    SELECT * FROM view_visits v
-    LEFT JOIN view_doctor_visits dv
-        ON v.id = dv.visit_id;
+SELECT
+    v.id                     AS visit_id,
+    v.patient_id,
+    v.patient_name,
+    v.institution_id,
+    v.institution_name,
+    v.institution_type,
+    v.visit_type,
+    v.scheduled_at,
+    v.status                 AS visit_status,
+    v.reason,
+    v.notes                  AS visit_notes,
+    v.created_at             AS visit_created_at,
+    v.updated_at             AS visit_updated_at,
+    dv.id                    AS doctor_visit_id,
+    dv.visit_id              AS doctor_visit_ref_id,
+    dv.doctor_id,
+    dv.doctor_name,
+    dv.doctor_notes,
+    dv.diagnosis_summary,
+    dv.created_at            AS doctor_visit_created_at,
+    dv.updated_at            AS doctor_visit_updated_at
+FROM view_visits v
+LEFT JOIN view_doctor_visits dv
+    ON v.id = dv.visit_id;
 
 CREATE OR REPLACE VIEW view_active_allergies AS
 SELECT
