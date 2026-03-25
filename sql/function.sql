@@ -429,3 +429,25 @@ BEGIN
 
     RETURN COALESCE(v_result, JSON_ARRAY());
 END;
+-- ============================================================
+-- prescription_is_expired returns TRUE if prescription is expired
+-- ============================================================
+DROP FUNCTION IF EXISTS prescription_is_expired;
+
+CREATE FUNCTION prescription_is_expired(p_prescription_id INT)
+    RETURNS BOOLEAN
+    READS SQL DATA
+BEGIN
+    DECLARE v_expire_date DATE;
+    DECLARE v_status ENUM('active', 'filled', 'partially filled', 'cancelled', 'expired');
+
+    SELECT expire_date, status INTO v_expire_date, v_status
+    FROM prescription
+    WHERE id = p_prescription_id;
+
+    IF v_status = 'expired' OR v_expire_date < CURDATE() THEN
+        RETURN TRUE;
+    END IF;
+
+    RETURN FALSE;
+END;
