@@ -278,7 +278,7 @@ CREATE OR REPLACE VIEW view_visits AS
 SELECT
     v.id,
     v.patient_id,
-    CONCAT(u.firstname, ' ', u.lastname) AS patient_name,
+    full_name(u.id) AS patient_name,
     v.institution_id,
     i.name AS institution_name,
     i.institution_type,
@@ -302,7 +302,7 @@ SELECT
     dv.id,
     dv.visit_id,
     dv.doctor_id,
-    CONCAT(d.firstname, ' ', d.lastname) AS doctor_name,
+    full_name(d.id) AS doctor_name,
     dv.doctor_notes,
     dv.diagnosis_summary,
     dv.created_at,
@@ -316,7 +316,7 @@ CREATE OR REPLACE VIEW view_user_allergies AS
 SELECT
     ua.id,
     ua.user_id,
-    CONCAT(u.firstname, ' ', u.lastname) AS user_name,
+    full_name(ua.user_id) AS user_name,
     ua.allergy_id,
     a.allergy_name,
     a.allergy_type,
@@ -364,7 +364,7 @@ CREATE OR REPLACE VIEW view_active_allergies AS
 SELECT
     ua.id,
     ua.user_id,
-    CONCAT(u.firstname, ' ', u.lastname) AS user_name,
+    full_name(ua.user_id) AS user_name,
     ua.allergy_id,
     a.allergy_name,
     a.allergy_type,
@@ -381,28 +381,24 @@ CREATE OR REPLACE VIEW view_parent_relationships AS
 SELECT
     pr.parent_relationship_id,
     pr.parent_id,
-    CONCAT(parent.firstname, ' ', parent.lastname) AS parent_name,
+    full_name(pr.parent_id) AS parent_name,
     pr.patient_id,
-    CONCAT(patient.firstname, ' ', patient.lastname) AS patient_name,
+    full_name(pr.patient_id) AS patient_name,
     pr.relationship
-FROM parent_relationship pr
-JOIN users parent ON pr.parent_id = parent.id
-JOIN users patient ON pr.patient_id = patient.id;
+FROM parent_relationship pr;
 
 CREATE OR REPLACE VIEW view_expired_prescriptions AS
 SELECT
     p.id,
     p.patient_id,
-    CONCAT(patient.firstname, ' ', patient.lastname) AS patient_name,
+    full_name(p.patient_id) AS patient_name,
     p.doctor_id,
-    CONCAT(doctor.firstname, ' ', doctor.lastname) AS doctor_name,
+    full_name(p.doctor_id) AS doctor_name,
     p.issue_date,
     p.expire_date,
     p.status,
     p.notes,
     DATEDIFF(NOW(), p.expire_date) AS days_since_expired
 FROM prescription p
-JOIN users patient ON p.patient_id = patient.id
-JOIN users doctor ON p.doctor_id = doctor.id
 WHERE p.expire_date < NOW()
    OR p.status = 'expired';
