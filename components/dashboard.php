@@ -14,13 +14,17 @@ if (isset($_SESSION['user_id'])) {
 }
 
 if (!$user_id || !$role) {
-    header('Location: index.php');
+    header('Location: /index');
     exit;
 }
 
 if (!Role::isValid($role)) {
-    header('Location: index.php');
+    header('Location: /index');
     exit;
+}
+
+if (!isset($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 }
 ?>
 
@@ -116,7 +120,8 @@ if (!Role::isValid($role)) {
                     <div class="nav-item relative px-4 py-2 text-slate-700 font-medium text-sm cursor-pointer hover:text-slate-900 rounded-lg transition-all duration-200">Dashboard</div>
 
                     <!-- Logout -->
-                    <form method="POST" action="../logout.php" class="inline">
+                    <form method="POST" action="/logout" class="inline">
+                        <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
                         <button type="submit" class="nav-item relative px-4 py-2 text-slate-700 font-medium text-sm cursor-pointer hover:text-slate-900 rounded-lg transition-all duration-200 hover:bg-red-50 hover:text-red-600">Logout</button>
                     </form>
                 </div>
