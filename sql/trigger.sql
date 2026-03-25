@@ -347,3 +347,27 @@ CREATE TRIGGER trg_log_diagnosis_recover
                );
     END IF;
 END;
+
+-- ============================================================
+-- INSTITUTION Triggers
+-- ============================================================
+DROP TRIGGER IF EXISTS trg_log_institution_insert;
+
+CREATE TRIGGER trg_log_institution_insert
+AFTER INSERT ON institution
+    FOR EACH ROW BEGIN
+    INSERT INTO logs (user_id, action, table_name, record_id, new_data)
+    VALUES (
+               1,
+               'CREATE',
+               'institution',
+               NEW.id,
+               JSON_OBJECT(
+                       'name', NEW.name,
+                       'institution_type', NEW.institution_type,
+                       'phone', NEW.phone,
+                       'email', NEW.email,
+                       'address', NEW.address
+               )
+           );
+END;
