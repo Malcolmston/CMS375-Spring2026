@@ -1,5 +1,9 @@
 RewriteEngine On
 
+# Force HTTPS
+RewriteCond %{HTTPS} off
+RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
 # Block directory traversal and dotfile access
 RewriteCond %{REQUEST_URI} \.\. [OR]
 RewriteCond %{REQUEST_URI} ^.*/\..*$
