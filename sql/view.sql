@@ -354,3 +354,15 @@ FROM user_allergy ua
 JOIN users u ON ua.user_id = u.id
 JOIN allergy a ON ua.allergy_id = a.id
 WHERE a.deleted_at IS NULL;
+
+CREATE OR REPLACE VIEW view_parent_relationships AS
+SELECT
+    pr.parent_relationship_id,
+    pr.parent_id,
+    CONCAT(parent.firstname, ' ', parent.lastname) AS parent_name,
+    pr.patient_id,
+    CONCAT(patient.firstname, ' ', patient.lastname) AS patient_name,
+    pr.relationship
+FROM parent_relationship pr
+JOIN users parent ON pr.parent_id = parent.id
+JOIN users patient ON pr.patient_id = patient.id;
