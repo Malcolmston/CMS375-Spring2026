@@ -565,3 +565,13 @@ AFTER UPDATE ON visit
                );
     END IF;
 END;
+DROP TRIGGER IF EXISTS visit_soft_delete;
+
+CREATE TRIGGER visit_soft_delete
+BEFORE DELETE ON visit
+    FOR EACH ROW BEGIN
+    IF @hard_delete_visit IS NOT TRUE THEN
+        UPDATE visit SET deleted_at = NOW() WHERE id = OLD.id AND deleted_at IS NULL;
+        CALL throw('Use hard_delete_visit for permanent deletion');
+    END IF;
+END;
