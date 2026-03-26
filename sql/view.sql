@@ -408,6 +408,14 @@ CREATE OR REPLACE VIEW view_active_vaccines AS
 SELECT * FROM vaccine v
 WHERE v.deleted_at IS NULL;
 
+CREATE OR REPLACE VIEW view_active_medicines AS
+SELECT * FROM medicine m
+WHERE m.deleted_at IS NULL;
+
+-- View: view_medicine_search - search medicines (base view, use function for search)
+CREATE OR REPLACE VIEW view_medicine_search AS
+SELECT * FROM view_active_medicines;
+
 -- View: view_vaccine_details - returns vaccine details with status info
 CREATE OR REPLACE VIEW view_vaccine_details AS
 SELECT
