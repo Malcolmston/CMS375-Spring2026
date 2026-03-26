@@ -297,9 +297,7 @@ BEGIN
     END IF;
 END;
 
-DELIMITER $$
-
-DROP PROCEDURE IF EXISTS create_institution $$
+DROP PROCEDURE IF EXISTS create_institution;
 CREATE PROCEDURE create_institution(
     IN p_name VARCHAR(255),
     IN p_institution_type VARCHAR(50),
@@ -310,9 +308,9 @@ CREATE PROCEDURE create_institution(
 BEGIN
     INSERT INTO institution (name, institution_type, phone, email, address)
     VALUES (p_name, p_institution_type, p_phone, p_email, p_address);
-END $$
+END;
 
-DROP PROCEDURE IF EXISTS create_visit $$
+DROP PROCEDURE IF EXISTS create_visit;
 CREATE PROCEDURE create_visit(
     IN p_patient_id INTEGER,
     IN p_institution_id INTEGER,
@@ -324,9 +322,9 @@ CREATE PROCEDURE create_visit(
 BEGIN
     INSERT INTO visit (patient_id, institution_id, visit_type, scheduled_at, reason, notes)
     VALUES (p_patient_id, p_institution_id, p_visit_type, p_scheduled_at, p_reason, p_notes);
-END $$
+END;
 
-DROP PROCEDURE IF EXISTS create_doctor_visit $$
+DROP PROCEDURE IF EXISTS create_doctor_visit;
 CREATE PROCEDURE create_doctor_visit(
     IN p_visit_id INTEGER,
     IN p_doctor_id INTEGER,
@@ -336,9 +334,9 @@ CREATE PROCEDURE create_doctor_visit(
 BEGIN
     INSERT INTO doctor_visit (visit_id, doctor_id, doctor_notes, diagnosis_summary)
     VALUES (p_visit_id, p_doctor_id, p_doctor_notes, p_diagnosis_summary);
-END $$
+END;
 
-DROP PROCEDURE IF EXISTS create_allergy $$
+DROP PROCEDURE IF EXISTS create_allergy;
 CREATE PROCEDURE create_allergy(
     IN p_allergy_name VARCHAR(255),
     IN p_allergy_type VARCHAR(50),
@@ -347,9 +345,9 @@ CREATE PROCEDURE create_allergy(
 BEGIN
     INSERT INTO allergy (allergy_name, allergy_type, description)
     VALUES (p_allergy_name, p_allergy_type, p_description);
-END $$
+END;
 
-DROP PROCEDURE IF EXISTS create_user_allergy $$
+DROP PROCEDURE IF EXISTS create_user_allergy;
 CREATE PROCEDURE create_user_allergy(
     IN p_user_id INTEGER,
     IN p_allergy_id INTEGER,
@@ -360,12 +358,12 @@ CREATE PROCEDURE create_user_allergy(
 BEGIN
     INSERT INTO user_allergy (user_id, allergy_id, reaction, severity, notes)
     VALUES (p_user_id, p_allergy_id, p_reaction, p_severity, p_notes);
-END $$
+END;
 
 -- ============================================================
 -- VACCINE Procedures (CRUD)
 -- ============================================================
-DROP PROCEDURE IF EXISTS create_vaccine $$
+DROP PROCEDURE IF EXISTS create_vaccine;
 CREATE PROCEDURE create_vaccine(
     IN p_name VARCHAR(1024),
     IN p_cvx_code VARCHAR(20),
@@ -384,9 +382,9 @@ CREATE PROCEDURE create_vaccine(
 BEGIN
     INSERT INTO vaccine (name, cvx_code, status, last_updated_date, manufacturer, type, development, recommended_age, dose_count, lethal_dose_mg_per_kg, lethal_dose_route, lethal_dose_source, extra)
     VALUES (p_name, p_cvx_code, p_status, p_last_updated_date, p_manufacturer, p_type, p_development, p_recommended_age, p_dose_count, p_lethal_dose_mg_per_kg, p_lethal_dose_route, p_lethal_dose_source, p_extra);
-END $$
+END;
 
-DROP PROCEDURE IF EXISTS get_vaccine_by_id $$
+DROP PROCEDURE IF EXISTS get_vaccine_by_id;
 CREATE PROCEDURE get_vaccine_by_id(
     IN p_vaccine_id INTEGER
 )
@@ -394,9 +392,9 @@ BEGIN
     SELECT * FROM vaccine v
     WHERE v.id = p_vaccine_id
       AND v.deleted_at IS NULL;
-END $$
+END;
 
-DROP PROCEDURE IF EXISTS update_vaccine $$
+DROP PROCEDURE IF EXISTS update_vaccine;
 CREATE PROCEDURE update_vaccine(
     IN p_vaccine_id INTEGER,
     IN p_name VARCHAR(1024),
@@ -421,9 +419,9 @@ BEGIN
         v.recommended_age = p_recommended_age,
         v.dose_count = p_dose_count
     WHERE v.id = p_vaccine_id;
-END $$
+END;
 
-DROP PROCEDURE IF EXISTS soft_delete_vaccine $$
+DROP PROCEDURE IF EXISTS soft_delete_vaccine;
 CREATE PROCEDURE soft_delete_vaccine(
     IN p_vaccine_id INTEGER
 )
@@ -431,9 +429,9 @@ BEGIN
     UPDATE vaccine v
     SET v.deleted_at = NOW()
     WHERE v.id = p_vaccine_id;
-END $$
+END;
 
-DROP PROCEDURE IF EXISTS restore_vaccine $$
+DROP PROCEDURE IF EXISTS restore_vaccine;
 CREATE PROCEDURE restore_vaccine(
     IN p_vaccine_id INTEGER
 )
@@ -441,25 +439,25 @@ BEGIN
     UPDATE vaccine v
     SET v.deleted_at = NULL
     WHERE v.id = p_vaccine_id;
-END $$
+END;
 
-DROP PROCEDURE IF EXISTS hard_delete_vaccine $$
+DROP PROCEDURE IF EXISTS hard_delete_vaccine;
 CREATE PROCEDURE hard_delete_vaccine(
     IN p_vaccine_id INTEGER
 )
 BEGIN
     DELETE FROM vaccine v WHERE v.id = p_vaccine_id;
-END $$
+END;
 
-DROP PROCEDURE IF EXISTS list_vaccines $$
+DROP PROCEDURE IF EXISTS list_vaccines;
 CREATE PROCEDURE list_vaccines()
 BEGIN
     SELECT * FROM vaccine v
     WHERE v.deleted_at IS NULL
     ORDER BY v.name;
-END $$
+END;
 
-DROP PROCEDURE IF EXISTS list_vaccines_by_type $$
+DROP PROCEDURE IF EXISTS list_vaccines_by_type;
 CREATE PROCEDURE list_vaccines_by_type(
     IN p_type VARCHAR(50)
 )
@@ -468,9 +466,9 @@ BEGIN
     WHERE v.type = p_type
       AND v.deleted_at IS NULL
     ORDER BY v.name;
-END $$
+END;
 
-DROP PROCEDURE IF EXISTS list_vaccines_by_development $$
+DROP PROCEDURE IF EXISTS list_vaccines_by_development;
 CREATE PROCEDURE list_vaccines_by_development(
     IN p_development VARCHAR(50)
 )
@@ -479,6 +477,98 @@ BEGIN
     WHERE v.development = p_development
       AND v.deleted_at IS NULL
     ORDER BY v.name;
-END $$
+END;
 
-DELIMITER ;
+-- ============================================================
+-- MEDICINE Insert/Update Procedures
+-- ============================================================
+DROP PROCEDURE IF EXISTS insert_medicine;
+CREATE PROCEDURE insert_medicine(
+    IN p_generic_name VARCHAR(50),
+    IN p_brand_name VARCHAR(50),
+    IN p_drug_class VARCHAR(50),
+    IN p_form VARCHAR(50),
+    IN p_standard_dose VARCHAR(20),
+    IN p_controlled_substance BOOLEAN,
+    IN p_requires_prescription BOOLEAN,
+    IN p_stock_quantity INTEGER,
+    IN p_unit_of_measure VARCHAR(50),
+    IN p_manufacturer VARCHAR(50),
+    IN p_storage_requirements VARCHAR(50)
+)
+BEGIN
+    INSERT INTO medicine (generic_name, brand_name, drug_class, form, standard_dose, controlled_substance, requires_prescription, stock_quantity, unit_of_measure, manufacturer, storage_requirements)
+    VALUES (p_generic_name, p_brand_name, p_drug_class, p_form, p_standard_dose, p_controlled_substance, p_requires_prescription, p_stock_quantity, p_unit_of_measure, p_manufacturer, p_storage_requirements);
+END;
+
+DROP PROCEDURE IF EXISTS update_medicine;
+CREATE PROCEDURE update_medicine(
+    IN p_medicine_id INTEGER,
+    IN p_generic_name VARCHAR(50),
+    IN p_brand_name VARCHAR(50),
+    IN p_drug_class VARCHAR(50),
+    IN p_form VARCHAR(50),
+    IN p_standard_dose VARCHAR(20),
+    IN p_controlled_substance BOOLEAN,
+    IN p_requires_prescription BOOLEAN,
+    IN p_stock_quantity INTEGER,
+    IN p_unit_of_measure VARCHAR(50),
+    IN p_manufacturer VARCHAR(50),
+    IN p_storage_requirements VARCHAR(50)
+)
+BEGIN
+    UPDATE medicine m
+    SET m.generic_name = p_generic_name,
+        m.brand_name = p_brand_name,
+        m.drug_class = p_drug_class,
+        m.form = p_form,
+        m.standard_dose = p_standard_dose,
+        m.controlled_substance = p_controlled_substance,
+        m.requires_prescription = p_requires_prescription,
+        m.stock_quantity = p_stock_quantity,
+        m.unit_of_measure = p_unit_of_measure,
+        m.manufacturer = p_manufacturer,
+        m.storage_requirements = p_storage_requirements
+    WHERE m.id = p_medicine_id;
+END;
+
+-- Mass insert for medicine (insert multiple at once)
+DROP PROCEDURE IF EXISTS insert_medicine_batch;
+CREATE PROCEDURE insert_medicine_batch(
+    IN p_count INT
+)
+BEGIN
+    DECLARE i INT DEFAULT 0;
+    DECLARE v_generic_name VARCHAR(50);
+    DECLARE v_brand_name VARCHAR(50);
+    DECLARE v_drug_class VARCHAR(50);
+    DECLARE v_form VARCHAR(50);
+    DECLARE v_standard_dose VARCHAR(20);
+    DECLARE v_manufacturer VARCHAR(50);
+
+    WHILE i < p_count DO
+        SET v_generic_name = CONCAT('Medicine_', i);
+        SET v_brand_name = CONCAT('Brand_', i);
+        SET v_drug_class = ELT(FLOOR(1 + RAND() * 8), 'NSAID', 'Antibiotic', 'Antihypertensive', 'Diabetes', 'Mental Health', 'Respiratory', 'Gastrointestinal', 'Cardiovascular');
+        SET v_form = ELT(FLOOR(1 + RAND() * 10), 'tablet', 'capsule', 'liquid', 'injection', 'patch', 'inhaler', 'cream', 'ointment', 'drops', 'suppository');
+        SET v_standard_dose = CONCAT(FLOOR(10 + RAND() * 990), 'mg');
+        SET v_manufacturer = ELT(FLOOR(1 + RAND() * 5), 'Pfizer', 'Merck', 'Novartis', 'GSK', 'Sanofi');
+
+        INSERT INTO medicine (generic_name, brand_name, drug_class, form, standard_dose, controlled_substance, requires_prescription, stock_quantity, unit_of_measure, manufacturer, storage_requirements)
+        VALUES (
+            v_generic_name,
+            v_brand_name,
+            v_drug_class,
+            v_form,
+            v_standard_dose,
+            FALSE,
+            TRUE,
+            FLOOR(100 + RAND() * 9900),
+            'mg',
+            v_manufacturer,
+            'room temperature'
+        );
+
+        SET i = i + 1;
+    END WHILE;
+END;
