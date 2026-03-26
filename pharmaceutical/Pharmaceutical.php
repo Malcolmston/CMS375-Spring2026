@@ -1,14 +1,15 @@
 <?php
 
-namespace account;
+namespace pharmaceutical;
 
 require_once __DIR__ . '/../Connect.php';
 
-use Connect;
 use AllowDynamicProperties;
+use Connect;
 
 /**
  * Base Pharmaceutical class - parent for Medicine and Vaccine
+ * Extends Connect for database access like Account class
  */
 #[AllowDynamicProperties]
 abstract class Pharmaceutical extends Connect
@@ -19,8 +20,11 @@ abstract class Pharmaceutical extends Connect
     protected string $storageRequirements;
     protected string $createdAt;
     protected string $updatedAt;
-    protected ?string $deletedAt;
+    protected ?string $deletedAt = null;
 
+    /**
+     * @throws \Exception
+     */
     public function __construct()
     {
         parent::__construct();
