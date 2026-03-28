@@ -1321,3 +1321,134 @@ AFTER UPDATE ON vaccine
         VALUES (NEW.id, 'RECOVER', 'vaccine', NEW.id, JSON_OBJECT('name', NEW.name, 'cvx_code', NEW.cvx_code));
     END IF;
 END;
+
+DROP TRIGGER IF EXISTS check_staff_role_trigger;
+
+CREATE TRIGGER check_staff_role_trigger
+    BEFORE INSERT ON institution_user
+    FOR EACH ROW
+BEGIN
+    -- Check if user has a staff or admin role using functions
+    IF NOT is_staff(NEW.user_id) AND NOT is_admin(NEW.user_id) THEN
+        CALL throw('User must have a staff or admin role to be added to an institution');
+    END IF;
+END;
+
+--- ============================================================
+--- MEDICINE_INTERACTION Triggers
+--- ============================================================
+DROP TRIGGER IF EXISTS trg_log_medicine_interaction_insert;
+
+CREATE TRIGGER trg_log_medicine_interaction_insert
+AFTER INSERT ON medicine_interaction
+    FOR EACH ROW BEGIN
+    INSERT INTO logs (user_id, action, table_name, record_id, new_data)
+    VALUES (
+               1,
+               'CREATE',
+               'medicine_interaction',
+               NEW.id,
+               JSON_OBJECT(
+                       'medicine_1', NEW.medicine_1,
+                       'medicine_2', NEW.medicine_2,
+                       'severity', NEW.severity,
+                       'description', NEW.description
+               )
+           );
+END;
+
+DROP TRIGGER IF EXISTS trg_log_medicine_interaction_update;
+
+CREATE TRIGGER trg_log_medicine_interaction_update
+AFTER UPDATE ON medicine_interaction
+    FOR EACH ROW BEGIN
+    INSERT INTO logs (user_id, action, table_name, record_id, old_data, new_data)
+    VALUES (
+               1,
+               'UPDATE',
+               'medicine_interaction',
+               NEW.id,
+               JSON_OBJECT('severity', OLD.severity, 'description', OLD.description),
+               JSON_OBJECT('severity', NEW.severity, 'description', NEW.description)
+           );
+END;
+
+DROP TRIGGER IF EXISTS trg_log_medicine_interaction_delete;
+
+CREATE TRIGGER trg_log_medicine_interaction_delete
+AFTER DELETE ON medicine_interaction
+    FOR EACH ROW BEGIN
+    INSERT INTO logs (user_id, action, table_name, record_id, old_data)
+    VALUES (
+               1,
+               'DELETE',
+               'medicine_interaction',
+               OLD.id,
+               JSON_OBJECT(
+                       'medicine_1', OLD.medicine_1,
+                       'medicine_2', OLD.medicine_2,
+                       'severity', OLD.severity
+               )
+           );
+END;
+
+--- ============================================================
+--- INSTITUTION_USER Triggers
+--- ============================================================
+DROP TRIGGER IF EXISTS trg_log_institution_user_insert;
+
+CREATE TRIGGER trg_log_institution_user_insert
+AFTER INSERT ON institution_user
+    FOR EACH ROW BEGIN
+    INSERT INTO logs (user_id, action, table_name, record_id, new_data)
+    VALUES (
+               1,
+               'CREATE',
+               'institution_user',
+               NEW.id,
+               JSON_OBJECT(
+                       'institution_id', NEW.institution_id,
+                       'user_id', NEW.user_id,
+                       'role', NEW.role
+               )
+           );
+END;
+
+DROP TRIGGER IF EXISTS trg_log_institution_user_update;
+
+CREATE TRIGGER trg_log_institution_user_update
+AFTER UPDATE ON institution_user
+    FOR EACH ROW BEGIN
+    INSERT INTO logs (user_id, action, table_name, record_id, old_data, new_data)
+    VALUES (
+               1,
+               'UPDATE',
+               'institution_user',
+               NEW.id,
+               JSON_OBJECT('institution_id', OLD.institution_id, 'role', OLD.role),
+               JSON_OBJECT('institution_id', NEW.institution_id, 'role', NEW.role)
+           );
+END;
+
+DROP TRIGGER IF EXISTS trg_log_institution_user_soft_delete;
+
+CREATE TRIGGER trg_log_institution_user_soft_delete
+AFTER UPDATE ON institution_user
+    FOR EACH ROW BEGIN
+    IF OLD.deleted_at IS NULL AND NEW.deleted_at IS NOT NULL THEN
+        INSERT INTO logs (user_id, action, table_name, record_id, old_data)
+        VALUES (1, 'DELETE', 'institution_user', NEW.id, JSON_OBJECT('institution_id', OLD.institution_id, 'user_id', OLD.user_id, 'role', OLD.role));
+    END IF;
+END;
+
+DROP TRIGGER IF EXISTS trg_log_institution_user_recover;
+
+CREATE TRIGGER trg_log_institution_user_recover
+AFTER UPDATE ON institution_user
+    FOR EACH ROW BEGIN
+    IF OLD.deleted_at IS NOT NULL AND NEW.deleted_at IS NULL THEN
+        INSERT INTO logs (user_id, action, table_name, record_id, new_data)
+        VALUES (1, 'RECOVER', 'institution_user', NEW.id, JSON_OBJECT('institution_id', NEW.institution_id, 'user_id', NEW.user_id, 'role', NEW.role));
+    END IF;
+END;
+
