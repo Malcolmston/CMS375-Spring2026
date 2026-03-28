@@ -907,7 +907,7 @@ DROP FUNCTION IF EXISTS count_released_vaccines;
 
 CREATE FUNCTION count_released_vaccines()
     RETURNS INT
-    READS SQL DATA
+    DETERMINISTIC
 BEGIN
     DECLARE v_count INT;
 
@@ -926,7 +926,7 @@ DROP FUNCTION IF EXISTS has_medicine;
 
 CREATE FUNCTION has_medicine(p_medicine_id INT)
     RETURNS BOOLEAN
-    READS SQL DATA
+    DETERMINISTIC
 BEGIN
     DECLARE v_exists BOOLEAN DEFAULT FALSE;
 
@@ -1160,30 +1160,39 @@ BEGIN
     );
 END;
 
--- search_medicine - search medicines by generic_name or brand_name
-DROP FUNCTION IF EXISTS search_medicine;
+DROP FUNCTION IF EXISTS is_staff;
 
-CREATE FUNCTION search_medicine(p_search_term VARCHAR(255))
-    RETURNS JSON
-    READS SQL DATA
+CREATE FUNCTION is_staff(user_id INT)
+    RETURNS BOOLEAN
+    DETERMINISTIC
 BEGIN
-    DECLARE v_search VARCHAR(255) DEFAULT CONCAT('%', p_search_term, '%');
+    DECLARE v_is_staff BOOLEAN DEFAULT FALSE;
 
-    RETURN (
-        SELECT JSON_ARRAYAGG(
-            JSON_OBJECT(
-                'id', m.id,
-                'generic_name', m.generic_name,
-                'brand_name', m.brand_name,
-                'drug_class', m.drug_class,
-                'form', m.form,
-                'standard_dose', m.standard_dose,
-                'stock_quantity', m.stock_quantity,
-                'manufacturer', m.manufacturer
-            )
-        )
-        FROM view_active_medicines m
-        WHERE m.generic_name LIKE v_search
-           OR m.brand_name LIKE v_search
-    );
+    SELECT TRUE
+    INTO v_is_staff
+    FROM user_role
+    WHERE user_role.user_id = user_id
+      AND role IN ('PHYSICIAN', 'NURSE', 'PHARMACIST', 'RADIOLOGIST', 'LAB_TECH',
+                   'SURGEON', 'RECEPTIONIST', 'ADMIN', 'BILLING', 'EMS', 'THERAPIST')
+    LIMIT 1;
+
+    RETURN COALESCE(v_is_staff, FALSE);
+END;
+
+DROP FUNCTION IF EXISTS is_admin;
+
+CREATE FUNCTION is_admin(user_id INT)
+    RETURNS BOOLEAN
+    DETERMINISTIC
+BEGIN
+    DECLARE v_is_admin BOOLEAN DEFAULT FALSE;
+
+    SELECT TRUE
+    INTO v_is_admin
+    FROM user_role
+    WHERE user_role.user_id = user_id
+      AND role = 'ADMIN'
+    LIMIT 1;
+
+    RETURN COALESCE(v_is_admin, FALSE);
 END;
