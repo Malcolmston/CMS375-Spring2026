@@ -638,31 +638,32 @@ CREATE PROCEDURE insert_medicine_batch(
     IN p_data JSON
 )
 BEGIN
-    DECLARE i INT DEFAULT 0;
-    DECLARE n INT;
-
-    SET n = JSON_LENGTH(p_data);
-
-    WHILE i < n
-        DO
-            SET @generic_name = JSON_UNQUOTE(JSON_EXTRACT(p_data, 'generic_name'));
-            SET @brand_name = JSON_UNQUOTE(JSON_EXTRACT(p_data, 'brand_name'));
-            SET @drug_class = JSON_UNQUOTE(JSON_EXTRACT(p_data, 'drug_class'));
-            SET @form = JSON_UNQUOTE(JSON_EXTRACT(p_data, 'form'));
-            SET @standard_dose = JSON_UNQUOTE(JSON_EXTRACT(p_data, 'standard_dose'));
-            SET @controlled_substance = JSON_EXTRACT(p_data, 'controlled_substance');
-            SET @requires_prescription = JSON_EXTRACT(p_data, 'requires_prescription');
-            SET @stock_quantity = JSON_UNQUOTE(JSON_EXTRACT(p_data, 'stock_quantity'));
-            SET @unit_of_measure = JSON_UNQUOTE(JSON_EXTRACT(p_data, 'unit_of_measure'));
-            SET @manufacturer = JSON_UNQUOTE(JSON_EXTRACT(p_data, 'manufacturer'));
-            SET @storage_requirements = JSON_UNQUOTE(JSON_EXTRACT(p_data, 'storage_requirements'));
-
-            CALL insert_medicine(@generic_name, @brand_name, @drug_class, @form, @standard_dose, @controlled_substance,
-                                 @requires_prescription, @stock_quantity, @unit_of_measure, @manufacturer,
-                                 @storage_requirements);
-
-            SET i = i + 1;
-        END WHILE;
+    INSERT INTO medicine (generic_name, brand_name, drug_class, form, standard_dose, controlled_substance, requires_prescription, stock_quantity, unit_of_measure, manufacturer, storage_requirements)
+    SELECT
+        jt.generic_name,
+        jt.brand_name,
+        jt.drug_class,
+        jt.form,
+        jt.standard_dose,
+        jt.controlled_substance,
+        jt.requires_prescription,
+        jt.stock_quantity,
+        jt.unit_of_measure,
+        jt.manufacturer,
+        jt.storage_requirements
+    FROM JSON_TABLE(p_data, '$[*]' COLUMNS (
+        generic_name VARCHAR(50) PATH '$.generic_name',
+        brand_name VARCHAR(50) PATH '$.brand_name',
+        drug_class VARCHAR(50) PATH '$.drug_class',
+        form VARCHAR(50) PATH '$.form',
+        standard_dose VARCHAR(20) PATH '$.standard_dose',
+        controlled_substance BOOLEAN PATH '$.controlled_substance',
+        requires_prescription BOOLEAN PATH '$.requires_prescription',
+        stock_quantity INTEGER PATH '$.stock_quantity',
+        unit_of_measure VARCHAR(50) PATH '$.unit_of_measure',
+        manufacturer VARCHAR(50) PATH '$.manufacturer',
+        storage_requirements VARCHAR(50) PATH '$.storage_requirements'
+    )) AS jt;
 END;
 
 
