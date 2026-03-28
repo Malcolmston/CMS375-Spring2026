@@ -4,8 +4,10 @@ services:
     container_name: spring2026-web
     ports:
       - "8080:80"
+      - "8443:443"
     volumes:
       - .:/var/www/html
+      - ./certs:/etc/apache2/ssl
     depends_on:
       mysql:
         condition: service_healthy
@@ -50,17 +52,18 @@ services:
     restart: "no"
 
   phpmyadmin:
-    image: phpmyadmin/phpmyadmin:5
+    image: phpmyadmin:latest
     container_name: spring2026-phpmyadmin
     depends_on:
       mysql:
         condition: service_healthy
     environment:
       PMA_HOST: mysql
+      PMA_USER: app
+      PMA_PASSWORD: app
       PMA_PORT: 3306
-      PMA_USER: root
-      PMA_PASSWORD: root
       UPLOAD_LIMIT: 64M
+      PMA_ABSOLUTE_URI: http://localhost:8081/
     ports:
       - "8081:80"
 
