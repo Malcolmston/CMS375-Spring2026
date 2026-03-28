@@ -1,7 +1,14 @@
 RewriteEngine On
 
-# Force HTTPS
+# Force HTTPS (Modified for local Docker port mapping)
 RewriteCond %{HTTPS} off
+# If on localhost:8080, redirect to localhost:8443
+RewriteCond %{HTTP_HOST} ^localhost:8080$
+RewriteRule ^(.*)$ https://localhost:8443/$1 [L,R=301]
+
+# General rule for other hosts or if no port 8080 is specified
+RewriteCond %{HTTPS} off
+RewriteCond %{HTTP_HOST} !^localhost:8080$
 RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
 # Cookie Management - Defense-in-Depth
