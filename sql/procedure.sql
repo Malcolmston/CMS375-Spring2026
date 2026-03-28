@@ -543,22 +543,54 @@ BEGIN
 
     SET n = JSON_LENGTH(p_data);
 
-    WHILE i < n DO
-        SET @generic_name = JSON_UNQUOTE(JSON_EXTRACT(p_data, 'generic_name'));
-        SET @brand_name = JSON_UNQUOTE(JSON_EXTRACT(p_data, 'brand_name'));
-        SET @drug_class = JSON_UNQUOTE(JSON_EXTRACT(p_data, 'drug_class'));
-        SET @form = JSON_UNQUOTE(JSON_EXTRACT(p_data, 'form'));
-        SET @standard_dose = JSON_UNQUOTE(JSON_EXTRACT(p_data, 'standard_dose'));
-        SET @controlled_substance = JSON_EXTRACT(p_data, 'controlled_substance');
-        SET @requires_prescription = JSON_EXTRACT(p_data, 'requires_prescription');
-        SET @stock_quantity = JSON_UNQUOTE(JSON_EXTRACT(p_data, 'stock_quantity'));
-        SET @unit_of_measure = JSON_UNQUOTE(JSON_EXTRACT(p_data, 'unit_of_measure'));
-        SET @manufacturer = JSON_UNQUOTE(JSON_EXTRACT(p_data, 'manufacturer'));
-        SET @storage_requirements = JSON_UNQUOTE(JSON_EXTRACT(p_data, 'storage_requirements'));
+    WHILE i < n
+        DO
+            SET @generic_name = JSON_UNQUOTE(JSON_EXTRACT(p_data, 'generic_name'));
+            SET @brand_name = JSON_UNQUOTE(JSON_EXTRACT(p_data, 'brand_name'));
+            SET @drug_class = JSON_UNQUOTE(JSON_EXTRACT(p_data, 'drug_class'));
+            SET @form = JSON_UNQUOTE(JSON_EXTRACT(p_data, 'form'));
+            SET @standard_dose = JSON_UNQUOTE(JSON_EXTRACT(p_data, 'standard_dose'));
+            SET @controlled_substance = JSON_EXTRACT(p_data, 'controlled_substance');
+            SET @requires_prescription = JSON_EXTRACT(p_data, 'requires_prescription');
+            SET @stock_quantity = JSON_UNQUOTE(JSON_EXTRACT(p_data, 'stock_quantity'));
+            SET @unit_of_measure = JSON_UNQUOTE(JSON_EXTRACT(p_data, 'unit_of_measure'));
+            SET @manufacturer = JSON_UNQUOTE(JSON_EXTRACT(p_data, 'manufacturer'));
+            SET @storage_requirements = JSON_UNQUOTE(JSON_EXTRACT(p_data, 'storage_requirements'));
 
-        INSERT INTO medicine (generic_name, brand_name, drug_class, form, standard_dose, controlled_substance, requires_prescription, stock_quantity, unit_of_measure, manufacturer, storage_requirements)
-        VALUES (@generic_name, @brand_name, @drug_class, @form, @standard_dose, @controlled_substance, @requires_prescription, @stock_quantity, @unit_of_measure, @manufacturer, @storage_requirements);
+            CALL insert_medicine(@generic_name, @brand_name, @drug_class, @form, @standard_dose, @controlled_substance,
+                                 @requires_prescription, @stock_quantity, @unit_of_measure, @manufacturer,
+                                 @storage_requirements);
 
-        SET i = i + 1;
-    END WHILE;
+            SET i = i + 1;
+        END WHILE;
+END;
+
+
+DROP PROCEDURE IF EXISTS assign_institution;
+
+CREATE PROCEDURE assign_institution(
+    IN p_user_id INT,
+    IN p_institution_id INT,
+    IN p_role VARCHAR(255),
+    OUT res BOOLEAN
+)
+BEGIN
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+        BEGIN
+            ROLLBACK;
+            SET res = FALSE;
+            RESIGNAL;
+        END;
+
+    START TRANSACTION;
+
+    IF NOT (is_staff(p_user_id) OR is_admin(p_user_id)) THEN
+        CALL throw('Invalid role');
+    END IF;
+
+    INSERT IGNORE INTO institution_user (user_id, institution_id, role)
+    VALUES (p_user_id, p_institution_id, p_role);
+
+    SET res = ROW_COUNT() > 0;
+    COMMIT;
 END;
