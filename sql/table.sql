@@ -202,7 +202,8 @@ CREATE TABLE IF NOT EXISTS medicine(
 CREATE TABLE IF NOT EXISTS prescription_item(
     id INTEGER PRIMARY KEY AUTO_INCREMENT,
     prescription_id INTEGER NOT NULL,
-    medicine_id INTEGER NOT NULL,
+    medicine_id INTEGER DEFAULT NULL,
+    vaccine_id  INTEGER DEFAULT NULL,
     dosage VARCHAR(50) NOT NULL,
     frequency ENUM(
                     'once daily',
@@ -214,7 +215,7 @@ CREATE TABLE IF NOT EXISTS prescription_item(
                     'every 8 hours',
                     'every 12 hours',
                     'as needed',
-                    'weekly', 
+                    'weekly',
                     'monthly'
                 ) NOT NULL,
     route ENUM(
@@ -237,12 +238,16 @@ CREATE TABLE IF NOT EXISTS prescription_item(
 
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-     deleted_at TIMESTAMP DEFAULT NULL,
-    
+    deleted_at TIMESTAMP DEFAULT NULL,
+
+    CONSTRAINT chk_medicine_or_vaccine
+        CHECK (medicine_id IS NOT NULL OR vaccine_id IS NOT NULL),
     CONSTRAINT fk_prescription_id
         FOREIGN KEY (prescription_id) REFERENCES prescription(id),
     CONSTRAINT fk_medicine_id
-        FOREIGN KEY (medicine_id) REFERENCES medicine(id)
+        FOREIGN KEY (medicine_id) REFERENCES medicine(id),
+    CONSTRAINT fk_vaccine_id
+        FOREIGN KEY (vaccine_id) REFERENCES vaccine(id)
     );
 
 CREATE TABLE IF NOT EXISTS parent_relationship(
