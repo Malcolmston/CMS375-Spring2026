@@ -535,39 +535,29 @@ END;
 -- Mass insert for medicine (insert multiple at once)
 DROP PROCEDURE IF EXISTS insert_medicine_batch;
 CREATE PROCEDURE insert_medicine_batch(
-    IN p_count INT
+    IN p_data JSON
 )
 BEGIN
     DECLARE i INT DEFAULT 0;
-    DECLARE v_generic_name VARCHAR(50);
-    DECLARE v_brand_name VARCHAR(50);
-    DECLARE v_drug_class VARCHAR(50);
-    DECLARE v_form VARCHAR(50);
-    DECLARE v_standard_dose VARCHAR(20);
-    DECLARE v_manufacturer VARCHAR(50);
+    DECLARE n INT;
 
-    WHILE i < p_count DO
-        SET v_generic_name = CONCAT('Medicine_', i);
-        SET v_brand_name = CONCAT('Brand_', i);
-        SET v_drug_class = ELT(FLOOR(1 + RAND() * 8), 'NSAID', 'Antibiotic', 'Antihypertensive', 'Diabetes', 'Mental Health', 'Respiratory', 'Gastrointestinal', 'Cardiovascular');
-        SET v_form = ELT(FLOOR(1 + RAND() * 10), 'tablet', 'capsule', 'liquid', 'injection', 'patch', 'inhaler', 'cream', 'ointment', 'drops', 'suppository');
-        SET v_standard_dose = CONCAT(FLOOR(10 + RAND() * 990), 'mg');
-        SET v_manufacturer = ELT(FLOOR(1 + RAND() * 5), 'Pfizer', 'Merck', 'Novartis', 'GSK', 'Sanofi');
+    SET n = JSON_LENGTH(p_data);
+
+    WHILE i < n DO
+        SET @generic_name = JSON_UNQUOTE(JSON_EXTRACT(p_data, 'generic_name'));
+        SET @brand_name = JSON_UNQUOTE(JSON_EXTRACT(p_data, 'brand_name'));
+        SET @drug_class = JSON_UNQUOTE(JSON_EXTRACT(p_data, 'drug_class'));
+        SET @form = JSON_UNQUOTE(JSON_EXTRACT(p_data, 'form'));
+        SET @standard_dose = JSON_UNQUOTE(JSON_EXTRACT(p_data, 'standard_dose'));
+        SET @controlled_substance = JSON_EXTRACT(p_data, 'controlled_substance');
+        SET @requires_prescription = JSON_EXTRACT(p_data, 'requires_prescription');
+        SET @stock_quantity = JSON_UNQUOTE(JSON_EXTRACT(p_data, 'stock_quantity'));
+        SET @unit_of_measure = JSON_UNQUOTE(JSON_EXTRACT(p_data, 'unit_of_measure'));
+        SET @manufacturer = JSON_UNQUOTE(JSON_EXTRACT(p_data, 'manufacturer'));
+        SET @storage_requirements = JSON_UNQUOTE(JSON_EXTRACT(p_data, 'storage_requirements'));
 
         INSERT INTO medicine (generic_name, brand_name, drug_class, form, standard_dose, controlled_substance, requires_prescription, stock_quantity, unit_of_measure, manufacturer, storage_requirements)
-        VALUES (
-            v_generic_name,
-            v_brand_name,
-            v_drug_class,
-            v_form,
-            v_standard_dose,
-            FALSE,
-            TRUE,
-            FLOOR(100 + RAND() * 9900),
-            'mg',
-            v_manufacturer,
-            'room temperature'
-        );
+        VALUES (@generic_name, @brand_name, @drug_class, @form, @standard_dose, @controlled_substance, @requires_prescription, @stock_quantity, @unit_of_measure, @manufacturer, @storage_requirements);
 
         SET i = i + 1;
     END WHILE;
