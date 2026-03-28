@@ -1,6 +1,13 @@
 <?php
 
 namespace account;
+
+use pharmaceutical\Medicine;
+use pharmaceutical\Vaccine;
+
+require_once __DIR__ . '/../pharmaceutical/Medicine.php';
+require_once __DIR__ . '/../pharmaceutical/Vaccine.php';
+
 trait PrescribableTrait
 {
     public function createPrescription(
@@ -33,16 +40,17 @@ trait PrescribableTrait
     }
 
     public function addPrescriptionItem(
-        int     $prescription_id,
-        int     $medicine_id,
-        string  $route,
-        string  $dosage,
-        string  $frequency,
-        int     $duration_days,
-        int     $quantity_prescribed,
-        ?string $instructions = null
+        int      $prescription_id,
+        Medicine $medicine,
+        string   $route,
+        string   $dosage,
+        string   $frequency,
+        int      $duration_days,
+        int      $quantity_prescribed,
+        ?string  $instructions = null
     ): bool
     {
+        $medicine_id = $medicine->getId();
         $stmt = $this->conn->prepare(
             "CALL add_prescription_item(?, ?, ?, ?, ?, ?, ?, ?)"
         );
@@ -52,6 +60,39 @@ trait PrescribableTrait
         $stmt->bind_param("iisssiis",
             $prescription_id,
             $medicine_id,
+            $route,
+            $dosage,
+            $frequency,
+            $duration_days,
+            $quantity_prescribed,
+            $instructions
+        );
+        $ok = $stmt->execute();
+        $stmt->close();
+        return $ok;
+    }
+
+    public function addVaccineItem(
+        int     $prescription_id,
+        Vaccine $vaccine,
+        string  $route,
+        string  $dosage,
+        string  $frequency,
+        int     $duration_days,
+        int     $quantity_prescribed,
+        ?string $instructions = null
+    ): bool
+    {
+        $vaccine_id = $vaccine->getId();
+        $stmt = $this->conn->prepare(
+            "CALL add_vaccine_item(?, ?, ?, ?, ?, ?, ?, ?)"
+        );
+        if (!$stmt) {
+            return false;
+        }
+        $stmt->bind_param("iisssiis",
+            $prescription_id,
+            $vaccine_id,
             $route,
             $dosage,
             $frequency,

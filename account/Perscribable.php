@@ -1,6 +1,10 @@
 <?php
 
 namespace account;
+
+use pharmaceutical\Medicine;
+use pharmaceutical\Vaccine;
+
 interface Perscribable
 {
     /**
@@ -18,8 +22,22 @@ interface Perscribable
      * Add a medicine line item to an existing prescription.
      */
     public function addPrescriptionItem(
+        int      $prescription_id,
+        Medicine $medicine,
+        string   $route,
+        string   $dosage,
+        string   $frequency,
+        int      $duration_days,
+        int      $quantity_prescribed,
+        ?string  $instructions = null
+    ): bool;
+
+    /**
+     * Add a vaccine line item to an existing prescription.
+     */
+    public function addVaccineItem(
         int     $prescription_id,
-        int     $medicine_id,
+        Vaccine $vaccine,
         string  $route,
         string  $dosage,
         string  $frequency,
