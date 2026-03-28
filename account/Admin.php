@@ -169,6 +169,7 @@ class Admin extends Account implements Employed
 
         return $admins;
     }
+
     /**
      * Terminate an employee from an institution (soft delete)
      *
@@ -189,6 +190,7 @@ class Admin extends Account implements Employed
 
         return $success;
     }
+
     /**
      * Update an employee's role at an institution
      *
