@@ -504,3 +504,206 @@ CREATE OR REPLACE VIEW view_vaccine_count AS
 SELECT vaccine_count AS count, type FROM view_vaccines_by_type;
 
 
+-- View: view_all_employees - all non-deleted users with staff roles
+CREATE OR REPLACE VIEW view_all_employees AS
+SELECT
+    u.id,
+    u.firstname,
+    u.lastname,
+    u.middlename,
+    u.prefix,
+    u.suffix,
+    u.gender,
+    u.phone,
+    u.location,
+    u.email,
+    u.age,
+    u.status,
+    u.blood,
+    u.employid,
+    u.created_at,
+    ur.role,
+    ur.assigned_at
+FROM users u
+JOIN user_role ur ON ur.user_id = u.id
+WHERE u.deleted_at IS NULL
+  AND ur.role != 'PATIENT';
+
+-- View: view_admins - all administrators
+CREATE OR REPLACE VIEW view_admins AS
+SELECT
+    u.id,
+    u.firstname,
+    u.lastname,
+    u.middlename,
+    u.prefix,
+    u.suffix,
+    u.gender,
+    u.phone,
+    u.location,
+    u.email,
+    u.age,
+    u.status,
+    u.adminid,
+    u.created_at,
+    ur.assigned_at
+FROM users u
+JOIN user_role ur ON ur.user_id = u.id
+WHERE u.deleted_at IS NULL
+  AND ur.role = 'ADMIN';
+
+-- View: view_doctors - all physicians and surgeons
+CREATE OR REPLACE VIEW view_doctors AS
+SELECT
+    u.id,
+    u.firstname,
+    u.lastname,
+    u.middlename,
+    u.prefix,
+    u.suffix,
+    u.gender,
+    u.phone,
+    u.location,
+    u.email,
+    u.age,
+    u.status,
+    u.employid,
+    u.created_at,
+    ur.role,
+    ur.assigned_at
+FROM users u
+JOIN user_role ur ON ur.user_id = u.id
+WHERE u.deleted_at IS NULL
+  AND ur.role IN ('PHYSICIAN', 'SURGEON');
+
+-- View: view_nurses - all nurses
+CREATE OR REPLACE VIEW view_nurses AS
+SELECT
+    u.id,
+    u.firstname,
+    u.lastname,
+    u.middlename,
+    u.prefix,
+    u.suffix,
+    u.gender,
+    u.phone,
+    u.location,
+    u.email,
+    u.age,
+    u.status,
+    u.employid,
+    u.created_at,
+    ur.role,
+    ur.assigned_at
+FROM users u
+JOIN user_role ur ON ur.user_id = u.id
+WHERE u.deleted_at IS NULL
+  AND ur.role = 'NURSE';
+
+-- View: view_pharmacists - all pharmacists
+CREATE OR REPLACE VIEW view_pharmacists AS
+SELECT
+    u.id,
+    u.firstname,
+    u.lastname,
+    u.middlename,
+    u.prefix,
+    u.suffix,
+    u.gender,
+    u.phone,
+    u.location,
+    u.email,
+    u.age,
+    u.status,
+    u.employid,
+    u.created_at,
+    ur.role,
+    ur.assigned_at
+FROM users u
+JOIN user_role ur ON ur.user_id = u.id
+WHERE u.deleted_at IS NULL
+  AND ur.role = 'PHARMACIST';
+
+-- View: view_staff_by_institution - staff members at a specific institution
+CREATE OR REPLACE VIEW view_staff_by_institution AS
+SELECT
+    iu.id AS institution_user_id,
+    iu.institution_id,
+    i.name AS institution_name,
+    iu.user_id,
+    u.firstname,
+    u.lastname,
+    u.email,
+    u.phone,
+    iu.role,
+    iu.created_at
+FROM institution_user iu
+JOIN institution i ON i.id = iu.institution_id
+JOIN users u ON u.id = iu.user_id
+WHERE iu.deleted_at IS NULL
+  AND i.deleted_at IS NULL;
+
+--- ============================================================
+--- Employee Views for Admin
+--- ============================================================
+
+-- View: view_institution_staff - all staff members at an institution (excluding patients)
+CREATE OR REPLACE VIEW view_institution_staff AS
+SELECT
+    iu.id,
+    iu.institution_id,
+    iu.user_id,
+    iu.role,
+    iu.created_at,
+    iu.updated_at,
+    u.firstname,
+    u.lastname,
+    u.middlename,
+    u.prefix,
+    u.suffix,
+    u.gender,
+    u.phone,
+    u.email,
+    u.location,
+    u.employid
+FROM institution_user iu
+         JOIN users u ON u.id = iu.user_id
+WHERE iu.deleted_at IS NULL AND u.deleted_at IS NULL;
+
+-- View: view_institution_doctors - doctors at an institution
+CREATE OR REPLACE VIEW view_institution_doctors AS
+SELECT * FROM view_institution_staff
+WHERE role IN ('PHYSICIAN', 'SURGEON', 'RADIOLOGIST');
+
+-- View: view_institution_nurses - nurses at an institution
+CREATE OR REPLACE VIEW view_institution_nurses AS
+SELECT * FROM view_institution_staff
+WHERE role = 'NURSE';
+
+-- View: view_institution_pharmacists - pharmacists at an institution
+CREATE OR REPLACE VIEW view_institution_pharmacists AS
+SELECT * FROM view_institution_staff
+WHERE role = 'PHARMACIST';
+
+-- View: view_institution_admins - other admins (not current user)
+CREATE OR REPLACE VIEW view_institution_admins AS
+SELECT * FROM view_institution_staff
+WHERE role = 'ADMIN';
+
+-- View: view_all_staff - all staff roles across all institutions
+CREATE OR REPLACE VIEW view_all_staff AS
+SELECT
+    iu.user_id,
+    iu.role,
+    iu.institution_id,
+    i.name AS institution_name,
+    u.firstname,
+    u.lastname,
+    u.email,
+    u.employid
+FROM institution_user iu
+         JOIN institution i ON i.id = iu.institution_id
+         JOIN users u ON u.id = iu.user_id
+WHERE iu.deleted_at IS NULL AND u.deleted_at IS NULL AND i.deleted_at IS NULL;
+
+
