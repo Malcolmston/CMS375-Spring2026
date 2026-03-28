@@ -619,3 +619,55 @@ BEGIN
     SET res = ROW_COUNT() > 0;
     COMMIT;
 END;
+
+DROP PROCEDURE IF EXISTS update_employee_role;
+
+CREATE PROCEDURE update_employee_role(
+    IN p_institution_user_id INT,
+    IN p_new_role VARCHAR(255),
+    OUT res BOOLEAN
+)
+BEGIN
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+        BEGIN
+            ROLLBACK;
+            SET res = FALSE;
+            RESIGNAL;
+        END;
+
+    START TRANSACTION;
+
+    UPDATE institution_user
+    SET role = p_new_role, updated_at = NOW()
+    WHERE id = p_institution_user_id
+      AND deleted_at IS NULL;
+
+    SET res = ROW_COUNT() > 0;
+    COMMIT;
+END;
+
+DROP PROCEDURE IF EXISTS update_employee_role;
+
+CREATE PROCEDURE update_employee_role(
+    IN p_institution_user_id INT,
+    IN p_new_role VARCHAR(255),
+    OUT res BOOLEAN
+)
+BEGIN
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+        BEGIN
+            ROLLBACK;
+            SET res = FALSE;
+            RESIGNAL;
+        END;
+
+    START TRANSACTION;
+
+    UPDATE institution_user
+    SET role = p_new_role, updated_at = NOW()
+    WHERE id = p_institution_user_id
+      AND deleted_at IS NULL;
+
+    SET res = ROW_COUNT() > 0;
+    COMMIT;
+END;
