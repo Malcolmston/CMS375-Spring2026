@@ -178,17 +178,20 @@ class Admin extends Account implements Employed
      */
     public function terminateEmployee(int $institutionUserId): bool
     {
-        $sql = "UPDATE institution_user SET deleted_at = NOW() WHERE id = ? AND deleted_at IS NULL";
+        $sql = "CALL unassign_institution(?, @res)";
 
         if (!($stmt = $this->getConnection()->prepare($sql))) {
             return false;
         }
 
         $stmt->bind_param('i', $institutionUserId);
-        $success = $stmt->execute();
+        $stmt->execute();
         $stmt->close();
 
-        return $success;
+        $result = $this->getConnection()->query("SELECT @res AS result");
+        $row = $result->fetch_assoc();
+
+        return $row['result'] ?? false;
     }
 
     /**
@@ -200,17 +203,20 @@ class Admin extends Account implements Employed
      */
     public function updateEmployeeRole(int $institutionUserId, string $newRole): bool
     {
-        $sql = "UPDATE institution_user SET role = ? WHERE id = ? AND deleted_at IS NULL";
+        $sql = "CALL update_employee_role(?, ?, @res)";
 
         if (!($stmt = $this->getConnection()->prepare($sql))) {
             return false;
         }
 
-        $stmt->bind_param('si', $newRole, $institutionUserId);
-        $success = $stmt->execute();
+        $stmt->bind_param('is', $institutionUserId, $newRole);
+        $stmt->execute();
         $stmt->close();
 
-        return $success;
+        $result = $this->getConnection()->query("SELECT @res AS result");
+        $row = $result->fetch_assoc();
+
+        return $row['result'] ?? false;
     }
 
     /**
@@ -284,17 +290,22 @@ class Admin extends Account implements Employed
      */
     public function fire(int $institutionUserId): bool
     {
-        $sql = "UPDATE institution_user SET deleted_at = NOW() WHERE id = ? AND deleted_at IS NULL";
+        $sql = "CALL unassign_institution(?, @res)";
 
         if (!($stmt = $this->getConnection()->prepare($sql))) {
             return false;
         }
 
         $stmt->bind_param('i', $institutionUserId);
-        $success = $stmt->execute();
+        $stmt->execute();
+
         $stmt->close();
 
-        return $success;
+        // Get the result from the OUT parameter
+        $result = $this->getConnection()->query("SELECT @res AS result");
+        $row = $result->fetch_assoc();
+
+        return $row['result'] ?? false;
     }
 
     /**
@@ -306,17 +317,20 @@ class Admin extends Account implements Employed
      */
     public function updateEmployeeRole(int $institutionUserId, string $newRole): bool
     {
-        $sql = "UPDATE institution_user SET role = ? WHERE id = ? AND deleted_at IS NULL";
+        $sql = "CALL update_employee_role(?, ?, @res)";
 
         if (!($stmt = $this->getConnection()->prepare($sql))) {
             return false;
         }
 
-        $stmt->bind_param('si', $newRole, $institutionUserId);
-        $success = $stmt->execute();
+        $stmt->bind_param('is', $institutionUserId, $newRole);
+        $stmt->execute();
         $stmt->close();
 
-        return $success;
+        $result = $this->getConnection()->query("SELECT @res AS result");
+        $row = $result->fetch_assoc();
+
+        return $row['result'] ?? false;
     }
 
     /**
