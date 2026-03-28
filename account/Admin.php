@@ -250,4 +250,26 @@ class Admin extends Account implements Employed
 
         return $success;
     }
+    /**
+     * Get details of a specific employee at an institution
+     *
+     * @param int $institutionUserId The institution_user ID
+     * @return array|false Employee details or false on failure
+     */
+    public function viewEmployee(int $institutionUserId): array|false
+    {
+        $sql = "SELECT * FROM view_staff_by_institution WHERE institution_user_id = ? LIMIT 1";
+
+        if (!($stmt = $this->getConnection()->prepare($sql))) {
+            return false;
+        }
+
+        $stmt->bind_param('i', $institutionUserId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $employee = $result->fetch_assoc();
+        $stmt->close();
+
+        return $employee;
+    }
 }
