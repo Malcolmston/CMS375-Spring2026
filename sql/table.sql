@@ -59,6 +59,7 @@ CREATE TABLE IF NOT EXISTS users (
 );
 
 CREATE TABLE IF NOT EXISTS user_role (
+ id INTEGER PRIMARY KEY AUTO_INCREMENT COMMENT 'unique role assignment id',
  user_id INTEGER NOT NULL COMMENT 'id of the user',
  role ENUM(
      'PATIENT','PHYSICIAN','NURSE','PHARMACIST','RADIOLOGIST','LAB_TECH',
@@ -67,7 +68,7 @@ CREATE TABLE IF NOT EXISTS user_role (
 
  assigned_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'when the role was assigned',
 
- PRIMARY KEY (user_id, role),
+ UNIQUE KEY uk_user_role (user_id, role),
  CONSTRAINT fk_user_role_user FOREIGN KEY (user_id)
      REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE
 );
@@ -299,6 +300,29 @@ CREATE TABLE IF NOT EXISTS institution (
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     deleted_at TIMESTAMP DEFAULT NULL
+);
+
+CREATE TABLE IF NOT EXISTS institution_user
+(
+    id             INTEGER PRIMARY KEY AUTO_INCREMENT,
+    institution_id INTEGER   NOT NULL,
+    user_id        INTEGER   NOT NULL,
+    role           ENUM (
+        'PATIENT','PHYSICIAN','NURSE','PHARMACIST','RADIOLOGIST','LAB_TECH',
+        'SURGEON','RECEPTIONIST','ADMIN','BILLING','EMS','THERAPIST'
+        )                    NOT NULL,
+
+    created_at     TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at     TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted_at     TIMESTAMP          DEFAULT NULL,
+
+    CONSTRAINT fk_institution
+        FOREIGN KEY (institution_id) REFERENCES institution (id)
+            ON DELETE CASCADE ON UPDATE RESTRICT,
+
+    CONSTRAINT fk_user_institution
+        FOREIGN KEY (user_id) REFERENCES users (id)
+            ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS visit (
