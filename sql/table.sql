@@ -192,7 +192,10 @@ CREATE TABLE IF NOT EXISTS medicine(
                                            'keep away from light',
                                            'keep dry',
                                            'refrigerate, keep away from light'
-                                           )
+                                           ),
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+     deleted_at TIMESTAMP DEFAULT NULL
 );
 
 CREATE TABLE IF NOT EXISTS prescription_item(
@@ -230,6 +233,10 @@ CREATE TABLE IF NOT EXISTS prescription_item(
     quantity_prescribed INTEGER NOT NULL,
     instructions VARCHAR(500),
     filled_date DATE,
+
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+     deleted_at TIMESTAMP DEFAULT NULL,
     
     CONSTRAINT fk_prescription_id
         FOREIGN KEY (prescription_id) REFERENCES prescription(id),
@@ -242,6 +249,10 @@ CREATE TABLE IF NOT EXISTS parent_relationship(
     parent_id INTEGER NOT NULL,
     patient_id INTEGER NOT NULL,
     relationship ENUM('Mother', 'Father', 'Legal Guardian') NOT NULL,
+
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+     deleted_at TIMESTAMP DEFAULT NULL,
 
     CONSTRAINT fk_parent_id
         FOREIGN KEY (parent_id) REFERENCES users(id),
@@ -256,6 +267,10 @@ CREATE TABLE IF NOT EXISTS medicine_interaction(
     severity VARCHAR(50),
     description VARCHAR(500),
     recommendation VARCHAR(500),
+
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+     deleted_at TIMESTAMP DEFAULT NULL,
 
     CONSTRAINT fk_medicine_id_1
         FOREIGN KEY (medicine_1) REFERENCES medicine(id),
@@ -329,6 +344,7 @@ CREATE TABLE IF NOT EXISTS doctor_visit (
     diagnosis_summary VARCHAR(255) DEFAULT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP DEFAULT NULL,
 
     CONSTRAINT fk_doctor_visit_visit
         FOREIGN KEY (visit_id) REFERENCES visit(id)
@@ -370,6 +386,7 @@ CREATE TABLE IF NOT EXISTS user_allergy (
     ) NOT NULL DEFAULT 'MILD',
     notes VARCHAR(255) DEFAULT NULL,
     recorded_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
     CONSTRAINT fk_user_allergy_user
         FOREIGN KEY (user_id) REFERENCES users(id)

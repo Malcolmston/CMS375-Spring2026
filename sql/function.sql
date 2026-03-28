@@ -907,7 +907,7 @@ DROP FUNCTION IF EXISTS count_released_vaccines;
 
 CREATE FUNCTION count_released_vaccines()
     RETURNS INT
-    READS SQL DATA
+    DETERMINISTIC
 BEGIN
     DECLARE v_count INT;
 
@@ -916,4 +916,283 @@ BEGIN
     WHERE development = 'RELEASED';
 
     RETURN v_count;
+END;
+
+-- ============================================================
+-- MEDICINE Functions
+-- ============================================================
+-- has_medicine checks if a medicine exists by ID
+DROP FUNCTION IF EXISTS has_medicine;
+
+CREATE FUNCTION has_medicine(p_medicine_id INT)
+    RETURNS BOOLEAN
+    DETERMINISTIC
+BEGIN
+    DECLARE v_exists BOOLEAN DEFAULT FALSE;
+
+    SELECT EXISTS(SELECT 1 FROM medicine m WHERE m.id = p_medicine_id AND m.deleted_at IS NULL) INTO v_exists;
+
+    RETURN v_exists;
+END;
+
+-- get_medicine returns medicine details by ID
+DROP FUNCTION IF EXISTS get_medicine;
+
+CREATE FUNCTION get_medicine(p_medicine_id INT)
+    RETURNS JSON
+    READS SQL DATA
+BEGIN
+    RETURN (
+        SELECT JSON_OBJECT(
+            'id', m.id,
+            'generic_name', m.generic_name,
+            'brand_name', m.brand_name,
+            'drug_class', m.drug_class,
+            'form', m.form,
+            'standard_dose', m.standard_dose,
+            'controlled_substance', m.controlled_substance,
+            'requires_prescription', m.requires_prescription,
+            'stock_quantity', m.stock_quantity,
+            'unit_of_measure', m.unit_of_measure,
+            'manufacturer', m.manufacturer,
+            'storage_requirements', m.storage_requirements
+        )
+        FROM medicine m
+        WHERE m.id = p_medicine_id
+          AND m.deleted_at IS NULL
+    );
+END;
+
+-- get_medicines_by_class returns all medicines of a specific drug class
+DROP FUNCTION IF EXISTS get_medicines_by_class;
+
+CREATE FUNCTION get_medicines_by_class(p_drug_class VARCHAR(50))
+    RETURNS JSON
+    READS SQL DATA
+BEGIN
+    RETURN (
+        SELECT JSON_ARRAYAGG(
+            JSON_OBJECT(
+                'id', m.id,
+                'generic_name', m.generic_name,
+                'brand_name', m.brand_name,
+                'form', m.form,
+                'standard_dose', m.standard_dose,
+                'stock_quantity', m.stock_quantity
+            )
+        )
+        FROM medicine m
+        WHERE m.drug_class = p_drug_class
+          AND m.deleted_at IS NULL
+    );
+END;
+
+-- get_medicines_by_form returns all medicines of a specific form
+DROP FUNCTION IF EXISTS get_medicines_by_form;
+
+CREATE FUNCTION get_medicines_by_form(p_form VARCHAR(50))
+    RETURNS JSON
+    READS SQL DATA
+BEGIN
+    RETURN (
+        SELECT JSON_ARRAYAGG(
+            JSON_OBJECT(
+                'id', m.id,
+                'generic_name', m.generic_name,
+                'brand_name', m.brand_name,
+                'standard_dose', m.standard_dose,
+                'stock_quantity', m.stock_quantity
+            )
+        )
+        FROM medicine m
+        WHERE m.form = p_form
+          AND m.deleted_at IS NULL
+    );
+END;
+
+-- count_medicines_by_class counts medicines by drug class
+DROP FUNCTION IF EXISTS count_medicines_by_class;
+
+CREATE FUNCTION count_medicines_by_class(p_drug_class VARCHAR(50))
+    RETURNS INT
+    READS SQL DATA
+BEGIN
+    DECLARE v_count INT DEFAULT 0;
+
+    SELECT COUNT(*) INTO v_count
+    FROM medicine m
+    WHERE m.drug_class = p_drug_class
+      AND m.deleted_at IS NULL;
+
+    RETURN v_count;
+END;
+
+-- ============================================================
+-- MEDICINE Functions
+-- ============================================================
+DROP FUNCTION IF EXISTS medicine_exists;
+
+CREATE FUNCTION medicine_exists(p_medicine_id INT)
+    RETURNS BOOLEAN
+    READS SQL DATA
+BEGIN
+    DECLARE v_exists BOOLEAN DEFAULT FALSE;
+
+    SELECT EXISTS(SELECT 1 FROM medicine m WHERE m.id = p_medicine_id AND m.deleted_at IS NULL) INTO v_exists;
+
+    RETURN v_exists;
+END;
+
+DROP FUNCTION IF EXISTS get_medicine;
+
+CREATE FUNCTION get_medicine(p_medicine_id INT)
+    RETURNS JSON
+    READS SQL DATA
+BEGIN
+    RETURN (
+        SELECT JSON_OBJECT(
+            'id', m.id,
+            'generic_name', m.generic_name,
+            'brand_name', m.brand_name,
+            'drug_class', m.drug_class,
+            'form', m.form,
+            'standard_dose', m.standard_dose,
+            'controlled_substance', m.controlled_substance,
+            'requires_prescription', m.requires_prescription,
+            'stock_quantity', m.stock_quantity,
+            'manufacturer', m.manufacturer
+        )
+        FROM medicine m
+        WHERE m.id = p_medicine_id
+          AND m.deleted_at IS NULL
+    );
+END;
+
+DROP FUNCTION IF EXISTS get_medicines_by_class;
+
+CREATE FUNCTION get_medicines_by_class(p_drug_class VARCHAR(50))
+    RETURNS JSON
+    READS SQL DATA
+BEGIN
+    RETURN (
+        SELECT JSON_ARRAYAGG(
+            JSON_OBJECT(
+                'id', m.id,
+                'generic_name', m.generic_name,
+                'brand_name', m.brand_name,
+                'form', m.form,
+                'standard_dose', m.standard_dose
+            )
+        )
+        FROM medicine m
+        WHERE m.drug_class = p_drug_class
+          AND m.deleted_at IS NULL
+    );
+END;
+
+DROP FUNCTION IF EXISTS get_medicines_by_form;
+
+CREATE FUNCTION get_medicines_by_form(p_form VARCHAR(50))
+    RETURNS JSON
+    READS SQL DATA
+BEGIN
+    RETURN (
+        SELECT JSON_ARRAYAGG(
+            JSON_OBJECT(
+                'id', m.id,
+                'generic_name', m.generic_name,
+                'brand_name', m.brand_name,
+                'drug_class', m.drug_class,
+                'standard_dose', m.standard_dose
+            )
+        )
+        FROM medicine m
+        WHERE m.form = p_form
+          AND m.deleted_at IS NULL
+    );
+END;
+
+DROP FUNCTION IF EXISTS check_low_stock;
+
+CREATE FUNCTION check_low_stock(p_threshold INT)
+    RETURNS INT
+    READS SQL DATA
+BEGIN
+    DECLARE v_count INT DEFAULT 0;
+
+    SELECT COUNT(*) INTO v_count
+    FROM medicine m
+    WHERE m.stock_quantity < p_threshold
+      AND m.deleted_at IS NULL;
+
+    RETURN v_count;
+END;
+
+-- ============================================================
+-- MEDICINE Search Function
+-- ============================================================
+DROP FUNCTION IF EXISTS search_medicine;
+
+CREATE FUNCTION search_medicine(p_search_term VARCHAR(100))
+    RETURNS JSON
+    READS SQL DATA
+BEGIN
+    DECLARE v_search VARCHAR(110);
+
+    SET v_search = CONCAT('%', p_search_term, '%');
+
+    RETURN (
+        SELECT JSON_ARRAYAGG(
+            JSON_OBJECT(
+                'id', m.id,
+                'generic_name', m.generic_name,
+                'brand_name', m.brand_name,
+                'drug_class', m.drug_class,
+                'form', m.form,
+                'standard_dose', m.standard_dose,
+                'stock_quantity', m.stock_quantity,
+                'manufacturer', m.manufacturer
+            )
+        )
+        FROM medicine m
+        WHERE (m.generic_name LIKE v_search OR m.brand_name LIKE v_search)
+          AND m.deleted_at IS NULL
+    );
+END;
+
+DROP FUNCTION IF EXISTS is_staff;
+
+CREATE FUNCTION is_staff(user_id INT)
+    RETURNS BOOLEAN
+    DETERMINISTIC
+BEGIN
+    DECLARE v_is_staff BOOLEAN DEFAULT FALSE;
+
+    SELECT TRUE
+    INTO v_is_staff
+    FROM user_role
+    WHERE user_role.user_id = user_id
+      AND role IN ('PHYSICIAN', 'NURSE', 'PHARMACIST', 'RADIOLOGIST', 'LAB_TECH',
+                   'SURGEON', 'RECEPTIONIST', 'ADMIN', 'BILLING', 'EMS', 'THERAPIST')
+    LIMIT 1;
+
+    RETURN COALESCE(v_is_staff, FALSE);
+END;
+
+DROP FUNCTION IF EXISTS is_admin;
+
+CREATE FUNCTION is_admin(user_id INT)
+    RETURNS BOOLEAN
+    DETERMINISTIC
+BEGIN
+    DECLARE v_is_admin BOOLEAN DEFAULT FALSE;
+
+    SELECT TRUE
+    INTO v_is_admin
+    FROM user_role
+    WHERE user_role.user_id = user_id
+      AND role = 'ADMIN'
+    LIMIT 1;
+
+    RETURN COALESCE(v_is_admin, FALSE);
 END;

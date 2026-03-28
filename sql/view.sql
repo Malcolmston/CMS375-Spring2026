@@ -408,6 +408,19 @@ CREATE OR REPLACE VIEW view_active_vaccines AS
 SELECT * FROM vaccine v
 WHERE v.deleted_at IS NULL;
 
+CREATE OR REPLACE VIEW view_active_out_vaccines AS
+SELECT * FROM view_active_vaccines
+         WHERE development = 'RELEASED'
+           AND status = 'Active';
+
+CREATE OR REPLACE VIEW view_active_medicines AS
+SELECT * FROM medicine m
+WHERE m.deleted_at IS NULL;
+
+-- View: view_medicine_search - search medicines (base view, use function for search)
+CREATE OR REPLACE VIEW view_medicine_search AS
+SELECT * FROM view_active_medicines;
+
 -- View: view_vaccine_details - returns vaccine details with status info
 CREATE OR REPLACE VIEW view_vaccine_details AS
 SELECT
@@ -462,6 +475,14 @@ SELECT
 FROM view_active_vaccines v
 GROUP BY v.development;
 
+-- View: view_vaccine_count_by_development - returns count of vaccines by development status
+CREATE OR REPLACE VIEW view_vaccine_count_by_development AS
+SELECT
+    v.development,
+    COUNT(*) AS count
+FROM view_active_vaccines v
+GROUP BY v.development;
+
 -- View: view_active_vaccines
 CREATE OR REPLACE VIEW view_active_vaccines AS
 SELECT * FROM vaccine
@@ -478,3 +499,8 @@ CREATE OR REPLACE VIEW view_discontinued_vaccines AS
 SELECT id, name, cvx_code, status, type, development, manufacturer, last_updated_date
 FROM vaccine
 WHERE development = 'DISCONTINUED' AND deleted_at IS NULL;
+
+CREATE OR REPLACE VIEW view_vaccine_count AS
+SELECT vaccine_count AS count, type FROM view_vaccines_by_type;
+
+
