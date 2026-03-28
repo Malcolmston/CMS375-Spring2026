@@ -252,6 +252,28 @@ class Admin extends Account implements Employed
 
         return $institutions;
     }
+
+    /**
+     * View all staff across all institutions
+     *
+     * @return array|false Array of all staff data or false on failure
+     */
+    public function viewAllStaff(): array|false
+    {
+        $sql = "SELECT * FROM view_all_staff";
+
+        if (!($stmt = $this->getConnection()->prepare($sql))) {
+            return false;
+        }
+
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $staff = $result->fetch_all(MYSQLI_ASSOC);
+        $stmt->close();
+
+        return $staff;
+    }
+
     /**
      * Fire/dismiss an employee from an institution
      *
