@@ -189,4 +189,25 @@ class Admin extends Account implements Employed
 
         return $success;
     }
+    /**
+     * Update an employee's role at an institution
+     *
+     * @param int    $institutionUserId The institution_user record ID
+     * @param string $newRole           The new role to assign
+     * @return bool True on success, false on failure
+     */
+    public function updateEmployeeRole(int $institutionUserId, string $newRole): bool
+    {
+        $sql = "UPDATE institution_user SET role = ? WHERE id = ? AND deleted_at IS NULL";
+
+        if (!($stmt = $this->getConnection()->prepare($sql))) {
+            return false;
+        }
+
+        $stmt->bind_param('si', $newRole, $institutionUserId);
+        $success = $stmt->execute();
+        $stmt->close();
+
+        return $success;
+    }
 }
