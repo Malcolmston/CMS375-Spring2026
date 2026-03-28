@@ -9,35 +9,34 @@ interface Perscribable
      */
     public function createPrescription(
         int    $patient_id,
-        ?int   $visit_id,
         string $notes,
-        string $start_date,
-        string $end_date
+        string $issue_date,
+        string $expire_date
     ): int|false;
 
     /**
      * Add a medicine line item to an existing prescription.
      */
     public function addPrescriptionItem(
-        int    $prescription_id,
-        int    $medicine_id,
-        string $route,
-        string $dose,
-        string $frequency,
-        int    $duration_days,
-        int    $refills,
-        string $quantity
+        int     $prescription_id,
+        int     $medicine_id,
+        string  $route,
+        string  $dosage,
+        string  $frequency,
+        int     $duration_days,
+        int     $quantity_prescribed,
+        ?string $instructions = null
     ): bool;
 
     /**
-     * Set a prescription's status to DISCONTINUED.
+     * Set a prescription's status to cancelled.
      */
     public function cancelPrescription(int $prescription_id): bool;
 
     /**
-     * Extend a prescription by updating its end date and resetting status to ACTIVE.
+     * Extend a prescription by updating its expire_date and resetting status to active.
      */
-    public function renewPrescription(int $prescription_id, string $end_date): bool;
+    public function renewPrescription(int $prescription_id, string $expire_date): bool;
 
     /**
      * Get all prescriptions (with their items) written for a specific patient.
