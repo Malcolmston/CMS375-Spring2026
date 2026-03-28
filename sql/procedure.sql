@@ -807,7 +807,7 @@ BEGIN
 END;
 
 -- ============================================================
--- add_prescription_item inserts a line item onto a prescription.
+-- add_prescription_item inserts a medicine line item onto a prescription.
 -- ============================================================
 DROP PROCEDURE IF EXISTS add_prescription_item;
 
@@ -826,6 +826,28 @@ BEGIN
         (prescription_id, medicine_id, route, dosage, frequency, duration_days, quantity_prescribed, instructions)
     VALUES
         (p_prescription_id, p_medicine_id, p_route, p_dosage, p_frequency, p_duration_days, p_quantity, p_instructions);
+END;
+
+-- ============================================================
+-- add_vaccine_item inserts a vaccine line item onto a prescription.
+-- ============================================================
+DROP PROCEDURE IF EXISTS add_vaccine_item;
+
+CREATE PROCEDURE add_vaccine_item(
+    IN p_prescription_id INT,
+    IN p_vaccine_id      INT,
+    IN p_route           VARCHAR(50),
+    IN p_dosage          VARCHAR(50),
+    IN p_frequency       VARCHAR(50),
+    IN p_duration_days   INT,
+    IN p_quantity        INT,
+    IN p_instructions    VARCHAR(500)
+)
+BEGIN
+    INSERT INTO prescription_item
+        (prescription_id, vaccine_id, route, dosage, frequency, duration_days, quantity_prescribed, instructions)
+    VALUES
+        (p_prescription_id, p_vaccine_id, p_route, p_dosage, p_frequency, p_duration_days, p_quantity, p_instructions);
 END;
 
 -- ============================================================
