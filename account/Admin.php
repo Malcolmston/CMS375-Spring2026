@@ -210,4 +210,24 @@ class Admin extends Account implements Employed
 
         return $success;
     }
+    /**
+     * View all institutions
+     *
+     * @return array|false Array of institution data or false on failure
+     */
+    public function viewAllInstitutions(): array|false
+    {
+        $sql = "SELECT * FROM view_active_institutions";
+
+        if (!($stmt = $this->getConnection()->prepare($sql))) {
+            return false;
+        }
+
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $institutions = $result->fetch_all(MYSQLI_ASSOC);
+        $stmt->close();
+
+        return $institutions;
+    }
 }
