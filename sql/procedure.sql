@@ -594,3 +594,28 @@ BEGIN
     SET res = ROW_COUNT() > 0;
     COMMIT;
 END;
+
+DROP PROCEDURE IF EXISTS unassign_institution;
+
+CREATE PROCEDURE unassign_institution(
+    IN p_institution_user_id INT,
+    OUT res BOOLEAN
+)
+BEGIN
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+        BEGIN
+            ROLLBACK;
+            SET res = FALSE;
+            RESIGNAL;
+        END;
+
+    START TRANSACTION;
+
+    UPDATE institution_user
+    SET deleted_at = NOW()
+    WHERE id = p_institution_user_id
+      AND deleted_at IS NULL;
+
+    SET res = ROW_COUNT() > 0;
+    COMMIT;
+END;
