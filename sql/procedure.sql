@@ -480,6 +480,106 @@ BEGIN
 END;
 
 -- ============================================================
+-- VACCINE Insert/Update Procedures
+-- ============================================================
+DROP PROCEDURE IF EXISTS insert_vaccine;
+
+CREATE PROCEDURE insert_vaccine(
+    IN p_name VARCHAR(1024),
+    IN p_cvx_code VARCHAR(20),
+    IN p_status VARCHAR(50),
+    IN p_last_updated_date DATE,
+    IN p_manufacturer VARCHAR(255),
+    IN p_type VARCHAR(50),
+    IN p_development VARCHAR(50),
+    IN p_recommended_age VARCHAR(100),
+    IN p_dose_count INTEGER
+)
+BEGIN
+    INSERT INTO vaccine (name, cvx_code, status, last_updated_date, manufacturer, type, development, recommended_age, dose_count)
+    VALUES (p_name, p_cvx_code, p_status, p_last_updated_date, p_manufacturer, p_type, p_development, p_recommended_age, p_dose_count);
+END;
+
+DROP PROCEDURE IF EXISTS insert_vaccine_batch;
+
+CREATE PROCEDURE insert_vaccine_batch(
+    IN p_data JSON
+)
+BEGIN
+    DECLARE i INT DEFAULT 0;
+    DECLARE n INT;
+
+    SET n = JSON_LENGTH(p_data);
+
+    WHILE i < n
+        DO
+            SET @name = JSON_UNQUOTE(JSON_EXTRACT(p_data, CONCAT('$[', i, '].name')));
+            SET @cvx_code = JSON_UNQUOTE(JSON_EXTRACT(p_data, CONCAT('$[', i, '].cvx_code')));
+            SET @status = JSON_UNQUOTE(JSON_EXTRACT(p_data, CONCAT('$[', i, '].status')));
+            SET @last_updated_date = JSON_UNQUOTE(JSON_EXTRACT(p_data, CONCAT('$[', i, '].last_updated_date')));
+            SET @manufacturer = JSON_UNQUOTE(JSON_EXTRACT(p_data, CONCAT('$[', i, '].manufacturer')));
+            SET @type = JSON_UNQUOTE(JSON_EXTRACT(p_data, CONCAT('$[', i, '].type')));
+            SET @development = JSON_UNQUOTE(JSON_EXTRACT(p_data, CONCAT('$[', i, '].development')));
+            SET @recommended_age = JSON_UNQUOTE(JSON_EXTRACT(p_data, CONCAT('$[', i, '].recommended_age')));
+            SET @dose_count = JSON_UNQUOTE(JSON_EXTRACT(p_data, CONCAT('$[', i, '].dose_count')));
+
+            CALL insert_vaccine(@name, @cvx_code, @status, @last_updated_date, @manufacturer, @type, @development, @recommended_age, @dose_count);
+
+            SET i = i + 1;
+        END WHILE;
+END;
+
+-- ============================================================
+-- VACCINE Insert/Update Procedures
+-- ============================================================
+DROP PROCEDURE IF EXISTS insert_vaccine;
+
+CREATE PROCEDURE insert_vaccine(
+    IN p_name VARCHAR(1024),
+    IN p_cvx_code VARCHAR(20),
+    IN p_status VARCHAR(50),
+    IN p_last_updated_date DATE,
+    IN p_manufacturer VARCHAR(255),
+    IN p_type VARCHAR(50),
+    IN p_development VARCHAR(50),
+    IN p_recommended_age VARCHAR(100),
+    IN p_dose_count INTEGER,
+    IN p_lethal_dose_mg_per_kg DECIMAL(10,3),
+    IN p_lethal_dose_route VARCHAR(50),
+    IN p_lethal_dose_source VARCHAR(255),
+    IN p_extra VARCHAR(2000)
+)
+BEGIN
+    INSERT INTO vaccine (name, cvx_code, status, last_updated_date, manufacturer, type, development, recommended_age, dose_count, lethal_dose_mg_per_kg, lethal_dose_route, lethal_dose_source, extra)
+    VALUES (p_name, p_cvx_code, p_status, p_last_updated_date, p_manufacturer, p_type, p_development, p_recommended_age, p_dose_count, p_lethal_dose_mg_per_kg, p_lethal_dose_route, p_lethal_dose_source, p_extra);
+END;
+
+-- ============================================================
+-- VACCINE Insert/Update Procedures
+-- ============================================================
+DROP PROCEDURE IF EXISTS insert_vaccine;
+
+CREATE PROCEDURE insert_vaccine(
+    IN p_name VARCHAR(1024),
+    IN p_cvx_code VARCHAR(20),
+    IN p_status VARCHAR(50),
+    IN p_last_updated_date DATE,
+    IN p_manufacturer VARCHAR(255),
+    IN p_type VARCHAR(50),
+    IN p_development VARCHAR(50),
+    IN p_recommended_age VARCHAR(100),
+    IN p_dose_count INTEGER,
+    IN p_lethal_dose_mg_per_kg DECIMAL(10,3),
+    IN p_lethal_dose_route VARCHAR(50),
+    IN p_lethal_dose_source VARCHAR(255),
+    IN p_extra VARCHAR(2000)
+)
+BEGIN
+    INSERT INTO vaccine (name, cvx_code, status, last_updated_date, manufacturer, type, development, recommended_age, dose_count, lethal_dose_mg_per_kg, lethal_dose_route, lethal_dose_source, extra)
+    VALUES (p_name, p_cvx_code, p_status, p_last_updated_date, p_manufacturer, p_type, p_development, p_recommended_age, p_dose_count, p_lethal_dose_mg_per_kg, p_lethal_dose_route, p_lethal_dose_source, p_extra);
+END;
+
+-- ============================================================
 -- MEDICINE Insert/Update Procedures
 -- ============================================================
 DROP PROCEDURE IF EXISTS insert_medicine;
