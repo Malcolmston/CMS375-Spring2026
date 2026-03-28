@@ -169,4 +169,24 @@ class Admin extends Account implements Employed
 
         return $admins;
     }
+    /**
+     * Terminate an employee from an institution (soft delete)
+     *
+     * @param int $institutionUserId The institution_user record ID to terminate
+     * @return bool True on success, false on failure
+     */
+    public function terminateEmployee(int $institutionUserId): bool
+    {
+        $sql = "UPDATE institution_user SET deleted_at = NOW() WHERE id = ? AND deleted_at IS NULL";
+
+        if (!($stmt = $this->getConnection()->prepare($sql))) {
+            return false;
+        }
+
+        $stmt->bind_param('i', $institutionUserId);
+        $success = $stmt->execute();
+        $stmt->close();
+
+        return $success;
+    }
 }
