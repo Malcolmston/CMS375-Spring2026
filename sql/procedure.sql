@@ -771,3 +771,101 @@ BEGIN
     SET res = ROW_COUNT() > 0;
     COMMIT;
 END;
+
+-- ============================================================
+-- create_prescription inserts a new prescription and returns
+-- the generated id.
+-- - Validates the patient exists via has_user()
+-- - doctor_id is the prescribing doctor's user id
+-- ============================================================
+DROP PROCEDURE IF EXISTS create_prescription;
+
+CREATE PROCEDURE create_prescription(
+    IN  p_patient_id      INT,
+    IN  p_doctor_id       INT,
+    IN  p_notes           VARCHAR(500),
+    IN  p_issue_date      DATE,
+    IN  p_expire_date     DATE,
+    OUT p_prescription_id INT
+)
+BEGIN
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        RESIGNAL;
+    END;
+
+    IF has_user(p_patient_id) IS NULL OR has_user(p_patient_id) = FALSE THEN
+        CALL throw('Patient does not exist');
+    END IF;
+
+    START TRANSACTION;
+        INSERT INTO prescription (patient_id, doctor_id, notes, issue_date, expire_date)
+        VALUES (p_patient_id, p_doctor_id, p_notes, p_issue_date, p_expire_date);
+        SET p_prescription_id = LAST_INSERT_ID();
+    COMMIT;
+END;
+
+-- ============================================================
+-- add_prescription_item inserts a line item onto a prescription.
+-- ============================================================
+DROP PROCEDURE IF EXISTS add_prescription_item;
+
+CREATE PROCEDURE add_prescription_item(
+    IN p_prescription_id   INT,
+    IN p_medicine_id       INT,
+    IN p_route             VARCHAR(50),
+    IN p_dosage            VARCHAR(50),
+    IN p_frequency         VARCHAR(50),
+    IN p_duration_days     INT,
+    IN p_quantity          INT,
+    IN p_instructions      VARCHAR(500)
+)
+BEGIN
+    INSERT INTO prescription_item
+        (prescription_id, medicine_id, route, dosage, frequency, duration_days, quantity_prescribed, instructions)
+    VALUES
+        (p_prescription_id, p_medicine_id, p_route, p_dosage, p_frequency, p_duration_days, p_quantity, p_instructions);
+END;
+
+-- ============================================================
+-- cancel_prescription sets a prescription's status to 'cancelled'.
+-- Only the prescribing doctor may cancel their own prescription.
+-- ============================================================
+DROP PROCEDURE IF EXISTS cancel_prescription;
+
+CREATE PROCEDURE cancel_prescription(
+    IN  p_prescription_id INT,
+    IN  p_doctor_id       INT,
+    OUT p_affected        BOOLEAN
+)
+BEGIN
+    UPDATE prescription
+    SET status = 'cancelled'
+    WHERE id = p_prescription_id
+      AND doctor_id = p_doctor_id;
+
+    SET p_affected = ROW_COUNT() > 0;
+END;
+
+-- ============================================================
+-- renew_prescription updates the expire_date and reactivates
+-- a prescription.  Only the prescribing doctor may renew.
+-- ============================================================
+DROP PROCEDURE IF EXISTS renew_prescription;
+
+CREATE PROCEDURE renew_prescription(
+    IN  p_prescription_id INT,
+    IN  p_doctor_id       INT,
+    IN  p_expire_date     DATE,
+    OUT p_affected        BOOLEAN
+)
+BEGIN
+    UPDATE prescription
+    SET expire_date = p_expire_date,
+        status      = 'active'
+    WHERE id = p_prescription_id
+      AND doctor_id = p_doctor_id;
+
+    SET p_affected = ROW_COUNT() > 0;
+END;
