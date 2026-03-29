@@ -5,11 +5,13 @@ namespace account;
 require_once __DIR__ . '/Account.php';
 require_once __DIR__ . '/Employed.php';
 require_once __DIR__ . '/EmployedTrait.php';
+require_once __DIR__ . '/EditableUserTrait.php';
+require_once __DIR__ . '/AdminEditableTrait.php';
 require_once __DIR__ . '/Role.php';
 
 class Admin extends Account implements Employed
 {
-    use EmployedTrait, EditableUserTrait;
+    use EmployedTrait, EditableUserTrait, AdminEditableTrait;
 
     private string $department;
 
