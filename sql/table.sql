@@ -266,27 +266,31 @@ CREATE TABLE IF NOT EXISTS parent_relationship(
         FOREIGN KEY (patient_id) REFERENCES users(id)
     );
 
-CREATE TABLE IF NOT EXISTS medicine_interaction(
-    id INTEGER PRIMARY KEY AUTO_INCREMENT,
-    medicine_1 INTEGER NOT NULL,
-    medicine_2 INTEGER NOT NULL,
-    severity VARCHAR(50),
-    description VARCHAR(500),
+CREATE TABLE IF NOT EXISTS drug_interaction (
+    id             INTEGER PRIMARY KEY AUTO_INCREMENT,
+    agent_1_type   ENUM('medicine','vaccine') NOT NULL,
+    agent_1_id     INTEGER NOT NULL,
+    agent_2_type   ENUM('medicine','vaccine') NOT NULL,
+    agent_2_id     INTEGER NOT NULL,
+    severity       VARCHAR(50),
+    description    VARCHAR(500),
     recommendation VARCHAR(500),
 
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-     deleted_at TIMESTAMP DEFAULT NULL,
+    created_at  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted_at  TIMESTAMP DEFAULT NULL,
 
-    CONSTRAINT fk_medicine_id_1
-        FOREIGN KEY (medicine_1) REFERENCES medicine(id),
-    CONSTRAINT fk_medicine_id_2
-        FOREIGN KEY (medicine_2) REFERENCES medicine(id),
-    CONSTRAINT avoid_duplicate_interaction
-        UNIQUE (medicine_1, medicine_2),
-    CONSTRAINT enforce_id_order
-        CHECK (medicine_1 < medicine_2)
-    );
+    -- Prevent reversed duplicates: 'medicine' < 'vaccine' alphabetically,
+    -- so medicine always occupies agent_1 in mixed pairs;
+    -- same-type pairs enforce agent_1_id < agent_2_id.
+    CONSTRAINT uq_drug_interaction
+        UNIQUE (agent_1_type, agent_1_id, agent_2_type, agent_2_id),
+    CONSTRAINT chk_interaction_order
+        CHECK (
+            agent_1_type < agent_2_type OR
+            (agent_1_type = agent_2_type AND agent_1_id < agent_2_id)
+        )
+);
     
 CREATE TABLE IF NOT EXISTS institution (
     id INTEGER PRIMARY KEY AUTO_INCREMENT,

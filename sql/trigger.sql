@@ -1346,59 +1346,66 @@ BEGIN
 END;
 
 --- ============================================================
---- MEDICINE_INTERACTION Triggers
+--- DRUG_INTERACTION Triggers
 --- ============================================================
 DROP TRIGGER IF EXISTS trg_log_medicine_interaction_insert;
+DROP TRIGGER IF EXISTS trg_log_medicine_interaction_update;
+DROP TRIGGER IF EXISTS trg_log_medicine_interaction_delete;
+DROP TRIGGER IF EXISTS trg_log_drug_interaction_insert;
 
-CREATE TRIGGER trg_log_medicine_interaction_insert
-AFTER INSERT ON medicine_interaction
+CREATE TRIGGER trg_log_drug_interaction_insert
+AFTER INSERT ON drug_interaction
     FOR EACH ROW BEGIN
     INSERT INTO logs (user_id, action, table_name, record_id, new_data)
     VALUES (
                1,
                'CREATE',
-               'medicine_interaction',
+               'drug_interaction',
                NEW.id,
                JSON_OBJECT(
-                       'medicine_1', NEW.medicine_1,
-                       'medicine_2', NEW.medicine_2,
-                       'severity', NEW.severity,
-                       'description', NEW.description
+                   'agent_1_type', NEW.agent_1_type,
+                   'agent_1_id',   NEW.agent_1_id,
+                   'agent_2_type', NEW.agent_2_type,
+                   'agent_2_id',   NEW.agent_2_id,
+                   'severity',     NEW.severity,
+                   'description',  NEW.description
                )
            );
 END;
 
-DROP TRIGGER IF EXISTS trg_log_medicine_interaction_update;
+DROP TRIGGER IF EXISTS trg_log_drug_interaction_update;
 
-CREATE TRIGGER trg_log_medicine_interaction_update
-AFTER UPDATE ON medicine_interaction
+CREATE TRIGGER trg_log_drug_interaction_update
+AFTER UPDATE ON drug_interaction
     FOR EACH ROW BEGIN
     INSERT INTO logs (user_id, action, table_name, record_id, old_data, new_data)
     VALUES (
                1,
                'UPDATE',
-               'medicine_interaction',
+               'drug_interaction',
                NEW.id,
                JSON_OBJECT('severity', OLD.severity, 'description', OLD.description),
                JSON_OBJECT('severity', NEW.severity, 'description', NEW.description)
            );
 END;
 
-DROP TRIGGER IF EXISTS trg_log_medicine_interaction_delete;
+DROP TRIGGER IF EXISTS trg_log_drug_interaction_delete;
 
-CREATE TRIGGER trg_log_medicine_interaction_delete
-AFTER DELETE ON medicine_interaction
+CREATE TRIGGER trg_log_drug_interaction_delete
+AFTER DELETE ON drug_interaction
     FOR EACH ROW BEGIN
     INSERT INTO logs (user_id, action, table_name, record_id, old_data)
     VALUES (
                1,
                'DELETE',
-               'medicine_interaction',
+               'drug_interaction',
                OLD.id,
                JSON_OBJECT(
-                       'medicine_1', OLD.medicine_1,
-                       'medicine_2', OLD.medicine_2,
-                       'severity', OLD.severity
+                   'agent_1_type', OLD.agent_1_type,
+                   'agent_1_id',   OLD.agent_1_id,
+                   'agent_2_type', OLD.agent_2_type,
+                   'agent_2_id',   OLD.agent_2_id,
+                   'severity',     OLD.severity
                )
            );
 END;

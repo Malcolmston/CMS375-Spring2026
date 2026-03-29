@@ -160,26 +160,40 @@ FROM prescription_item     pi
 
 CREATE OR REPLACE VIEW view_drug_interactions AS
 SELECT
-    -- Medicine interaction details
-    mi.id,
-    mi.severity,
-    mi.description,
-    mi.recommendation,
+    di.id,
+    di.agent_1_type,
+    di.agent_1_id,
+    di.agent_2_type,
+    di.agent_2_id,
+    di.severity,
+    di.description,
+    di.recommendation,
 
-    -- Medicine details for each side of the interaction
+    -- Agent 1 resolved name
+    CASE di.agent_1_type
+        WHEN 'medicine' THEN m1.generic_name
+        WHEN 'vaccine'  THEN v1.name
+    END AS agent_1_name,
+    CASE di.agent_1_type
+        WHEN 'medicine' THEN m1.brand_name
+        ELSE NULL
+    END AS agent_1_brand,
 
-    -- Medicine 1
-    m1.id           AS medicine_1_id,
-    m1.generic_name AS medicine_1_generic,
-    m1.brand_name   AS medicine_1_brand,
+    -- Agent 2 resolved name
+    CASE di.agent_2_type
+        WHEN 'medicine' THEN m2.generic_name
+        WHEN 'vaccine'  THEN v2.name
+    END AS agent_2_name,
+    CASE di.agent_2_type
+        WHEN 'medicine' THEN m2.brand_name
+        ELSE NULL
+    END AS agent_2_brand
 
-    -- Medicine 2
-    m2.id           AS medicine_2_id,
-    m2.generic_name AS medicine_2_generic,
-    m2.brand_name   AS medicine_2_brand
-FROM medicine_interaction mi
-    INNER JOIN medicine m1 ON m1.id = mi.medicine_1
-    INNER JOIN medicine m2 ON m2.id = mi.medicine_2;
+FROM drug_interaction di
+LEFT JOIN medicine m1 ON di.agent_1_type = 'medicine' AND m1.id = di.agent_1_id
+LEFT JOIN vaccine  v1 ON di.agent_1_type = 'vaccine'  AND v1.id = di.agent_1_id
+LEFT JOIN medicine m2 ON di.agent_2_type = 'medicine' AND m2.id = di.agent_2_id
+LEFT JOIN vaccine  v2 ON di.agent_2_type = 'vaccine'  AND v2.id = di.agent_2_id;
 
 
 -- View: view_patient_summary gives one row per active patient with their

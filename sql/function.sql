@@ -214,16 +214,67 @@ BEGIN
     DECLARE v_low  INT DEFAULT LEAST(p_medicine_id_1, p_medicine_id_2);
     DECLARE v_high INT DEFAULT GREATEST(p_medicine_id_1, p_medicine_id_2);
     SELECT JSON_OBJECT(
-               'id',  id,
-               'medicine1',   medicine_1,
-               'medicine2',   medicine_2,
-               'severity',        severity,
-               'description',     description,
-               'recommendation',  recommendation
+               'id',             id,
+               'agent_1_type',   agent_1_type,
+               'agent_1_id',     agent_1_id,
+               'agent_2_type',   agent_2_type,
+               'agent_2_id',     agent_2_id,
+               'severity',       severity,
+               'description',    description,
+               'recommendation', recommendation
            ) INTO v_result
-    FROM medicine_interaction
-    WHERE medicine_1 = v_low
-      AND medicine_2 = v_high
+    FROM drug_interaction
+    WHERE agent_1_type = 'medicine'
+      AND agent_2_type = 'medicine'
+      AND agent_1_id   = v_low
+      AND agent_2_id   = v_high
+    LIMIT 1;
+    RETURN COALESCE(v_result, JSON_OBJECT());
+END;
+-- ============================================================
+-- General interaction check for any two agents (medicine or vaccine)
+-- Enforces canonical order: 'medicine' < 'vaccine',
+-- same-type uses smaller ID first
+-- ============================================================
+DROP FUNCTION IF EXISTS check_interaction;
+CREATE FUNCTION check_interaction(
+    p_type_1 ENUM('medicine','vaccine'), p_id_1 INT,
+    p_type_2 ENUM('medicine','vaccine'), p_id_2 INT
+)
+    RETURNS JSON
+    READS SQL DATA
+BEGIN
+    DECLARE v_result  JSON;
+    DECLARE v_type_a  ENUM('medicine','vaccine');
+    DECLARE v_id_a    INT;
+    DECLARE v_type_b  ENUM('medicine','vaccine');
+    DECLARE v_id_b    INT;
+
+    -- Canonicalise order
+    IF p_type_1 < p_type_2
+        OR (p_type_1 = p_type_2 AND p_id_1 <= p_id_2) THEN
+        SET v_type_a = p_type_1; SET v_id_a = p_id_1;
+        SET v_type_b = p_type_2; SET v_id_b = p_id_2;
+    ELSE
+        SET v_type_a = p_type_2; SET v_id_a = p_id_2;
+        SET v_type_b = p_type_1; SET v_id_b = p_id_1;
+    END IF;
+
+    SELECT JSON_OBJECT(
+               'id',             id,
+               'agent_1_type',   agent_1_type,
+               'agent_1_id',     agent_1_id,
+               'agent_2_type',   agent_2_type,
+               'agent_2_id',     agent_2_id,
+               'severity',       severity,
+               'description',    description,
+               'recommendation', recommendation
+           ) INTO v_result
+    FROM drug_interaction
+    WHERE agent_1_type = v_type_a
+      AND agent_1_id   = v_id_a
+      AND agent_2_type = v_type_b
+      AND agent_2_id   = v_id_b
     LIMIT 1;
     RETURN COALESCE(v_result, JSON_OBJECT());
 END;
