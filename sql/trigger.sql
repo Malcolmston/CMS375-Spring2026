@@ -358,7 +358,7 @@ AFTER INSERT ON institution
     FOR EACH ROW BEGIN
     INSERT INTO logs (user_id, action, table_name, record_id, new_data)
     VALUES (
-               1,
+               NULL,
                'CREATE',
                'institution',
                NEW.id,
@@ -380,7 +380,7 @@ AFTER UPDATE ON institution
     IF OLD.deleted_at IS NULL AND NEW.deleted_at IS NULL THEN
         INSERT INTO logs (user_id, action, table_name, record_id, old_data, new_data)
         VALUES (
-                   1,
+                   NULL,
                    'UPDATE',
                    'institution',
                    NEW.id,
@@ -410,7 +410,7 @@ AFTER UPDATE ON institution
     IF OLD.deleted_at IS NULL AND NEW.deleted_at IS NOT NULL THEN
         INSERT INTO logs (user_id, action, table_name, record_id, old_data, new_data)
         VALUES (
-                   1,
+                   NULL,
                    'DELETE',
                    'institution',
                    NEW.id,
@@ -436,7 +436,7 @@ AFTER UPDATE ON institution
     IF OLD.deleted_at IS NOT NULL AND NEW.deleted_at IS NULL THEN
         INSERT INTO logs (user_id, action, table_name, record_id, old_data, new_data)
         VALUES (
-                   1,
+                   NULL,
                    'RECOVER',
                    'institution',
                    NEW.id,
@@ -595,7 +595,7 @@ AFTER INSERT ON allergy
     FOR EACH ROW BEGIN
     INSERT INTO logs (user_id, action, table_name, record_id, new_data)
     VALUES (
-               1,
+               NULL,
                'CREATE',
                'allergy',
                NEW.id,
@@ -615,7 +615,7 @@ AFTER UPDATE ON allergy
     IF OLD.deleted_at IS NULL AND NEW.deleted_at IS NULL THEN
         INSERT INTO logs (user_id, action, table_name, record_id, old_data, new_data)
         VALUES (
-                   1,
+                   NULL,
                    'UPDATE',
                    'allergy',
                    NEW.id,
@@ -641,7 +641,7 @@ AFTER UPDATE ON allergy
     IF OLD.deleted_at IS NULL AND NEW.deleted_at IS NOT NULL THEN
         INSERT INTO logs (user_id, action, table_name, record_id, old_data, new_data)
         VALUES (
-                   1,
+                   NULL,
                    'DELETE',
                    'allergy',
                    NEW.id,
@@ -667,7 +667,7 @@ AFTER UPDATE ON allergy
     IF OLD.deleted_at IS NOT NULL AND NEW.deleted_at IS NULL THEN
         INSERT INTO logs (user_id, action, table_name, record_id, old_data, new_data)
         VALUES (
-                   1,
+                   NULL,
                    'RECOVER',
                    'allergy',
                    NEW.id,
@@ -755,7 +755,7 @@ AFTER INSERT ON prescription_item
     FOR EACH ROW BEGIN
     INSERT INTO logs (user_id, action, table_name, record_id, new_data)
     VALUES (
-               1,
+               NULL,
                'CREATE',
                'prescription_item',
                NEW.id,
@@ -781,7 +781,7 @@ AFTER INSERT ON medicine
     FOR EACH ROW BEGIN
     INSERT INTO logs (user_id, action, table_name, record_id, new_data)
     VALUES (
-               1,
+               NULL,
                'CREATE',
                'medicine',
                NEW.id,
@@ -803,7 +803,7 @@ AFTER UPDATE ON medicine
     IF OLD.stock_quantity != NEW.stock_quantity THEN
         INSERT INTO logs (user_id, action, table_name, record_id, old_data, new_data)
         VALUES (
-                   1,
+                   NULL,
                    'UPDATE',
                    'medicine',
                    NEW.id,
@@ -1358,7 +1358,7 @@ AFTER INSERT ON drug_interaction
     FOR EACH ROW BEGIN
     INSERT INTO logs (user_id, action, table_name, record_id, new_data)
     VALUES (
-               1,
+               NULL,
                'CREATE',
                'drug_interaction',
                NEW.id,
@@ -1380,7 +1380,7 @@ AFTER UPDATE ON drug_interaction
     FOR EACH ROW BEGIN
     INSERT INTO logs (user_id, action, table_name, record_id, old_data, new_data)
     VALUES (
-               1,
+               NULL,
                'UPDATE',
                'drug_interaction',
                NEW.id,
@@ -1396,7 +1396,7 @@ AFTER DELETE ON drug_interaction
     FOR EACH ROW BEGIN
     INSERT INTO logs (user_id, action, table_name, record_id, old_data)
     VALUES (
-               1,
+               NULL,
                'DELETE',
                'drug_interaction',
                OLD.id,
@@ -1420,7 +1420,7 @@ AFTER INSERT ON institution_user
     FOR EACH ROW BEGIN
     INSERT INTO logs (user_id, action, table_name, record_id, new_data)
     VALUES (
-               1,
+               NULL,
                'CREATE',
                'institution_user',
                NEW.id,
@@ -1439,7 +1439,7 @@ AFTER UPDATE ON institution_user
     FOR EACH ROW BEGIN
     INSERT INTO logs (user_id, action, table_name, record_id, old_data, new_data)
     VALUES (
-               1,
+               NULL,
                'UPDATE',
                'institution_user',
                NEW.id,
