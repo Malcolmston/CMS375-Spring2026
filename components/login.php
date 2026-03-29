@@ -166,8 +166,9 @@ function handle_admin(): void
  */
 function redirect_back(string $error): never
 {
-    $_SESSION['login_error'] = $error;
-    header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? '/'));
+    $base = $_SERVER['HTTP_REFERER'] ?? '/';
+    $url  = strtok($base, '?') . '?error=' . urlencode($error);
+    header('Location: ' . $url);
     exit;
 }
 
