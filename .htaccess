@@ -45,6 +45,7 @@ RewriteRule ^dashboard$ components/dashboard.php [L]
 RewriteRule ^logout$ logout.php [L,PT]
 
 RewriteRule ^blog$ components/home/pages/blog.php [L]
+RewriteRule ^contact$ components/home/pages/contact.php [L]
 # Block access to the account folder
 RewriteRule ^account/.*$ - [F,L]
 
