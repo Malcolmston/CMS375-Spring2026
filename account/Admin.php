@@ -408,25 +408,4 @@ class Admin extends Account implements Employed
         $stmt->close();
         return true;
     }
-
-    /**
-     * Checks if the current user has the specified role.
-     *
-     * @param Role $role The role to check against the current user.
-     * @return bool Returns true if the user has the specified role, otherwise false.
-     */
-    public function hasRole(Role $role): bool
-    {
-        $sql = "SELECT has_role(?, ?) AS has_role";
-        if (!($stmt = $this->getConnection()->prepare($sql))) {
-            return false;
-        }
-        $roleValue = $role->value;
-        $stmt->bind_param('is', $this->id, $roleValue);
-        $stmt->execute();
-        $stmt->bind_result($hasRole);
-        $stmt->fetch();
-        $stmt->close();
-        return (bool)$hasRole;
-    }
 }
