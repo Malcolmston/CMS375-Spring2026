@@ -3,11 +3,9 @@
 namespace account;
 
 require_once __DIR__ . '/Account.php';
-require_once __DIR__ . '/EditableUserTrait.php';
 
 class Patient extends Account
 {
-    use EditableUserTrait;
     /**
      * @inheritDoc
      */
@@ -58,5 +56,34 @@ class Patient extends Account
         $stmt->execute();
         $result = $stmt->get_result();
         return $result->fetch_all(MYSQLI_ASSOC);
+    }
+
+    /**
+     * Retrieves a list of active diagnoses for the current patient.
+     *
+     * @return array An array of associative arrays representing the diagnoses data.
+     */
+    public function getMyDiagnoses(): array
+    {
+        $sql = "SELECT * FROM view_active_diagnoses WHERE patient_id = ?";
+        $stmt = $this->getConnection()->prepare($sql);
+        $stmt->bind_param('i', $this->id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        return $result->fetch_all(MYSQLI_ASSOC);
+    }
+
+    /**
+     * Soft deletes a diagnosis associated with the currently authenticated user by invoking a stored procedure.
+     *
+     * @param int $diagnosisId The unique identifier of the diagnosis to be soft deleted.
+     * @return bool Returns true if the stored procedure executes successfully, false otherwise.
+     */
+    public function softDeleteDiagnosis(int $diagnosisId): bool
+    {
+        $sql = "CALL soft_delete_diagnosis(?, ?)";
+        $stmt = $this->getConnection()->prepare($sql);
+        $stmt->bind_param('ii', $diagnosisId, $this->id);
+        return $stmt->execute();
     }
 }
