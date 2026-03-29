@@ -47,4 +47,14 @@ class Patient extends Account
         $this->password = self::encryptPassword($this->password);
         return $this->insert();
     }
+
+    public function getMyPrescriptions(): array
+    {
+        $sql = "SELECT * FROM view_prescriptions WHERE patient_id = ?";
+        $stmt = $this->getConnection()->prepare($sql);
+        $stmt->bind_param('i', $this->id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        return $result->fetch_all(MYSQLI_ASSOC);
+    }
 }
