@@ -257,7 +257,31 @@ trait PrescribableTrait
         $stmt->close();
         if (!$row || $row['result'] === null) return [];
         $decoded = json_decode($row['result'], true);
-        // Function returns {} when no interaction — treat as empty
+        return (is_array($decoded) && !empty($decoded)) ? $decoded : [];
+    }
+
+    /**
+     * General interaction check between any two agents (medicine or vaccine).
+     * Accepts 'medicine' or 'vaccine' as type strings.
+     *
+     * @param string $type1 'medicine' or 'vaccine'
+     * @param int    $id1   Agent 1 ID
+     * @param string $type2 'medicine' or 'vaccine'
+     * @param int    $id2   Agent 2 ID
+     * @return array Interaction record; empty means no known conflict
+     */
+    public function checkInteraction(string $type1, int $id1, string $type2, int $id2): array
+    {
+        $stmt = $this->getConnection()->prepare(
+            "SELECT check_interaction(?, ?, ?, ?) AS result"
+        );
+        if (!$stmt) return [];
+        $stmt->bind_param('sisi', $type1, $id1, $type2, $id2);
+        $stmt->execute();
+        $row = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
+        if (!$row || $row['result'] === null) return [];
+        $decoded = json_decode($row['result'], true);
         return (is_array($decoded) && !empty($decoded)) ? $decoded : [];
     }
 }
