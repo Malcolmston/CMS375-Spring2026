@@ -721,3 +721,12 @@ FROM institution_user iu
 WHERE iu.deleted_at IS NULL AND u.deleted_at IS NULL AND i.deleted_at IS NULL;
 
 
+CREATE OR REPLACE VIEW view_all_interactions AS
+    SELECT di.*,
+           m.generic_name AS medicine_name,
+           v.name AS vaccine_name
+    FROM drug_interaction di
+             LEFT JOIN view_active_medicines m ON di.agent_1_type = 'medicine' AND di.agent_1_id = m.id
+        OR di.agent_2_type = 'medicine' AND di.agent_2_id = m.id
+             LEFT JOIN view_active_vaccines v ON di.agent_1_type = 'vaccine' AND di.agent_1_id = v.id
+        OR di.agent_2_type = 'vaccine' AND di.agent_2_id = v.id;
