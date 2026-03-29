@@ -233,4 +233,31 @@ trait PrescribableTrait
         if (!$row || $row['result'] === null) return [];
         return json_decode($row['result'], true) ?: [];
     }
+
+    /**
+     * Check for a known interaction between two medicines.
+     * Returns the interaction record (severity, description, recommendation),
+     * or an empty array if no interaction is recorded.
+     *
+     * @param Medicine $a First medicine
+     * @param Medicine $b Second medicine
+     * @return array Interaction record; empty means no known conflict
+     */
+    public function checkDrugInteractions(Medicine $a, Medicine $b): array
+    {
+        $idA = $a->getId();
+        $idB = $b->getId();
+        $stmt = $this->getConnection()->prepare(
+            "SELECT check_drug_interactions(?, ?) AS result"
+        );
+        if (!$stmt) return [];
+        $stmt->bind_param('ii', $idA, $idB);
+        $stmt->execute();
+        $row = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
+        if (!$row || $row['result'] === null) return [];
+        $decoded = json_decode($row['result'], true);
+        // Function returns {} when no interaction — treat as empty
+        return (is_array($decoded) && !empty($decoded)) ? $decoded : [];
+    }
 }
