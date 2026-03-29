@@ -729,4 +729,5 @@ CREATE OR REPLACE VIEW view_all_interactions AS
              LEFT JOIN view_active_medicines m ON di.agent_1_type = 'medicine' AND di.agent_1_id = m.id
         OR di.agent_2_type = 'medicine' AND di.agent_2_id = m.id
              LEFT JOIN view_active_vaccines v ON di.agent_1_type = 'vaccine' AND di.agent_1_id = v.id
-        OR di.agent_2_type = 'vaccine' AND di.agent_2_id = v.id;
+        OR di.agent_2_type = 'vaccine' AND di.agent_2_id = v.id
+    AND di.deleted_at IS NULL;
