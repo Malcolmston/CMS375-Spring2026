@@ -237,8 +237,7 @@ END;
 
 -- ============================================================
 -- check_vaccine_interaction takes two vaccine IDs and returns
--- any known interaction between them as JSON.
--- IDs are sorted so the smaller is always agent_1_id.
+-- all medicines that interact with either vaccine as a JSON array.
 -- ============================================================
 DROP FUNCTION IF EXISTS check_vaccine_interaction;
 CREATE FUNCTION check_vaccine_interaction(p_vaccine_id_1 INT, p_vaccine_id_2 INT)
@@ -246,29 +245,25 @@ CREATE FUNCTION check_vaccine_interaction(p_vaccine_id_1 INT, p_vaccine_id_2 INT
     READS SQL DATA
 BEGIN
     DECLARE v_result JSON;
-    DECLARE v_low  INT DEFAULT LEAST(p_vaccine_id_1, p_vaccine_id_2);
-    DECLARE v_high INT DEFAULT GREATEST(p_vaccine_id_1, p_vaccine_id_2);
 
-    SELECT JSON_OBJECT(
-               'id',             id,
-               'agent_1_type',   agent_1_type,
-               'agent_1_id',     agent_1_id,
-               'agent_2_type',   agent_2_type,
-               'agent_2_id',     agent_2_id,
-               'severity',       severity,
-               'description',    description,
-               'recommendation', recommendation,
-               'vaccine_name',   vaccine_name
+    SELECT JSON_ARRAYAGG(
+               JSON_OBJECT(
+                   'medicine_id',    agent_1_id,
+                   'medicine_name',  medicine_name,
+                   'vaccine_id',     agent_2_id,
+                   'vaccine_name',   vaccine_name,
+                   'severity',       severity,
+                   'description',    description,
+                   'recommendation', recommendation
+               )
            ) INTO v_result
     FROM view_all_interactions
-    WHERE agent_1_type = 'vaccine'
+    WHERE agent_1_type = 'medicine'
       AND agent_2_type = 'vaccine'
-      AND agent_1_id   = v_low
-      AND agent_2_id   = v_high
-      AND deleted_at   IS NULL
-    LIMIT 1;
+      AND agent_2_id   IN (p_vaccine_id_1, p_vaccine_id_2)
+      AND deleted_at   IS NULL;
 
-    RETURN COALESCE(v_result, JSON_OBJECT());
+    RETURN COALESCE(v_result, JSON_ARRAY());
 END;
 
 -- ============================================================
