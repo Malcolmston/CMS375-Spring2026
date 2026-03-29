@@ -61,6 +61,22 @@ class Patient extends Account
     }
 
     /**
+     * Retrieves all active allergies recorded for this patient.
+     *
+     * @return array
+     */
+    public function getMyAllergies(): array
+    {
+        $stmt = $this->getConnection()->prepare(
+            "SELECT * FROM view_active_allergies WHERE user_id = ?"
+        );
+        $stmt->bind_param('i', $this->id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        return $result->fetch_all(MYSQLI_ASSOC);
+    }
+
+    /**
      * Retrieves a list of active diagnoses for the current patient.
      *
      * @return array An array of associative arrays representing the diagnoses data.
