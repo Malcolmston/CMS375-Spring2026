@@ -11,12 +11,18 @@ services:
     depends_on:
       mysql:
         condition: service_healthy
+      mailpit:
+        condition: service_healthy
     environment:
       DB_HOST: mysql
       DB_PORT: 3306
       DB_USER: app
       DB_PASS: app
       DB_NAME: med_helth
+      MAIL_HOST: mailpit
+      MAIL_PORT: 1025
+    networks:
+      - web
 
   mysql:
     image: mysql:8.0
@@ -37,6 +43,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - web
 
   grant-permissions:
     image: mysql:8.0
@@ -50,6 +58,8 @@ services:
       mysql -h mysql -u root
       -e "GRANT ALL PRIVILEGES ON med_helth.* TO 'app'@'%'; FLUSH PRIVILEGES;"
     restart: "no"
+    networks:
+      - web
 
   phpmyadmin:
     image: phpmyadmin:latest
@@ -63,11 +73,13 @@ services:
       PMA_PASSWORD: app
       PMA_PORT: 3306
       UPLOAD_LIMIT: 64M
-      PMA_ABSOLUTE_URI: http://localhost:8081/
+      PMA_ABSOLUTE_URI: http://spring2026.local:8081/
     ports:
       - "8081:80"
+    networks:
+      - web
 
-  mailhog:
+  mailpit:
     image: axllent/mailpit:latest
     container_name: spring2026-mailpit
     restart: always
@@ -79,9 +91,23 @@ services:
       MP_SMTP_AUTH_ACCEPT_ANY: 1
       MP_SMTP_AUTH_ALLOW_INSECURE: 1
     healthcheck:
-      test: [ "CMD", "wget", "--spider", "-q", "http://localhost:8025/livez" ]
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8025/livez"]
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - web
+
 volumes:
   mysql_data:
+
+networks:
+  web:
+    driver: bridge
+    driver_opts:
+      com.docker.network.bridge.name: spring2026
+    ipam:
+      config:
+        - subnet: 172.18.0.0/16
+          gateway: 172.18.0.1
+    external: false
