@@ -141,17 +141,9 @@ class DrugInteraction extends Pharmaceutical
         $conn = self::getConnection();
         $vaccineId = $vaccine->getId();
         $stmt = $conn->prepare("
-            SELECT di.*,
-                   m.generic_name AS medicine_name,
-                   v.name AS vaccine_name
-            FROM drug_interaction di
-            LEFT JOIN medicine m ON di.agent_1_type = 'medicine' AND di.agent_1_id = m.id
-                             OR di.agent_2_type = 'medicine' AND di.agent_2_id = m.id
-            LEFT JOIN vaccine v ON di.agent_1_type = 'vaccine' AND di.agent_1_id = v.id
-                              OR di.agent_2_type = 'vaccine' AND di.agent_2_id = v.id
-            WHERE (di.agent_1_type = 'vaccine' AND di.agent_1_id = ?)
-               OR (di.agent_2_type = 'vaccine' AND di.agent_2_id = ?)
-              AND di.deleted_at IS NULL
+            SELECT * FROM view_all_interactions
+                WHERE (agent_1_type = 'vaccine' AND agent_1_id = ?)
+                   OR (agent_2_type = 'vaccine' AND agent_2_id = ?)
         ");
         $stmt->bind_param('ii', $vaccineId, $vaccineId);
         $stmt->execute();
