@@ -199,15 +199,38 @@ trait PrescribableTrait
      */
     public function checkPrescriptionExpired(int $prescriptionId): bool
     {
-        $sql = "CALL check_prescription_expired(?)";
-        $stmt = $this->conn->prepare($sql);
-        if (!$stmt) {
-            return false;
-        }
+        $stmt = $this->getConnection()->prepare(
+            "SELECT prescription_is_expired(?) AS result"
+        );
+        if (!$stmt) return false;
         $stmt->bind_param("i", $prescriptionId);
         $stmt->execute();
-        $rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+        $row = $stmt->get_result()->fetch_assoc();
         $stmt->close();
-        return count($rows) > 0;
+        return (bool)($row['result'] ?? false);
+    }
+
+    /**
+     * Safety check before adding a medicine to a prescription.
+     * Returns conflicting allergy records if the patient is allergic to the medicine,
+     * or an empty array if it is safe to prescribe.
+     *
+     * @param int      $patientId The patient's user ID
+     * @param Medicine $medicine  The medicine to check
+     * @return array Conflicting allergy records; empty means no conflict
+     */
+    public function checkAllergyMedicationConflict(int $patientId, Medicine $medicine): array
+    {
+        $medicineId = $medicine->getId();
+        $stmt = $this->getConnection()->prepare(
+            "SELECT check_allergy_medication_conflict(?, ?) AS result"
+        );
+        if (!$stmt) return [];
+        $stmt->bind_param('ii', $patientId, $medicineId);
+        $stmt->execute();
+        $row = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
+        if (!$row || $row['result'] === null) return [];
+        return json_decode($row['result'], true) ?: [];
     }
 }
