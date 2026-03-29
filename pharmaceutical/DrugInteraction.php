@@ -32,27 +32,19 @@ class DrugInteraction extends Pharmaceutical
      */
     public static function checkMedicineInteraction(Medicine $med1, Medicine $med2): ?array
     {
-        $conn = self::getConnection();
-        $stmt = $conn->prepare("
-            SELECT severity, description, recommendation
-            FROM view_all_interactions
-            WHERE agent_1_type = 'medicine'
-              AND agent_1_id = ?
-              AND agent_2_type = 'medicine'
-              AND agent_2_id = ?
-        ");
+        $instance = new static();
+
+        $sql = "SELECT check_interaction('medicine', ?, 'medicine', ?) AS result";
+
+        $stmt = $instance->getConnection()->prepare($sql);
         $id1 = $med1->getId();
         $id2 = $med2->getId();
-        // Ensure consistent order
-        if ($id1 > $id2) {
-            [$id1, $id2] = [$id2, $id1];
-        }
         $stmt->bind_param('ii', $id1, $id2);
         $stmt->execute();
-        $result = $stmt->get_result();
-        $interaction = $result->fetch_assoc();
+        $row = $stmt->get_result()->fetch_assoc();
         $stmt->close();
-        return $interaction;
+        $data = json_decode($row['result'], true);
+        return !empty($data) ? $data : null;
     }
 
     /**
@@ -60,21 +52,19 @@ class DrugInteraction extends Pharmaceutical
      */
     public static function checkMedicineVaccineInteraction(Medicine $med, Vaccine $vaccine): ?array
     {
-        $conn = self::getConnection();
-        $stmt = $conn->prepare("
-            SELECT severity, description, recommendation
-            FROM view_all_interactions
-            WHERE ((agent_1_type = 'medicine' AND agent_1_id = ? AND agent_2_type = 'vaccine' AND agent_2_id = ?)
-               OR (agent_1_type = 'vaccine' AND agent_1_id = ? AND agent_2_type = 'medicine' AND agent_2_id = ?))
-        ");
+        $instance = new static();
+
         $medId = $med->getId();
         $vaccineId = $vaccine->getId();
-        $stmt->bind_param('iiii', $medId, $vaccineId, $vaccineId, $medId);
+        $sql = "SELECT check_interaction('medicine', ?, 'vaccine', ?) AS result";
+
+        $stmt = $instance->getConnection()->prepare($sql);
+        $stmt->bind_param('ii', $medId, $vaccineId);
         $stmt->execute();
-        $result = $stmt->get_result();
-        $interaction = $result->fetch_assoc();
+        $row = $stmt->get_result()->fetch_assoc();
         $stmt->close();
-        return $interaction ?: null;
+        $data = json_decode($row['result'], true);
+        return !empty($data) ? $data : null;
     }
 
     /**
@@ -82,26 +72,19 @@ class DrugInteraction extends Pharmaceutical
      */
     public static function checkVaccineInteraction(Vaccine $vacc1, Vaccine $vacc2): ?array
     {
-        $conn = self::getConnection();
+        $instance = new static();
+
         $id1 = $vacc1->getId();
         $id2 = $vacc2->getId();
-        if ($id1 > $id2) {
-            [$id1, $id2] = [$id2, $id1];
-        }
-        $stmt = $conn->prepare("
-            SELECT severity, description, recommendation
-            FROM view_all_interactions
-            WHERE agent_1_type = 'vaccine'
-              AND agent_1_id = ?
-              AND agent_2_type = 'vaccine'
-              AND agent_2_id = ?
-        ");
+        $sql = "SELECT check_vaccine_interaction(?, ?) AS result";
+
+        $stmt = $instance->getConnection()->prepare($sql);
         $stmt->bind_param('ii', $id1, $id2);
         $stmt->execute();
-        $result = $stmt->get_result();
-        $interaction = $result->fetch_assoc();
+        $row = $stmt->get_result()->fetch_assoc();
         $stmt->close();
-        return $interaction ?: null;
+        $data = json_decode($row['result'], true);
+        return !empty($data) ? $data : null;
     }
 
     /**
@@ -109,20 +92,17 @@ class DrugInteraction extends Pharmaceutical
      */
     public static function getInteractionsForMedicine(Medicine $med): array
     {
-        $conn = self::getConnection();
+        $instance = new static();
+        $conn = $instance->getConnection();
         $medId = $med->getId();
-        $stmt = $conn->prepare("
-            SELECT *
-            FROM view_all_interactions
-            WHERE ((agent_1_type = 'medicine' AND agent_1_id = ?)
-               OR (agent_2_type = 'medicine' AND agent_2_id = ?))
-        ");
-        $stmt->bind_param('ii', $medId, $medId);
+        $sql = "SELECT get_interactions_for_medicine(?) AS result";
+
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param('i', $medId);
         $stmt->execute();
-        $result = $stmt->get_result();
-        $interactions = $result->fetch_all(MYSQLI_ASSOC);
+        $row = $stmt->get_result()->fetch_assoc();
         $stmt->close();
-        return $interactions;
+        return json_decode($row['result'], true) ?? [];
     }
 
     /**
@@ -130,19 +110,17 @@ class DrugInteraction extends Pharmaceutical
      */
     public static function getInteractionsForVaccine(Vaccine $vaccine): array
     {
-        $conn = self::getConnection();
+        $instance = new static();
+        $conn = $instance->getConnection();
         $vaccineId = $vaccine->getId();
-        $stmt = $conn->prepare("
-            SELECT * FROM view_all_interactions
-                WHERE (agent_1_type = 'vaccine' AND agent_1_id = ?)
-                   OR (agent_2_type = 'vaccine' AND agent_2_id = ?)
-        ");
-        $stmt->bind_param('ii', $vaccineId, $vaccineId);
+        $sql = "SELECT get_interactions_for_vaccine(?) AS result";
+
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param('i', $vaccineId);
         $stmt->execute();
-        $result = $stmt->get_result();
-        $interactions = $result->fetch_all(MYSQLI_ASSOC);
+        $row = $stmt->get_result()->fetch_assoc();
         $stmt->close();
-        return $interactions;
+        return json_decode($row['result'], true) ?? [];
     }
 
     // Getters
