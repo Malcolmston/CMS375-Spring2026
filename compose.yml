@@ -13,14 +13,8 @@ services:
         condition: service_healthy
       mailpit:
         condition: service_healthy
-    environment:
-      DB_HOST: mysql
-      DB_PORT: 3306
-      DB_USER: app
-      DB_PASS: app
-      DB_NAME: med_helth
-      MAIL_HOST: mailpit
-      MAIL_PORT: 1025
+    env_file:
+      - .env
     networks:
       - web
 
@@ -108,6 +102,6 @@ networks:
       com.docker.network.bridge.name: spring2026
     ipam:
       config:
-        - subnet: 172.18.0.0/16
-          gateway: 172.18.0.1
+        - subnet: 172.30.0.0/16
+          gateway: 172.30.0.1
     external: false
