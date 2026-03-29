@@ -40,6 +40,8 @@ RUN printf "<VirtualHost *:443>\n\
     SSLCertificateFile /etc/apache2/ssl/server.crt\n\
     SSLCertificateKeyFile /etc/apache2/ssl/server.key\n\
     \n\
+    PassEnv NEWS_API_KEY DB_HOST DB_PORT DB_USER DB_PASS DB_NAME MAIL_HOST MAIL_PORT\n\
+    \n\
     <Directory /var/www/html>\n\
         AllowOverride All\n\
         Require all granted\n\
