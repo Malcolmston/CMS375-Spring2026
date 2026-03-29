@@ -250,6 +250,18 @@ abstract class Account extends Connect
         return $instance;
     }
 
+    public static function getPatientSummary(int $patient_id): array
+    {
+        $instance = new static();
+
+        $sql = "SELECT * FROM view_patient_summary WHERE patient_id = ?";
+        $stmt = $instance->getConnection()->prepare($sql);
+        $stmt->bind_param("i", $patient_id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        return $result->fetch_all(MYSQLI_ASSOC);
+    }
+
     /**
      * Determines whether a user exists based on the specified criteria.
      *
@@ -364,6 +376,47 @@ abstract class Account extends Connect
         $stmt->execute();
     }
 
+    protected function updateProfile(): bool
+    {
+        $prefix = $this->prefix?->value;
+        $suffix = $this->suffix?->value;
+        $blood = $this->blood?->value;
+        $locX = $this->location->x;
+        $locY = $this->location->y;
+
+        $sql = "CALL update_user(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, @p_success)";
+
+        if (!($stmt = $this->getConnection()->prepare($sql))) {
+            return false;
+        }
+
+        $stmt->bind_param(
+            "issssssssddis",
+            $this->id,
+            $this->firstName,
+            $this->lastName,
+            $this->middleName,
+            $prefix,
+            $suffix,
+            $this->gender,
+            $this->phone,
+            $locX,
+            $locY,
+            $this->email,
+            $this->age,
+            $blood,
+            $this->extra
+        );
+
+        $stmt->execute();
+        $stmt->close();
+
+        $result = $this->getConnection()->query("SELECT @p_success AS success");
+        $row = $result->fetch_assoc();
+
+        return $row['success'] ?? false;
+    }
+
     /**
      * Changes the user's password if the provided old password is verified.
      *
@@ -385,6 +438,27 @@ abstract class Account extends Connect
         $stmt->execute();
         $this->password = $newpws;
         return true;
+    }
+
+    /**
+     * Checks if the current user has the specified role.
+     *
+     * @param Role $role The role to check against the current user.
+     * @return bool Returns true if the user has the specified role, otherwise false.
+     */
+    public function hasRole(Role $role): bool
+    {
+        $sql = "SELECT has_role(?, ?) AS has_role";
+        if (!($stmt = $this->getConnection()->prepare($sql))) {
+            return false;
+        }
+        $roleValue = $role->value;
+        $stmt->bind_param('is', $this->id, $roleValue);
+        $stmt->execute();
+        $stmt->bind_result($hasRole);
+        $stmt->fetch();
+        $stmt->close();
+        return (bool)$hasRole;
     }
 
     /**
