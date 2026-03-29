@@ -284,6 +284,18 @@ class Medicine extends Pharmaceutical
         return $ok;
     }
 
+    public function hasMedicine(): bool
+    {
+        $sql = "SELECT has_medicine(?) AS result";
+        $stmt = $this->getConnection()->prepare($sql);
+        if (!$stmt) return false;
+        $stmt->bind_param('i', $this->id);
+        $stmt->execute();
+        $result = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
+        return $result['result'] === 1;
+    }
+
     // Getters
     public function getGenericName(): string { return $this->genericName; }
     public function getBrandName(): string { return $this->brandName; }
