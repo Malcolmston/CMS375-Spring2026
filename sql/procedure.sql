@@ -6,6 +6,110 @@ BEGIN
 END ;
 
 -- ============================================================
+-- update_user updates an existing user's profile
+-- ============================================================
+DROP PROCEDURE IF EXISTS update_user;
+
+CREATE PROCEDURE update_user(
+    IN p_user_id INT,
+    IN p_firstname VARCHAR(255),
+    IN p_lastname VARCHAR(255),
+    IN p_middlename VARCHAR(255),
+    IN p_prefix VARCHAR(10),
+    IN p_suffix VARCHAR(10),
+    IN p_gender VARCHAR(30),
+    IN p_phone VARCHAR(45),
+    IN p_loc_x DECIMAL(10,6),
+    IN p_loc_y DECIMAL(10,6),
+    IN p_email VARCHAR(255),
+    IN p_age INTEGER,
+    IN p_blood VARCHAR(10),
+    IN p_extra VARCHAR(2000),
+    OUT p_success BOOLEAN
+)
+BEGIN
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        SET p_success = FALSE;
+        RESIGNAL;
+    END;
+
+    START TRANSACTION;
+
+    UPDATE users SET
+        firstname = p_firstname,
+        lastname = p_lastname,
+        middlename = p_middlename,
+        prefix = p_prefix,
+        suffix = p_suffix,
+        gender = p_gender,
+        phone = p_phone,
+        location = ST_GeomFromText(CONCAT('POINT(', p_loc_x, ' ', p_loc_y, ')')),
+        email = p_email,
+        age = p_age,
+        blood = p_blood,
+        extra = p_extra,
+        updated_at = NOW()
+    WHERE id = p_user_id AND deleted_at IS NULL;
+
+    SET p_success = ROW_COUNT() > 0;
+    COMMIT;
+END;
+
+-- ============================================================
+-- update_user updates an existing user's profile
+-- ============================================================
+DROP PROCEDURE IF EXISTS update_user;
+
+CREATE PROCEDURE update_user(
+    IN p_user_id INT,
+    IN p_firstname VARCHAR(255),
+    IN p_lastname VARCHAR(255),
+    IN p_middlename VARCHAR(255),
+    IN p_prefix VARCHAR(30),
+    IN p_suffix VARCHAR(30),
+    IN p_gender VARCHAR(30),
+    IN p_phone VARCHAR(45),
+    IN p_loc_x DECIMAL(10,6),
+    IN p_loc_y DECIMAL(10,6),
+    IN p_email VARCHAR(255),
+    IN p_age INT,
+    IN p_blood VARCHAR(30),
+    IN p_extra VARCHAR(2000),
+    OUT p_success BOOLEAN
+)
+BEGIN
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        SET p_success = FALSE;
+        RESIGNAL;
+    END;
+
+    START TRANSACTION;
+
+    UPDATE users SET
+        firstname = p_firstname,
+        lastname = p_lastname,
+        middlename = p_middlename,
+        prefix = p_prefix,
+        suffix = p_suffix,
+        gender = p_gender,
+        phone = p_phone,
+        location = POINT(p_loc_x, p_loc_y),
+        email = p_email,
+        age = p_age,
+        blood = p_blood,
+        extra = p_extra,
+        updated_at = NOW()
+    WHERE id = p_user_id;
+
+    SET p_success = ROW_COUNT() > 0;
+    COMMIT;
+END;
+
+-- ============================================================
 -- insert_user inserts a new user and returns the generated id
 -- - employid / adminid are set by BEFORE INSERT triggers
 -- - Primary role is seeded into user_role by AFTER INSERT trigger
