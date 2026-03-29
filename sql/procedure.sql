@@ -996,3 +996,15 @@ BEGIN
 
     SET p_affected = ROW_COUNT() > 0;
 END;
+
+DROP PROCEDURE IF EXISTS set_stock;
+
+CREATE PROCEDURE set_stock(
+    IN med_id INT,
+    IN stock INT
+)
+BEGIN
+    UPDATE medicine
+    SET stock_quantity = stock
+    WHERE id = med_id;
+END;
