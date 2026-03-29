@@ -23,36 +23,6 @@ trait EditableUserTrait
     }
 
     /**
-     * Restore a soft-deleted user account (clears deleted_at).
-     * Throws a DB-level error if the user does not exist or is not deleted.
-     */
-    public function restoreUser(int $userId): bool
-    {
-        $stmt = $this->getConnection()->prepare("CALL restore_user(?)");
-        if (!$stmt) return false;
-        $stmt->bind_param("i", $userId);
-        $ok = $stmt->execute();
-        $stmt->close();
-        return $ok;
-    }
-
-    /**
-     * Permanently remove a user and all their data (irreversible).
-     * Check @hard_delete_user after execution — NULL signals failure.
-     */
-    public function hardDeleteUser(int $userId): bool
-    {
-        $stmt = $this->getConnection()->prepare("CALL hard_delete_user(?)");
-        if (!$stmt) return false;
-        $stmt->bind_param("i", $userId);
-        if (!$stmt->execute()) { $stmt->close(); return false; }
-        $stmt->close();
-        $row = $this->getConnection()->query("SELECT @hard_delete_user AS ok")->fetch_assoc();
-        // procedure sets @hard_delete_user = TRUE on success, NULL on failure
-        return isset($row['ok']) && $row['ok'] !== null;
-    }
-
-    /**
      * Update any user's profile fields.
      * Admin: pass any userId. Patient: pass $this->id to edit own profile.
      *
