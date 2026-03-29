@@ -346,6 +346,60 @@ class Vaccine extends Pharmaceutical
         return $stmt->execute();
     }
 
+    /**
+     * Deactivate a vaccine without losing data (sets deleted_at).
+     */
+    public function softDelete(int $id): bool
+    {
+        $stmt = $this->getConnection()->prepare("CALL soft_delete_vaccine(?)");
+        if (!$stmt) return false;
+        $stmt->bind_param('i', $id);
+        $ok = $stmt->execute() && $stmt->affected_rows > 0;
+        $stmt->close();
+        return $ok;
+    }
+
+    /**
+     * Re-activate a soft-deleted vaccine (clears deleted_at).
+     */
+    public function restore(int $id): bool
+    {
+        $stmt = $this->getConnection()->prepare("CALL restore_vaccine(?)");
+        if (!$stmt) return false;
+        $stmt->bind_param('i', $id);
+        $ok = $stmt->execute() && $stmt->affected_rows > 0;
+        $stmt->close();
+        return $ok;
+    }
+
+    /**
+     * Guard before prescribing — confirm vaccine exists and is not deleted.
+     */
+    public function hasVaccine(int $id): bool
+    {
+        $stmt = $this->getConnection()->prepare("SELECT has_vaccine(?) AS result");
+        if (!$stmt) return false;
+        $stmt->bind_param('i', $id);
+        $stmt->execute();
+        $row = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
+        return (bool)($row['result'] ?? false);
+    }
+
+    /**
+     * Bulk-import vaccines from a JSON array.
+     */
+    public function insertBatch(array $vaccines): bool
+    {
+        $json = json_encode($vaccines);
+        $stmt = $this->getConnection()->prepare("CALL insert_vaccine_batch(?)");
+        if (!$stmt) return false;
+        $stmt->bind_param('s', $json);
+        $ok = $stmt->execute();
+        $stmt->close();
+        return $ok;
+    }
+
     // Getters
     public function getCvxCode(): string { return $this->cvxCode; }
     public function getStatus(): string { return $this->status; }
