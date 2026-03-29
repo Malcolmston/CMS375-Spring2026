@@ -445,5 +445,19 @@ class Admin extends Account implements Employed
         $stmt->close();
         return $pharmacists;
     }
+
+    /**
+     * Retrieves a list of expired prescriptions.
+     *
+     * @return array An array of expired prescriptions retrieved from the database.
+     */
+    public function getExpiredPrescriptions(): array
+    {
+        $sql = "SELECT * FROM view_expired_prescriptions";
+        $stmt = $this->getConnection()->prepare($sql);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        return $result->fetch_all(MYSQLI_ASSOC);
+    }
 }
 
