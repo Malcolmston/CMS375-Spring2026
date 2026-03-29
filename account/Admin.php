@@ -384,4 +384,49 @@ class Admin extends Account implements Employed
         $stmt->close();
         return true;
     }
+
+    /**
+     * Revokes a specific role from a user by executing a stored procedure.
+     *
+     * @param int $userId The unique identifier of the user from whom the role is being revoked.
+     * @param Role $role The role object representing the role to be revoked.
+     * @return bool Returns true if the role was successfully revoked, or false on failure.
+     */
+    public function revokeRole(int $userId, Role $role): bool
+    {
+        $sql = "CALL revoke_role(?, ?, ?)";
+        if (!($stmt = $this->getConnection()->prepare($sql))) {
+            return false;
+        }
+        $roleValue = $role->value;
+        $adminId = $this->id;
+        $stmt->bind_param('isi', $userId, $roleValue, $adminId);
+        if (!$stmt->execute()) {
+            $stmt->close();
+            return false;
+        }
+        $stmt->close();
+        return true;
+    }
+
+    /**
+     * Checks if the current user has the specified role.
+     *
+     * @param Role $role The role to check against the current user.
+     * @return bool Returns true if the user has the specified role, otherwise false.
+     */
+    public function hasRole(Role $role): bool
+    {
+        $sql = "SELECT has_role(?, ?) AS has_role";
+        if (!($stmt = $this->getConnection()->prepare($sql))) {
+            return false;
+        }
+        $roleValue = $role->value;
+        $stmt->bind_param('is', $this->id, $roleValue);
+        $stmt->execute();
+        $stmt->bind_result($hasRole);
+        $stmt->fetch();
+        $stmt->close();
+        return (bool)$hasRole;
+    }
 }
