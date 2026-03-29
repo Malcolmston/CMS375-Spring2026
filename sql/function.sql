@@ -200,10 +200,9 @@ BEGIN
     RETURN COALESCE(v_result, JSON_ARRAY());
 END;
 -- ============================================================
--- Check drug interactions takes two medicine IDs and returns
--- any known interaction between them as JSON
--- - p_medicine_id_1 and p_medicine_id_2 are the medicines to check
--- - IDs are sorted so the smaller is always checked as medicine_id_1
+-- check_drug_interactions takes two medicine IDs and returns
+-- any known interaction between them as JSON.
+-- IDs are sorted so the smaller is always agent_1_id.
 -- ============================================================
 DROP FUNCTION IF EXISTS check_drug_interactions;
 CREATE FUNCTION check_drug_interactions(p_medicine_id_1 INT, p_medicine_id_2 INT)
@@ -213,6 +212,7 @@ BEGIN
     DECLARE v_result JSON;
     DECLARE v_low  INT DEFAULT LEAST(p_medicine_id_1, p_medicine_id_2);
     DECLARE v_high INT DEFAULT GREATEST(p_medicine_id_1, p_medicine_id_2);
+
     SELECT JSON_OBJECT(
                'id',             id,
                'agent_1_type',   agent_1_type,
@@ -221,20 +221,60 @@ BEGIN
                'agent_2_id',     agent_2_id,
                'severity',       severity,
                'description',    description,
-               'recommendation', recommendation
+               'recommendation', recommendation,
+               'medicine_name',  medicine_name
            ) INTO v_result
-    FROM drug_interaction
+    FROM view_all_interactions
     WHERE agent_1_type = 'medicine'
       AND agent_2_type = 'medicine'
       AND agent_1_id   = v_low
       AND agent_2_id   = v_high
+      AND deleted_at   IS NULL
     LIMIT 1;
+
     RETURN COALESCE(v_result, JSON_OBJECT());
 END;
+
 -- ============================================================
--- General interaction check for any two agents (medicine or vaccine)
+-- check_vaccine_interaction takes two vaccine IDs and returns
+-- any known interaction between them as JSON.
+-- IDs are sorted so the smaller is always agent_1_id.
+-- ============================================================
+DROP FUNCTION IF EXISTS check_vaccine_interaction;
+CREATE FUNCTION check_vaccine_interaction(p_vaccine_id_1 INT, p_vaccine_id_2 INT)
+    RETURNS JSON
+    READS SQL DATA
+BEGIN
+    DECLARE v_result JSON;
+    DECLARE v_low  INT DEFAULT LEAST(p_vaccine_id_1, p_vaccine_id_2);
+    DECLARE v_high INT DEFAULT GREATEST(p_vaccine_id_1, p_vaccine_id_2);
+
+    SELECT JSON_OBJECT(
+               'id',             id,
+               'agent_1_type',   agent_1_type,
+               'agent_1_id',     agent_1_id,
+               'agent_2_type',   agent_2_type,
+               'agent_2_id',     agent_2_id,
+               'severity',       severity,
+               'description',    description,
+               'recommendation', recommendation,
+               'vaccine_name',   vaccine_name
+           ) INTO v_result
+    FROM view_all_interactions
+    WHERE agent_1_type = 'vaccine'
+      AND agent_2_type = 'vaccine'
+      AND agent_1_id   = v_low
+      AND agent_2_id   = v_high
+      AND deleted_at   IS NULL
+    LIMIT 1;
+
+    RETURN COALESCE(v_result, JSON_OBJECT());
+END;
+
+-- ============================================================
+-- check_interaction checks any two agents (medicine or vaccine).
 -- Enforces canonical order: 'medicine' < 'vaccine',
--- same-type uses smaller ID first
+-- same-type uses smaller ID first.
 -- ============================================================
 DROP FUNCTION IF EXISTS check_interaction;
 CREATE FUNCTION check_interaction(
@@ -268,15 +308,83 @@ BEGIN
                'agent_2_id',     agent_2_id,
                'severity',       severity,
                'description',    description,
-               'recommendation', recommendation
+               'recommendation', recommendation,
+               'medicine_name',  medicine_name,
+               'vaccine_name',   vaccine_name
            ) INTO v_result
-    FROM drug_interaction
+    FROM view_all_interactions
     WHERE agent_1_type = v_type_a
       AND agent_1_id   = v_id_a
       AND agent_2_type = v_type_b
       AND agent_2_id   = v_id_b
+      AND deleted_at   IS NULL
     LIMIT 1;
+
     RETURN COALESCE(v_result, JSON_OBJECT());
+END;
+
+-- ============================================================
+-- get_interactions_for_medicine returns all active interactions
+-- involving a given medicine ID as a JSON array.
+-- ============================================================
+DROP FUNCTION IF EXISTS get_interactions_for_medicine;
+CREATE FUNCTION get_interactions_for_medicine(p_medicine_id INT)
+    RETURNS JSON
+    READS SQL DATA
+BEGIN
+    DECLARE v_result JSON;
+
+    SELECT JSON_ARRAYAGG(
+               JSON_OBJECT(
+                   'id',             id,
+                   'agent_1_type',   agent_1_type,
+                   'agent_1_id',     agent_1_id,
+                   'agent_2_type',   agent_2_type,
+                   'agent_2_id',     agent_2_id,
+                   'severity',       severity,
+                   'description',    description,
+                   'recommendation', recommendation,
+                   'medicine_name',  medicine_name,
+                   'vaccine_name',   vaccine_name
+               )
+           ) INTO v_result
+    FROM view_all_interactions
+    WHERE ((agent_1_type = 'medicine' AND agent_1_id = p_medicine_id)
+        OR (agent_2_type = 'medicine' AND agent_2_id = p_medicine_id));
+
+    RETURN COALESCE(v_result, JSON_ARRAY());
+END;
+
+-- ============================================================
+-- get_interactions_for_vaccine returns all active interactions
+-- involving a given vaccine ID as a JSON array.
+-- ============================================================
+DROP FUNCTION IF EXISTS get_interactions_for_vaccine;
+CREATE FUNCTION get_interactions_for_vaccine(p_vaccine_id INT)
+    RETURNS JSON
+    READS SQL DATA
+BEGIN
+    DECLARE v_result JSON;
+
+    SELECT JSON_ARRAYAGG(
+               JSON_OBJECT(
+                   'id',             id,
+                   'agent_1_type',   agent_1_type,
+                   'agent_1_id',     agent_1_id,
+                   'agent_2_type',   agent_2_type,
+                   'agent_2_id',     agent_2_id,
+                   'severity',       severity,
+                   'description',    description,
+                   'recommendation', recommendation,
+                   'medicine_name',  medicine_name,
+                   'vaccine_name',   vaccine_name
+               )
+           ) INTO v_result
+    FROM view_all_interactions
+    WHERE ((agent_1_type = 'vaccine' AND agent_1_id = p_vaccine_id)
+        OR (agent_2_type = 'vaccine' AND agent_2_id = p_vaccine_id));
+
+    RETURN COALESCE(v_result, JSON_ARRAY());
 END;
 -- ============================================================
 -- Get guardians for patient returns all parents or guardians
