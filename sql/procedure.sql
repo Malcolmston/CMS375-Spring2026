@@ -771,6 +771,25 @@ BEGIN
 END;
 
 
+-- Soft-delete a medicine (sets deleted_at, keeps the row)
+DROP PROCEDURE IF EXISTS soft_delete_medicine;
+CREATE PROCEDURE soft_delete_medicine(IN p_id INTEGER)
+BEGIN
+    UPDATE medicine
+    SET deleted_at = NOW()
+    WHERE id = p_id
+      AND deleted_at IS NULL;
+END;
+
+-- Hard-delete a medicine (permanent — sets session flag for BEFORE DELETE trigger)
+DROP PROCEDURE IF EXISTS hard_delete_medicine;
+CREATE PROCEDURE hard_delete_medicine(IN p_id INTEGER)
+BEGIN
+    SET @hard_delete_medicine = TRUE;
+    DELETE FROM medicine WHERE id = p_id;
+    SET @hard_delete_medicine = NULL;
+END;
+
 DROP PROCEDURE IF EXISTS assign_institution;
 
 CREATE PROCEDURE assign_institution(
