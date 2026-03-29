@@ -16,11 +16,11 @@ class Allergy extends Connect
     }
 
     /**
-     * Create a new allergy record in the catalog.
+     * Add a new allergy entry to the master catalogue.
      *
      * @return int|false The new allergy ID, or false on failure
      */
-    public function create(string $allergyName, AllergyType $allergyType, ?string $description = null): int|false
+    public function createAllergy(string $allergyName, AllergyType $allergyType, ?string $description = null): int|false
     {
         $typeVal = $allergyType->value;
         $stmt = $this->getConnection()->prepare("CALL create_allergy(?, ?, ?)");
@@ -33,12 +33,12 @@ class Allergy extends Connect
     }
 
     /**
-     * Record an allergy for a specific user.
+     * Link an allergy from the catalogue to a patient record.
      *
      * @return bool True on success, false on failure
      */
-    public function addToUser(
-        int      $userId,
+    public function addPatientAllergy(
+        int      $patientId,
         int      $allergyId,
         string   $reaction,
         Severity $severity,
@@ -48,30 +48,33 @@ class Allergy extends Connect
         $severityVal = $severity->value;
         $stmt = $this->getConnection()->prepare("CALL create_user_allergy(?, ?, ?, ?, ?)");
         if (!$stmt) return false;
-        $stmt->bind_param('iisss', $userId, $allergyId, $reaction, $severityVal, $notes);
+        $stmt->bind_param('iisss', $patientId, $allergyId, $reaction, $severityVal, $notes);
         $ok = $stmt->execute();
         $stmt->close();
         return $ok;
     }
 
     /**
-     * Remove a user_allergy record (hard delete — no soft delete on this join table).
+     * Review all known allergies for a patient before prescribing.
+     * Uses view_active_allergies (excludes soft-deleted catalogue entries).
      *
-     * @param int $userAllergyId The user_allergy.id to remove
-     * @return bool
+     * @return array
      */
-    public function removeFromUser(int $userAllergyId): bool
+    public function getPatientAllergies(int $patientId): array
     {
-        $stmt = $this->getConnection()->prepare("DELETE FROM user_allergy WHERE id = ?");
-        if (!$stmt) return false;
-        $stmt->bind_param('i', $userAllergyId);
-        $ok = $stmt->execute() && $stmt->affected_rows > 0;
+        $stmt = $this->getConnection()->prepare(
+            "SELECT * FROM view_active_allergies WHERE user_id = ?"
+        );
+        if (!$stmt) return [];
+        $stmt->bind_param('i', $patientId);
+        $stmt->execute();
+        $rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
         $stmt->close();
-        return $ok;
+        return $rows;
     }
 
     /**
-     * Get all active (non-deleted) allergens in the catalog.
+     * Get all active (non-deleted) allergens in the catalogue.
      *
      * @return array
      */
@@ -122,46 +125,7 @@ class Allergy extends Connect
     }
 
     /**
-     * Get all allergies recorded for a patient.
-     * Returns rows from view_user_allergies (includes reaction, severity, notes).
-     *
-     * @return array
-     */
-    public function getPatientAllergies(int $userId): array
-    {
-        $stmt = $this->getConnection()->prepare(
-            "SELECT * FROM view_user_allergies WHERE user_id = ?"
-        );
-        if (!$stmt) return [];
-        $stmt->bind_param('i', $userId);
-        $stmt->execute();
-        $rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
-        $stmt->close();
-        return $rows;
-    }
-
-    /**
-     * Check whether a patient's recorded allergies conflict with a medicine.
-     * Returns the conflict JSON decoded as an array, or an empty array if no conflict.
-     *
-     * @return array Conflicting allergy records, empty if safe
-     */
-    public function checkMedicationConflict(int $patientId, int $medicineId): array
-    {
-        $stmt = $this->getConnection()->prepare(
-            "SELECT check_allergy_medication_conflict(?, ?) AS result"
-        );
-        if (!$stmt) return [];
-        $stmt->bind_param('ii', $patientId, $medicineId);
-        $stmt->execute();
-        $row = $stmt->get_result()->fetch_assoc();
-        $stmt->close();
-        if (!$row || $row['result'] === null) return [];
-        return json_decode($row['result'], true) ?: [];
-    }
-
-    /**
-     * Soft-delete an allergen (sets deleted_at via trigger).
+     * Soft-delete an allergen (sets deleted_at).
      *
      * @return bool
      */
