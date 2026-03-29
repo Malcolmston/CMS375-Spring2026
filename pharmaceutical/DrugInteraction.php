@@ -68,9 +68,9 @@ class DrugInteraction extends Pharmaceutical
     }
 
     /**
-     * Check interaction between two vaccines
+     * Get all medicines that interact with either of the two given vaccines
      */
-    public static function checkVaccineInteraction(Vaccine $vacc1, Vaccine $vacc2): ?array
+    public static function checkVaccineInteraction(Vaccine $vacc1, Vaccine $vacc2): array
     {
         $instance = new static();
 
@@ -83,8 +83,7 @@ class DrugInteraction extends Pharmaceutical
         $stmt->execute();
         $row = $stmt->get_result()->fetch_assoc();
         $stmt->close();
-        $data = json_decode($row['result'], true);
-        return !empty($data) ? $data : null;
+        return json_decode($row['result'], true) ?? [];
     }
 
     /**
