@@ -243,6 +243,47 @@ class Medicine extends Pharmaceutical
         return $stmt->execute();
     }
 
+    public function getById(int $id): Medicine|null
+    {
+        $stmt = $this->getConnection()->prepare(
+            "SELECT * FROM view_active_medicines WHERE id = ? LIMIT 1"
+        );
+        if (!$stmt) return null;
+        $stmt->bind_param('i', $id);
+        $stmt->execute();
+        $row = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
+        if (!$row) return null;
+
+        $this->id                   = $row['id'];
+        $this->genericName          = $row['generic_name'];
+        $this->brandName            = $row['brand_name'];
+        $this->drugClass            = $row['drug_class'];
+        $this->form                 = $row['form'];
+        $this->standardDose         = $row['standard_dose'];
+        $this->controlledSubstance  = (bool) $row['controlled_substance'];
+        $this->requiresPrescription = (bool) $row['requires_prescription'];
+        $this->stockQuantity        = (int)  $row['stock_quantity'];
+        $this->unitOfMeasure        = $row['unit_of_measure'];
+        $this->manufacturer         = $row['manufacturer'];
+        $this->storageRequirements  = $row['storage_requirements'];
+        $this->createdAt            = $row['created_at'];
+        $this->updatedAt            = $row['updated_at'];
+        $this->deletedAt            = $row['deleted_at'];
+
+        return $this;
+    }
+
+    public function softDelete(int $id): bool
+    {
+        $stmt = $this->getConnection()->prepare("CALL soft_delete_medicine(?)");
+        if (!$stmt) return false;
+        $stmt->bind_param('i', $id);
+        $ok = $stmt->execute() && $stmt->affected_rows > 0;
+        $stmt->close();
+        return $ok;
+    }
+
     // Getters
     public function getGenericName(): string { return $this->genericName; }
     public function getBrandName(): string { return $this->brandName; }
