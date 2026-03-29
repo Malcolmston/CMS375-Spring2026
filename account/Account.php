@@ -263,6 +263,25 @@ abstract class Account extends Connect
     }
 
     /**
+     * Check whether a user holds a given role — use before privileged actions.
+     *
+     * @param int  $userId The user to check.
+     * @param role $role   The role to test for.
+     * @return bool True if the user has the role, false otherwise.
+     */
+    public function hasRole(int $userId, role $role): bool
+    {
+        $roleVal = $role->value;
+        $stmt = $this->getConnection()->prepare("SELECT has_role(?, ?) AS result");
+        if (!$stmt) return false;
+        $stmt->bind_param("is", $userId, $roleVal);
+        $stmt->execute();
+        $row = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
+        return (bool)($row['result'] ?? false);
+    }
+
+    /**
      * Determines whether a user exists based on the specified criteria.
      *
      * @return bool Returns true if a user exists, otherwise false.
@@ -438,27 +457,6 @@ abstract class Account extends Connect
         $stmt->execute();
         $this->password = $newpws;
         return true;
-    }
-
-    /**
-     * Checks if the current user has the specified role.
-     *
-     * @param Role $role The role to check against the current user.
-     * @return bool Returns true if the user has the specified role, otherwise false.
-     */
-    public function hasRole(Role $role): bool
-    {
-        $sql = "SELECT has_role(?, ?) AS has_role";
-        if (!($stmt = $this->getConnection()->prepare($sql))) {
-            return false;
-        }
-        $roleValue = $role->value;
-        $stmt->bind_param('is', $this->id, $roleValue);
-        $stmt->execute();
-        $stmt->bind_result($hasRole);
-        $stmt->fetch();
-        $stmt->close();
-        return (bool)$hasRole;
     }
 
     /**
