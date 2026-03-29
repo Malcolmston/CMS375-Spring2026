@@ -384,5 +384,64 @@ class Admin extends Account implements Employed
         $stmt->execute();
         $stmt->close();
     }
+
+    /**
+     * Retrieves a list of doctors associated with a specific institution.
+     *
+     * @param int $institutionId The ID of the institution whose doctors are to be retrieved.
+     * @return array|false An array of doctors if the query is successful, or false if an error occurs.
+     */
+    public function viewInstitutionDoctors(int $institutionId): array|false
+    {
+        $sql = "SELECT * FROM view_institution_doctors WHERE institution_id = ?";
+        if (!($stmt = $this->getConnection()->prepare($sql))) {
+            return false;
+        }
+        $stmt->bind_param('i', $institutionId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $doctors = $result->fetch_all(MYSQLI_ASSOC);
+        $stmt->close();
+        return $doctors;
+    }
+
+    /**
+     * Retrieves a list of nurses associated with a specific institution.
+     *
+     * @param int $institutionId The ID of the institution whose nurses are to be retrieved.
+     * @return array|false An array of nurses if the query succeeds, or false if an error occurs.
+     */
+    public function viewInstitutionNurses(int $institutionId): array|false
+    {
+        $sql = "SELECT * FROM view_institution_nurses WHERE institution_id = ?";
+        if (!($stmt = $this->getConnection()->prepare($sql))) {
+            return false;
+        }
+        $stmt->bind_param('i', $institutionId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $nurses = $result->fetch_all(MYSQLI_ASSOC);
+        $stmt->close();
+        return $nurses;
+    }
+
+    /**
+     * Retrieves a list of pharmacists associated with a specific institution.
+     *
+     * @param int $institutionId The ID of the institution whose pharmacists are to be retrieved.
+     * @return array|false Returns an array of pharmacists as associative arrays if successful, or false on failure.
+     */
+    public function viewInstitutionPharmacists(int $institutionId): array|false {
+        $sql = "SELECT * FROM view_institution_pharmacists WHERE institution_id = ?";
+        if (!($stmt = $this->getConnection()->prepare($sql))) {
+            return false;
+        }
+        $stmt->bind_param('i', $institutionId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $pharmacists = $result->fetch_all(MYSQLI_ASSOC);
+        $stmt->close();
+        return $pharmacists;
+    }
 }
 
