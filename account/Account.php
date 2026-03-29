@@ -352,6 +352,42 @@ abstract class Account extends Connect
     }
 
     /**
+     * Permanently deletes a user from the database based on the specified criteria.
+     *
+     * @return void Does not return any value.
+     */
+    protected function hardDelete()
+    {
+        $sql = "CALL hard_delete_user(?)";
+        $stmt = $this->getConnection()->prepare($sql);
+        $stmt->bind_param("i", $this->id);
+        $stmt->execute();
+    }
+
+    /**
+     * Changes the user's password if the provided old password is verified.
+     *
+     * @param string $old The current password to verify.
+     * @param string $newpws The new password to set.
+     * @return bool Returns true if the password is successfully changed, otherwise false.
+     */
+    protected function changePassword(string $old, string $newpws): bool
+    {
+        if ( !self::verifyPassword($this->password,$old) ) {
+            return false;
+        }
+
+        $newpws = self::encryptPassword($newpws);
+        $sql = "CALL change_password(?, ?)";
+        $stmt = $this->getConnection()->prepare($sql);
+        $stmt->bind_param("ss", $this->id, $newpws);
+
+        $stmt->execute();
+        $this->password = $newpws;
+        return true;
+    }
+
+    /**
      * Authenticates a user using the provided username and password.
      *
      * @param string $username The username of the user attempting to log in.
