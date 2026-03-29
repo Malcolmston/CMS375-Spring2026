@@ -129,4 +129,16 @@ trait EmployedTrait
 
         return $staff;
     }
+
+    public function viewMyInstitutions(): array|false
+    {
+        $sql = "SELECT * FROM view_institution_staff WHERE id = ?";
+        $stmt = $this->getConnection()->prepare($sql);
+        $stmt->bind_param('i', $this->id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $institutions = $result->fetch_all(MYSQLI_ASSOC);
+        $stmt->close();
+        return $institutions;
+    }
 }
