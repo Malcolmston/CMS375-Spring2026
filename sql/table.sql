@@ -91,7 +91,7 @@ CREATE TABLE IF NOT EXISTS diagnosis (
 CREATE TABLE IF NOT EXISTS logs (
     id INTEGER PRIMARY KEY AUTO_INCREMENT,
 
-    user_id INTEGER NOT NULL COMMENT 'user who performed the action',
+    user_id INTEGER NULL COMMENT 'user who performed the action; NULL = system/trigger',
     action ENUM(
         'CREATE','UPDATE','DELETE','LOGIN','LOGOUT',
         'ROLE_ASSIGNED','ROLE_REMOVED','PASSWORD_CHANGE',
