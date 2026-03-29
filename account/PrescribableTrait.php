@@ -170,4 +170,44 @@ trait PrescribableTrait
         $stmt->close();
         return $rows;
     }
+
+    /**
+     * Retrieves the items associated with a specific prescription from the database.
+     *
+     * @param int $prescription_id The unique identifier of the prescription for which items are to be retrieved.
+     * @return array An array of associative arrays containing the prescription items. Returns an empty array if no items are found or if an error occurs.
+     */
+    public function getPrescriptionItems(int $prescription_id): array
+    {
+        $sql = "SELECT * FROM view_prescription_item WHERE prescription_id = ?";
+        $stmt = $this->conn->prepare($sql);
+        if (!$stmt) {
+            return [];
+        }
+        $stmt->bind_param("i", $prescription_id);
+        $stmt->execute();
+        $rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+        $stmt->close();
+        return $rows;
+    }
+
+    /**
+     * Checks if a prescription has expired based on the given prescription ID.
+     *
+     * @param int $prescriptionId The ID of the prescription to check for expiration.
+     * @return bool Returns true if the prescription is expired, otherwise false.
+     */
+    public function checkPrescriptionExpired(int $prescriptionId): bool
+    {
+        $sql = "CALL check_prescription_expired(?)";
+        $stmt = $this->conn->prepare($sql);
+        if (!$stmt) {
+            return false;
+        }
+        $stmt->bind_param("i", $prescriptionId);
+        $stmt->execute();
+        $rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+        $stmt->close();
+        return count($rows) > 0;
+    }
 }
