@@ -1027,3 +1027,31 @@ BEGIN
     SET stock_quantity = stock
     WHERE id = med_id;
 END;
+
+-- Update a user's hashed password (trigger trg_log_password_change fires automatically)
+DROP PROCEDURE IF EXISTS update_password;
+
+CREATE PROCEDURE update_password(
+    IN p_user_id       INT,
+    IN p_password_hash VARCHAR(255)
+)
+BEGIN
+    UPDATE users
+    SET    password   = p_password_hash,
+           updated_at = NOW()
+    WHERE  id         = p_user_id
+      AND  deleted_at IS NULL;
+END;
+
+-- Link a patient to a guardian in the parent_relationship table
+DROP PROCEDURE IF EXISTS create_parent_relationship;
+
+CREATE PROCEDURE create_parent_relationship(
+    IN p_parent_id    INT,
+    IN p_patient_id   INT,
+    IN p_relationship VARCHAR(50)
+)
+BEGIN
+    INSERT INTO parent_relationship (parent_id, patient_id, relationship)
+    VALUES (p_parent_id, p_patient_id, p_relationship);
+END;
