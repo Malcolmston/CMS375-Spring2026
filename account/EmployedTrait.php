@@ -2,6 +2,8 @@
 
 namespace account;
 
+require_once __DIR__ . '/Institution.php';
+
 trait EmployedTrait
 {
     protected function fetchEmployeeIds(): void
@@ -140,5 +142,10 @@ trait EmployedTrait
         $institutions = $result->fetch_all(MYSQLI_ASSOC);
         $stmt->close();
         return $institutions;
+    }
+
+    public function getInstitution(int $institutionId): ?Institution
+    {
+        return Institution::getById($institutionId);
     }
 }
