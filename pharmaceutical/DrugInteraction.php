@@ -35,12 +35,11 @@ class DrugInteraction extends Pharmaceutical
         $conn = self::getConnection();
         $stmt = $conn->prepare("
             SELECT severity, description, recommendation
-            FROM drug_interaction
+            FROM view_all_interactions
             WHERE agent_1_type = 'medicine'
               AND agent_1_id = ?
               AND agent_2_type = 'medicine'
               AND agent_2_id = ?
-              AND deleted_at IS NULL
         ");
         $id1 = $med1->getId();
         $id2 = $med2->getId();
@@ -53,7 +52,7 @@ class DrugInteraction extends Pharmaceutical
         $result = $stmt->get_result();
         $interaction = $result->fetch_assoc();
         $stmt->close();
-        return $interaction ?: null;
+        return $interaction;
     }
 
     /**
@@ -64,10 +63,9 @@ class DrugInteraction extends Pharmaceutical
         $conn = self::getConnection();
         $stmt = $conn->prepare("
             SELECT severity, description, recommendation
-            FROM drug_interaction
-            WHERE (agent_1_type = 'medicine' AND agent_1_id = ? AND agent_2_type = 'vaccine' AND agent_2_id = ?)
-               OR (agent_1_type = 'vaccine' AND agent_1_id = ? AND agent_2_type = 'medicine' AND agent_2_id = ?)
-              AND deleted_at IS NULL
+            FROM view_all_interactions
+            WHERE ((agent_1_type = 'medicine' AND agent_1_id = ? AND agent_2_type = 'vaccine' AND agent_2_id = ?)
+               OR (agent_1_type = 'vaccine' AND agent_1_id = ? AND agent_2_type = 'medicine' AND agent_2_id = ?))
         ");
         $medId = $med->getId();
         $vaccineId = $vaccine->getId();
@@ -92,12 +90,11 @@ class DrugInteraction extends Pharmaceutical
         }
         $stmt = $conn->prepare("
             SELECT severity, description, recommendation
-            FROM drug_interaction
+            FROM view_all_interactions
             WHERE agent_1_type = 'vaccine'
               AND agent_1_id = ?
               AND agent_2_type = 'vaccine'
               AND agent_2_id = ?
-              AND deleted_at IS NULL
         ");
         $stmt->bind_param('ii', $id1, $id2);
         $stmt->execute();
@@ -115,15 +112,10 @@ class DrugInteraction extends Pharmaceutical
         $conn = self::getConnection();
         $medId = $med->getId();
         $stmt = $conn->prepare("
-            SELECT di.*,
-                   m1.generic_name AS agent_1_name,
-                   m2.generic_name AS agent_2_name
-            FROM drug_interaction di
-            LEFT JOIN medicine m1 ON di.agent_1_type = 'medicine' AND di.agent_1_id = m1.id
-            LEFT JOIN medicine m2 ON di.agent_2_type = 'medicine' AND di.agent_2_id = m2.id
-            WHERE (di.agent_1_type = 'medicine' AND di.agent_1_id = ?)
-               OR (di.agent_2_type = 'medicine' AND di.agent_2_id = ?)
-              AND di.deleted_at IS NULL
+            SELECT *
+            FROM view_all_interactions
+            WHERE ((agent_1_type = 'medicine' AND agent_1_id = ?)
+               OR (agent_2_type = 'medicine' AND agent_2_id = ?))
         ");
         $stmt->bind_param('ii', $medId, $medId);
         $stmt->execute();
