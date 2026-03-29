@@ -39,4 +39,19 @@ trait DiagnosibleTrait
         $stmt->close();
         return json_decode($json, true) ?? [];
     }
+
+
+    /**
+     * Soft deletes a diagnosis associated with the currently authenticated user by invoking a stored procedure.
+     *
+     * @param int $diagnosisId The unique identifier of the diagnosis to be soft deleted.
+     * @return bool Returns true if the stored procedure executes successfully, false otherwise.
+     */
+    public function softDeleteDiagnosis(int $diagnosisId): bool
+    {
+        $sql = "CALL soft_delete_diagnosis(?, ?)";
+        $stmt = $this->getConnection()->prepare($sql);
+        $stmt->bind_param('ii', $diagnosisId, $this->id);
+        return $stmt->execute();
+    }
 }
