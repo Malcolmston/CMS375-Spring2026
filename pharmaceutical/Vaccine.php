@@ -53,6 +53,8 @@ class Vaccine extends Pharmaceutical
 
     /**
      * Get all vaccine type enum values
+     *
+     * @return string[]
      */
     public static function getTypes(): array
     {
@@ -61,6 +63,8 @@ class Vaccine extends Pharmaceutical
 
     /**
      * Get all development stage enum values
+     *
+     * @return string[]
      */
     public static function getStages(): array
     {

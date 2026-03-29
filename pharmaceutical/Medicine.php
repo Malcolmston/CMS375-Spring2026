@@ -28,6 +28,9 @@ class Medicine extends Pharmaceutical
     }
 
     // Enum methods for form
+    /**
+     * @return string[]
+     */
     public static function getFormEnum(): array
     {
         return array_map(fn($c) => $c->value, Form::cases());
@@ -39,6 +42,9 @@ class Medicine extends Pharmaceutical
     }
 
     // Enum methods for storage
+    /**
+     * @return string[]
+     */
     public static function getStorageEnum(): array
     {
         return array_map(fn($c) => $c->value, Store::cases());
