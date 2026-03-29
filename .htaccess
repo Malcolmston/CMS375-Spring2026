@@ -1,3 +1,5 @@
+PassEnv NEWS_API_KEY DB_HOST DB_PORT DB_USER DB_PASS DB_NAME MAIL_HOST MAIL_PORT
+
 RewriteEngine On
 
 # Force HTTPS (Modified for local Docker port mapping)
@@ -42,6 +44,7 @@ RewriteRule ^dashboard$ components/dashboard.php [L]
 
 RewriteRule ^logout$ logout.php [L,PT]
 
+RewriteRule ^blog$ components/home/pages/blog.php [L]
 # Block access to the account folder
 RewriteRule ^account/.*$ - [F,L]
 
