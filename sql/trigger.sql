@@ -1171,6 +1171,17 @@ AFTER UPDATE ON medicine
     END IF;
 END;
 
+DROP TRIGGER IF EXISTS medicine_before_delete;
+
+CREATE TRIGGER medicine_before_delete
+BEFORE DELETE ON medicine
+FOR EACH ROW BEGIN
+    IF @hard_delete_medicine IS NOT TRUE THEN
+        UPDATE medicine SET deleted_at = NOW() WHERE id = OLD.id AND deleted_at IS NULL;
+        CALL throw('Use hard_delete_medicine for permanent deletion');
+    END IF;
+END;
+
 -- ============================================================
 -- DOCTOR_VISIT Triggers (INSERT, UPDATE)
 -- ============================================================
