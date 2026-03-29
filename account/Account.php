@@ -312,36 +312,6 @@ abstract class Account extends Connect
     }
 
     /**
-     * Performs a soft delete operation on a user, marking the user as deleted without removing their data.
-     *
-     * @return bool Returns true if the soft delete operation was successful, otherwise false.
-     */
-    protected function softDelete(): bool
-    {
-        $sql = "CALL soft_delete_user(?)";
-        $stmt = $this->getConnection()->prepare($sql);
-        $stmt->bind_param("i", $this->id);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        return $result->num_rows > 0;
-    }
-
-    /**
-     * Restores a user based on the specified criteria.
-     *
-     * @return bool Returns true if the user was successfully restored, otherwise false.
-     */
-    protected function restore(): bool
-    {
-        $sql = "CALL restore_user(?)";
-        $stmt = $this->getConnection()->prepare($sql);
-        $stmt->bind_param("i", $this->id);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        return $result->num_rows > 0;
-    }
-
-    /**
      * Inserts a new user record into the database using the provided details.
      *
      * @return bool Returns true if the user was successfully inserted, otherwise false.
@@ -383,80 +353,44 @@ abstract class Account extends Connect
     }
 
     /**
-     * Permanently deletes a user from the database based on the specified criteria.
-     *
-     * @return void Does not return any value.
+     * Update this account's own profile fields.
      */
-    protected function hardDelete()
-    {
-        $sql = "CALL hard_delete_user(?)";
-        $stmt = $this->getConnection()->prepare($sql);
-        $stmt->bind_param("i", $this->id);
-        $stmt->execute();
-    }
-
     protected function updateProfile(): bool
     {
-        $prefix = $this->prefix?->value;
-        $suffix = $this->suffix?->value;
-        $blood = $this->blood?->value;
-        $locX = $this->location->x;
-        $locY = $this->location->y;
+        $prefixVal = $this->prefix?->value;
+        $suffixVal = $this->suffix?->value;
+        $bloodVal  = $this->blood?->value;
+        $locX      = $this->location->x;
+        $locY      = $this->location->y;
 
-        $sql = "CALL update_user(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, @p_success)";
-
-        if (!($stmt = $this->getConnection()->prepare($sql))) {
-            return false;
-        }
+        $stmt = $this->getConnection()->prepare(
+            "CALL update_user(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, @p_success)"
+        );
+        if (!$stmt) return false;
 
         $stmt->bind_param(
-            "issssssssddis",
+            "isssssssddsiss",
             $this->id,
             $this->firstName,
             $this->lastName,
             $this->middleName,
-            $prefix,
-            $suffix,
+            $prefixVal,
+            $suffixVal,
             $this->gender,
             $this->phone,
             $locX,
             $locY,
             $this->email,
             $this->age,
-            $blood,
+            $bloodVal,
             $this->extra
         );
 
-        $stmt->execute();
+        if (!$stmt->execute()) { $stmt->close(); return false; }
         $stmt->close();
 
-        $result = $this->getConnection()->query("SELECT @p_success AS success");
-        $row = $result->fetch_assoc();
-
-        return $row['success'] ?? false;
-    }
-
-    /**
-     * Changes the user's password if the provided old password is verified.
-     *
-     * @param string $old The current password to verify.
-     * @param string $newpws The new password to set.
-     * @return bool Returns true if the password is successfully changed, otherwise false.
-     */
-    protected function changePassword(string $old, string $newpws): bool
-    {
-        if ( !self::verifyPassword($this->password,$old) ) {
-            return false;
-        }
-
-        $newpws = self::encryptPassword($newpws);
-        $sql = "CALL change_password(?, ?)";
-        $stmt = $this->getConnection()->prepare($sql);
-        $stmt->bind_param("ss", $this->id, $newpws);
-
-        $stmt->execute();
-        $this->password = $newpws;
-        return true;
+        $row = $this->getConnection()->query("SELECT @p_success AS ok")->fetch_assoc();
+        return (bool)($row['ok'] ?? false);
     }
 
     /**
