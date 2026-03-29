@@ -4,10 +4,11 @@ namespace account;
 
 require_once __DIR__ . '/Account.php';
 require_once __DIR__ . '/EditableUserTrait.php';
+require_once __DIR__ . '/VisitTrait.php';
 
 class Patient extends Account
 {
-    use EditableUserTrait;
+    use EditableUserTrait, VisitTrait;
     /**
      * @inheritDoc
      */
