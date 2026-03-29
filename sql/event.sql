@@ -33,6 +33,18 @@ BEGIN
       AND status IN ('SCHEDULED', 'NO_SHOW');
 END;
 
+DROP EVENT IF EXISTS remove_adult_guardianship;
+
+CREATE EVENT remove_adult_guardianship
+ON SCHEDULE EVERY 1 DAY
+DO
+BEGIN
+    DELETE pr FROM parent_relationship pr
+    JOIN users u ON u.id = pr.patient_id
+    WHERE u.age >= 21
+      AND pr.deleted_at IS NULL;
+END;
+
 DROP EVENT IF EXISTS alert_low_stock;
 
 CREATE EVENT alert_low_stock
