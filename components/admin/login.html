@@ -57,5 +57,24 @@
             </button>
         </form>
     </div>
+    <!-- Login error popup -->
+    <div id="error-popup" class="hidden fixed inset-0 z-50 flex items-start justify-center pt-6 px-4 pointer-events-none">
+        <div class="pointer-events-auto flex items-start gap-3 bg-red-50 border border-red-200 text-red-800 rounded-xl shadow-lg px-5 py-4 max-w-sm w-full">
+            <svg class="mt-0.5 shrink-0 w-5 h-5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+            </svg>
+            <span id="error-message" class="text-sm font-medium flex-1"></span>
+            <button onclick="document.getElementById('error-popup').classList.add('hidden')" class="text-red-400 hover:text-red-600 text-lg leading-none">&times;</button>
+        </div>
+    </div>
+    <script>
+        const params = new URLSearchParams(location.search);
+        const err = params.get('error');
+        if (err) {
+            document.getElementById('error-message').textContent = err;
+            document.getElementById('error-popup').classList.remove('hidden');
+            history.replaceState(null, '', location.pathname);
+        }
+    </script>
 </body>
 </html>
