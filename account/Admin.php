@@ -5,6 +5,7 @@ namespace account;
 require_once __DIR__ . '/Account.php';
 require_once __DIR__ . '/Employed.php';
 require_once __DIR__ . '/EmployedTrait.php';
+require_once __DIR__ . '/Role.php';
 
 class Admin extends Account implements Employed
 {
@@ -354,5 +355,33 @@ class Admin extends Account implements Employed
         $stmt->close();
 
         return $employee;
+    }
+
+    /**
+     * Assign a role to a specified user
+     *
+     * @param int $userId The ID of the user to whom the role is being assigned
+     * @param Role $role The role to be assigned to the user
+     * @return bool True on successful role assignment, false on failure
+     */
+    public function assignRole(int $userId, Role $role): bool
+    {
+        $sql = "CALL assign_role(?, ?, ?)";
+
+        if (!($stmt = $this->getConnection()->prepare($sql))) {
+            return false;
+        }
+
+        $roleValue = $role->value;
+        $adminId = $this->id;
+        $stmt->bind_param('isi', $userId, $roleValue, $adminId);
+
+        if (!$stmt->execute()) {
+            $stmt->close();
+            return false;
+        }
+
+        $stmt->close();
+        return true;
     }
 }
