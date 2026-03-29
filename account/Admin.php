@@ -408,4 +408,26 @@ class Admin extends Account implements Employed
         $stmt->close();
         return true;
     }
+
+    /**
+     * Creates a new institution by executing the corresponding stored procedure.
+     *
+     * @param string $name The name of the institution to be created.
+     * @param InstitutionType $type The type of the institution, represented as an InstitutionType object.
+     * @param string $phone The phone number associated with the institution.
+     * @param string $email The email address associated with the institution.
+     * @param string $address The physical address of the institution.
+     * @return void
+     */
+    public function createInstitution(string $name, InstitutionType $type, string $phone, string $email, string $address): void
+    {
+        $sql = "CALL create_institution(?, ?, ?, ?, ?)";
+
+        $institutionId = $type->value;
+
+        $stmt = $this->getConnection()->prepare($sql);
+        $stmt->bind_param('sisss', $name, $institutionId, $phone, $email, $address);
+        $stmt->execute();
+        $stmt->close();
+    }
 }
