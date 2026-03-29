@@ -9,7 +9,7 @@ require_once __DIR__ . '/Role.php';
 
 class Admin extends Account implements Employed
 {
-    use EmployedTrait;
+    use EmployedTrait, EditableUserTrait;
 
     private string $department;
 
@@ -263,27 +263,6 @@ class Admin extends Account implements Employed
     }
 
     /**
-     * View all staff across all institutions
-     *
-     * @return array|false Array of all staff data or false on failure
-     */
-    public function viewAllStaff(): array|false
-    {
-        $sql = "SELECT * FROM view_all_staff";
-
-        if (!($stmt = $this->getConnection()->prepare($sql))) {
-            return false;
-        }
-
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $staff = $result->fetch_all(MYSQLI_ASSOC);
-        $stmt->close();
-
-        return $staff;
-    }
-
-    /**
      * Fire/dismiss an employee from an institution
      *
      * @param int $institutionUserId The institution_user ID to remove
@@ -303,31 +282,6 @@ class Admin extends Account implements Employed
         $stmt->close();
 
         // Get the result from the OUT parameter
-        $result = $this->getConnection()->query("SELECT @res AS result");
-        $row = $result->fetch_assoc();
-
-        return $row['result'] ?? false;
-    }
-
-    /**
-     * Update an employee's role at an institution
-     *
-     * @param int    $institutionUserId The institution_user ID
-     * @param string $newRole           The new role to assign
-     * @return bool True on success, false on failure
-     */
-    public function updateEmployeeRole(int $institutionUserId, string $newRole): bool
-    {
-        $sql = "CALL update_employee_role(?, ?, @res)";
-
-        if (!($stmt = $this->getConnection()->prepare($sql))) {
-            return false;
-        }
-
-        $stmt->bind_param('is', $institutionUserId, $newRole);
-        $stmt->execute();
-        $stmt->close();
-
         $result = $this->getConnection()->query("SELECT @res AS result");
         $row = $result->fetch_assoc();
 
@@ -429,22 +383,6 @@ class Admin extends Account implements Employed
         $stmt->bind_param('sisss', $name, $institutionId, $phone, $email, $address);
         $stmt->execute();
         $stmt->close();
-    }
-
-    /**
-     * Soft deletes a user by executing a stored procedure.
-     *
-     * @param int $userId The unique identifier of the user to be soft deleted.
-     * @return bool Returns true if the user was successfully soft deleted, or false otherwise.
-     */
-    public function softDeleteUser(int $userId): bool
-    {
-        $sql = "CALL soft_delete_user(?)";
-        $stmt = $this->getConnection()->prepare($sql);
-        $stmt->bind_param("i", $userId);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        return $result->num_rows > 0;
     }
 }
 
