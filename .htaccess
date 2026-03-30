@@ -50,6 +50,8 @@ RewriteRule ^services/lab$ components/home/pages/lab-services.php [L]
 RewriteRule ^blog$ components/home/pages/blog.php [L]
 RewriteRule ^faq$ components/home/pages/faq.php [L]
 RewriteRule ^contact$ components/home/pages/contact.php [L]
+RewriteRule ^privacy$ components/home/pages/privacy.php [L]
+
 # Block access to the account folder
 RewriteRule ^account/.*$ - [F,L]
 
