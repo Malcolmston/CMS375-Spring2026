@@ -47,6 +47,7 @@ RewriteRule ^dashboard$ components/dashboard.php [L]
 
 RewriteRule ^logout$ logout.php [L,PT]
 
+RewriteRule ^about/story$ components/home/pages/story.php [L]
 RewriteRule ^about/careers$ components/home/pages/careers.php [L]
 RewriteRule ^services/primary-care$ components/home/pages/primary-care.php [L]
 RewriteRule ^services/specialists$ components/home/pages/specialists.php [L]
