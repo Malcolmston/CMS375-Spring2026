@@ -33,6 +33,9 @@ RewriteRule ^components/login\.php$ /login [R=301,L]
 RewriteRule ^components/dashboard\.php$ /dashboard [R=301,L]
 RewriteRule ^logout\.php$ /logout [R=301,L]
 
+# Block direct access to page PHP files — must use clean URLs
+RewriteRule ^components/home/pages/.*\.php$ - [F,L]
+
 # Redirect /patient/login.html to components/patient/login.html
 RewriteRule ^patient/login\.html$ components/patient/login.html [L]
 RewriteRule ^staff/login\.html$ components/staff/login.html [L]
