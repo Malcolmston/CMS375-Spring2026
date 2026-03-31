@@ -212,11 +212,6 @@
 
     <script>
         $(document).ready(function() {
-            $('.nav-item').hover(
-                function() { $(this).addClass('bg-slate-100'); },
-                function() { $(this).removeClass('bg-slate-100'); }
-            );
-
             $('form').on('submit', function(e) {
                 e.preventDefault();
                 const btn = $(this).find('button[type=submit]');
