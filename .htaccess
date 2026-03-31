@@ -26,7 +26,7 @@ RewriteRule ^.*$ - [F,L]
 
 # Redirect /index to home dashboard.php
 RewriteRule ^index\.php$ /index [R=301,L]
-RewriteRule ^index$ index.php [L]
+RewriteRule ^index$ index.php [END]
 
 # Redirect full URLs to clean URLs
 RewriteRule ^components/login\.php$ /login [R=301,L]
