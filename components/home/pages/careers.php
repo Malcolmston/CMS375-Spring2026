@@ -8,59 +8,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://kit.fontawesome.com/1ad3aa32da.js" crossorigin="anonymous"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
-    <style>
-        .dropdown-menu {
-            opacity: 0;
-            visibility: hidden;
-            transform: translateX(-50%) translateY(-10px);
-            transition: all 0.3s ease;
-        }
-        .dropdown:hover .dropdown-menu {
-            opacity: 1;
-            visibility: visible;
-            transform: translateX(-50%) translateY(0);
-        }
-        .nav-item::after {
-            content: '';
-            position: absolute;
-            bottom: 4px;
-            left: 20%;
-            right: 20%;
-            height: 2px;
-            background: linear-gradient(90deg, transparent, #1e293b, transparent);
-            transform: scaleX(0);
-            transition: transform 0.3s ease;
-        }
-        .nav-item:hover::after { transform: scaleX(1); }
-        .dropdown > .nav-item::before {
-            content: '';
-            position: absolute;
-            right: 0;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 0;
-            height: 0;
-            border-left: 4px solid transparent;
-            border-right: 4px solid transparent;
-            border-top: 4px solid #1e293b;
-            transition: transform 0.3s ease;
-        }
-        .dropdown:hover > .nav-item::before { transform: translateY(-50%) rotate(180deg); }
-        .dropdown-item:hover {
-            padding-left: 24px;
-            background: rgba(30, 41, 59, 0.05);
-        }
-        .dropdown-item::before {
-            content: '';
-            width: 5px;
-            height: 5px;
-            background: #1e293b;
-            border-radius: 50%;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-        .dropdown-item:hover::before { opacity: 1; }
-    </style>
 </head>
 <body class="min-h-screen bg-gradient-to-br from-slate-100 via-slate-50 to-slate-200">
 

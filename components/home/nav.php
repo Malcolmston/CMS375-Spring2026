@@ -1,3 +1,4 @@
+<link rel="stylesheet" href="/components/home/css/nav.css">
 <nav class="fixed inset-x-6 top-6 z-50 animate__animated animate__fadeInDown">
     <div class="bg-white/95 backdrop-blur-md border border-slate-200/60 rounded-2xl shadow-lg">
         <div class="px-5 py-3 flex items-center justify-between">
