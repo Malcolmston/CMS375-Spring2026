@@ -9,7 +9,10 @@ use account\Patient;
 use account\Admin;
 use account\Billing;
 use account\LabTech;
+use account\Radiologist;
 use account\role;
+use account\Surgeon;
+use account\Therapist;
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
@@ -115,8 +118,16 @@ function handle_staff(): void
     }
 
     $account = match ($role) {
-        Role::BILLING->value => new Billing(),
+        Role::PHYSICIAN->value => new Physician(),
+        Role::NURSE->value => new Nurse(),
+        Role::PHARMACIST->value => new Pharmacist(),
+        Role::RADIOLOGIST->value => new Radiologist(),
         Role::LAB_TECH->value => new LabTech(),
+        Role::SURGEON->value => new Surgeon(),
+        Role::RECEPTIONIST->value => new Receptionist(),
+        Role::BILLING->value => new Billing(),
+        Role::EMS->value => new EMS(),
+        Role::THERAPIST->value => new Therapist(),
         default    => null,
     };
 
