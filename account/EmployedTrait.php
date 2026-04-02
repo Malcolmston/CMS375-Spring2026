@@ -31,7 +31,7 @@ trait EmployedTrait
                    AND employid = ?
                  LIMIT 1";
 
-        $conn = (new \Connect())->getConnection();
+        $conn = \Connect::getInstance()->getConnection();
         $stmt = $conn->prepare($sql);
         if ($stmt === false) {
             return null;
@@ -40,9 +40,10 @@ trait EmployedTrait
         $stmt->execute();
         $stmt->bind_result($role);
         $found = $stmt->fetch();
+        $result = $found ? $role : null;
         $stmt->close();
 
-        return $found ? $role : null;
+        return $result;
     }
 
 
