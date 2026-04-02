@@ -21,7 +21,9 @@ RUN mkdir -p /etc/apache2/ssl && \
     openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
     -keyout /etc/apache2/ssl/server.key \
     -out /etc/apache2/ssl/server.crt \
-    -subj "/C=US/ST=State/L=City/O=Organization/OU=Department/CN=localhost"
+    -subj "/C=US/ST=State/L=City/O=Organization/OU=Department/CN=localhost" \
+    -addext "basicConstraints=CA:FALSE" \
+    -addext "subjectAltName=DNS:localhost,IP:127.0.0.1"
 
 # Stage 4: Runtime stage (Final)
 FROM base AS runtime
@@ -30,8 +32,9 @@ WORKDIR /var/www/html
 # Enable mod_rewrite, mod_headers, and mod_ssl
 RUN a2enmod rewrite headers ssl
 
-# Set AllowOverride to allow .htaccess
-RUN sed -i 's/AllowOverride None/AllowOverride All/' /etc/apache2/apache2.conf
+# Set AllowOverride to allow .htaccess and set ServerName to suppress FQDN warning
+RUN sed -i 's/AllowOverride None/AllowOverride All/' /etc/apache2/apache2.conf && \
+    echo "ServerName localhost" >> /etc/apache2/apache2.conf
 
 # Create a basic SSL configuration for Apache
 RUN printf "<VirtualHost *:443>\n\
