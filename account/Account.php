@@ -23,8 +23,8 @@ abstract class Account extends Connect
     protected int $id;
     protected string $firstName;
     protected string $lastName;
-    protected string $middleName;
-    protected suffix $suffix;
+    protected ?string $middleName;
+    protected ?suffix $suffix;
     protected prefix $prefix;
     protected string $gender;
     protected string $phone;
@@ -60,12 +60,12 @@ abstract class Account extends Connect
         return $this->lastName;
     }
 
-    public function getMiddleName(): string
+    public function getMiddleName(): ?string
     {
         return $this->middleName;
     }
 
-    public function getSuffix(): suffix
+    public function getSuffix(): ?suffix
     {
         return $this->suffix;
     }
@@ -232,14 +232,18 @@ abstract class Account extends Connect
         $instance->id         = $row['id'];
         $instance->firstName  = $row['firstname'];
         $instance->lastName   = $row['lastname'];
-        $instance->middleName = $row['middlename'];
-        $instance->suffix     = suffix::from($row['suffix']);
+        $instance->middleName = $row['middlename'] ?? '';
+        $instance->suffix     = suffix::tryFrom($row['suffix'] ?? '');
         $instance->prefix     = prefix::from($row['prefix']);
         $instance->gender     = $row['gender'];
         $instance->phone      = $row['phone'];
         $instance->location   = new Point((float) $row['loc_x'], (float) $row['loc_y']);
         $instance->email      = $row['email'];
         $instance->age        = (int) $row['age'];
+        $instance->blood      = blood::from($row['blood']);
+        $instance->extra      = $row['extra'] ?? '';
+        $instance->employid   = $row['employid'] ?? null;
+        $instance->adminid    = $row['adminid']  ?? null;
         $instance->role       = role::from($row['role']);
         $instance->status     = $row['status'];
         $instance->createdAt  = new DateTime($row['created_at']);
