@@ -4,12 +4,23 @@ require_once __DIR__ . '/../account/Patient.php';
 require_once __DIR__ . '/../account/Admin.php';
 require_once __DIR__ . '/../account/Billing.php';
 require_once __DIR__ . '/../account/LabTech.php';
+require_once __DIR__ . '/../account/Pharmacist.php';
+require_once __DIR__ . '/../account/Radiologist.php';
+require_once __DIR__ . '/../account/Receptionist.php';
+require_once __DIR__ . '/../account/Surgeon.php';
+require_once __DIR__ . '/../account/Ems.php';
+require_once __DIR__ . '/../account/Therapist.php';
 
+
+
+use account\Ems;
 use account\Patient;
 use account\Admin;
 use account\Billing;
 use account\LabTech;
+use account\Pharmacist;
 use account\Radiologist;
+use account\Receptionist;
 use account\role;
 use account\Surgeon;
 use account\Therapist;
@@ -22,10 +33,9 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 session_set_cookie_params([
     'lifetime' => 0,
     'path' => '/',
-    'domain' => 'localhost',
     'secure' => true,      // ONLY over HTTPS
     'httponly' => true,    // JS cannot access cookie
-    'samesite' => 'Strict' // or 'Lax'
+    'samesite' => 'Strict'
 ]);
 
 
