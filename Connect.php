@@ -2,9 +2,10 @@
 
 class Connect
 {
-    private $conn;
+    protected $conn;
+    private static $instance = null;
 
-    public function __construct()
+    private function __construct()
     {
         $host = getenv('DB_HOST') ?: '127.0.0.1';
         $user = getenv('DB_USER') ?: 'app';
@@ -23,6 +24,14 @@ class Connect
         $this->conn->query("SET time_zone = '+00:00'");
     }
 
+    public static function getInstance(): self
+    {
+        if (self::$instance === null) {
+            self::$instance = new self();
+        }
+        return self::$instance;
+    }
+
     public function getConnection(): mysqli
     {
         return $this->conn;
@@ -35,7 +44,7 @@ class Connect
      */
     public function isConnected(): bool
     {
-        return isset($this->conn);
+        return isset($this->conn) && $this->conn instanceof mysqli;
     }
 
     public function __destruct()
