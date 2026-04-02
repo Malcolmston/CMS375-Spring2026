@@ -173,7 +173,9 @@ abstract class Account extends Connect
         ?string $password   = null,
         ?string $extra      = null,
     ) {
-        parent::__construct();
+        // Use singleton connection instead of creating new one
+        $instance = \Connect::getInstance();
+        $this->conn = $instance->getConnection();
         if ($firstName  !== null) $this->firstName  = $firstName;
         if ($lastName   !== null) $this->lastName   = $lastName;
         if ($middleName !== null) $this->middleName = $middleName;
