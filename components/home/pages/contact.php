@@ -130,8 +130,10 @@
                         </div>
                         <div>
                             <h3 class="font-semibold text-slate-800 text-sm mb-1">Email</h3>
-                            <p class="text-slate-600 text-sm">hello@medhealth.com</p>
+                            <p class="text-slate-600 text-sm">support@medhealth.com</p>
                             <p class="text-slate-600 text-sm">billing@medhealth.com</p>
+                            <p class="text-slate-600 text-sm">schedule@medhealth.com</p>
+                            <p class="text-slate-500 text-xs mt-0.5">Emails are typically responded to within 24 hours.</p>
                         </div>
                     </div>
                 </div>
