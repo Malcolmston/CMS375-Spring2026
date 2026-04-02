@@ -20,7 +20,7 @@ class Mail
      * @param bool $ishtml Optional. Indicates whether the email content is HTML. Defaults to true.
      * @return bool Returns true if the email was sent successfully, or false if an error occurred.
      */
-    public static function send($to, $from, $subject, $message, $ishtml = true) {
+    private static function send($to, $from, $subject, $message, $ishtml = true) {
         $mail = new PHPMailer(true);
         try {
             $mail->isSMTP();
@@ -51,7 +51,7 @@ class Mail
      * @param array $data An associative array of data to be extracted and injected into the template.
      * @return bool Returns true if the email was sent successfully, or false if an error occurred, such as a missing template file.
      */
-    public static function sendTemplate($to, $from, $subject, $template, $data) {
+    private static function sendTemplate($to, $from, $subject, $template, $data) {
         $templatePath = __DIR__ . '/templates/' . $template;
         if (!file_exists($templatePath)) {
             error_log("Mail template not found: {$templatePath}");
