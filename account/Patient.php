@@ -91,4 +91,66 @@ class Patient extends Account
         $result = $stmt->get_result();
         return $result->fetch_all(MYSQLI_ASSOC);
     }
+
+    /**
+     * Retrieves all prescription line items (medicine-level detail) for this patient.
+     *
+     * @return array
+     */
+    public function getMyPrescriptionDetails(): array
+    {
+        $stmt = $this->getConnection()->prepare(
+            "SELECT * FROM view_prescription_detail WHERE patient_id = ? ORDER BY issue_date DESC"
+        );
+        $stmt->bind_param('i', $this->id);
+        $stmt->execute();
+        return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    }
+
+    /**
+     * Retrieves parent and legal guardian relationships for this patient.
+     *
+     * @return array
+     */
+    public function getMyGuardians(): array
+    {
+        $stmt = $this->getConnection()->prepare(
+            "SELECT * FROM view_parent_relationships WHERE patient_id = ?"
+        );
+        $stmt->bind_param('i', $this->id);
+        $stmt->execute();
+        return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    }
+
+    /**
+     * Changes the password for this patient after verifying the current password.
+     * Loads the stored hash directly so it works regardless of how the instance was constructed.
+     *
+     * @param string $old  Plain-text current password.
+     * @param string $new  Plain-text new password.
+     * @return bool
+     */
+    public function changeMyPassword(string $old, string $new): bool
+    {
+        $stmt = $this->getConnection()->prepare(
+            "SELECT password FROM users WHERE id = ? AND deleted_at IS NULL LIMIT 1"
+        );
+        $stmt->bind_param('i', $this->id);
+        $stmt->execute();
+        $row = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
+
+        if (!$row || !self::verifyPassword($old, $row['password'])) {
+            return false;
+        }
+
+        $hash = self::encryptPassword($new);
+        $stmt = $this->getConnection()->prepare(
+            "UPDATE users SET password = ?, updated_at = NOW() WHERE id = ?"
+        );
+        $stmt->bind_param('si', $hash, $this->id);
+        $ok = $stmt->execute() && $stmt->affected_rows > 0;
+        $stmt->close();
+        return $ok;
+    }
 }
