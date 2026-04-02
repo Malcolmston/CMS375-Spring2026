@@ -104,7 +104,7 @@ trait EditableUserTrait
      */
     public function changePassword(string $old, string $new): bool
     {
-        if (!self::verifyPassword($this->password, $old)) return false;
+        if (!self::verifyPassword($old, $this->password)) return false;
 
         $hash = self::encryptPassword($new);
         $stmt = $this->getConnection()->prepare(
