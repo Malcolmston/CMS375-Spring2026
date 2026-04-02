@@ -4,14 +4,14 @@ RewriteEngine On
 
 # Force HTTPS (Modified for local Docker port mapping)
 RewriteCond %{HTTPS} off
-# If on localhost:8080, redirect to localhost:8443
+# If on localhost:8080, redirect to localhost:8443 (307 preserves POST body)
 RewriteCond %{HTTP_HOST} ^localhost:8080$
-RewriteRule ^(.*)$ https://localhost:8443/$1 [L,R=301]
+RewriteRule ^(.*)$ https://localhost:8443/$1 [L,R=307]
 
 # General rule for other hosts or if no port 8080 is specified
 RewriteCond %{HTTPS} off
 RewriteCond %{HTTP_HOST} !^localhost:8080$
-RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=307]
 
 # Cookie Management - Defense-in-Depth
 # Ensures all cookies (including non-PHP) are secure, even if PHP misses them
@@ -39,10 +39,13 @@ RewriteRule ^staff/login\.html$ components/staff/login.html [L]
 RewriteRule ^admin/login\.html$ components/admin/login.html [L]
 RewriteRule ^login\.html$ components/patient/login.html [L]
 
-RewriteRule ^login$ components/login.php [L]
-RewriteRule ^dashboard$ components/dashboard.php [L]
+RewriteRule ^login$ components/login.php [END]
+RewriteRule ^dashboard$ components/dashboard.php [END]
+RewriteRule ^dashboard/patient$ components/dashboard/patient.php [END]
+RewriteRule ^dashboard/admin$ components/dashboard/admin.php [END]
+RewriteRule ^dashboard/staff$ components/dashboard/staff.php [END]
 
-RewriteRule ^logout$ logout.php [L,PT]
+RewriteRule ^logout$ logout.php [END,PT]
 
 RewriteRule ^about/story$ components/home/pages/story.php [L]
 RewriteRule ^about/team$ components/home/pages/team.php [L]
