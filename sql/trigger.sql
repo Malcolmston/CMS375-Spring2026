@@ -1012,7 +1012,7 @@ CREATE TRIGGER trg_log_visit_insert
 AFTER INSERT ON visit
     FOR EACH ROW BEGIN
     INSERT INTO logs (user_id, action, table_name, record_id, new_data)
-    VALUES (NEW.patient_id, 'CREATE', 'visit', NEW.id, JSON_OBJECT('patient_id', NEW.patient_id, 'institution_id', NEW.institution_id, 'visit_type', NEW.visit_type, 'scheduled_at', NEW.scheduled_at, 'status', NEW.status));
+    VALUES (NULL, 'CREATE', 'visit', NEW.id, JSON_OBJECT('patient_id', NEW.patient_id, 'institution_id', NEW.institution_id, 'visit_type', NEW.visit_type, 'scheduled_at', NEW.scheduled_at, 'status', NEW.status));
 END;
 
 DROP TRIGGER IF EXISTS trg_log_visit_update;
@@ -1022,7 +1022,7 @@ AFTER UPDATE ON visit
     FOR EACH ROW BEGIN
     IF OLD.deleted_at IS NULL AND NEW.deleted_at IS NULL THEN
         INSERT INTO logs (user_id, action, table_name, record_id, old_data, new_data)
-        VALUES (NEW.patient_id, 'UPDATE', 'visit', NEW.id, JSON_OBJECT('status', OLD.status), JSON_OBJECT('status', NEW.status));
+        VALUES (NULL, 'UPDATE', 'visit', NEW.id, JSON_OBJECT('status', OLD.status), JSON_OBJECT('status', NEW.status));
     END IF;
 END;
 
@@ -1033,7 +1033,7 @@ AFTER UPDATE ON visit
     FOR EACH ROW BEGIN
     IF OLD.deleted_at IS NULL AND NEW.deleted_at IS NOT NULL THEN
         INSERT INTO logs (user_id, action, table_name, record_id, old_data, new_data)
-        VALUES (NEW.patient_id, 'DELETE', 'visit', NEW.id, JSON_OBJECT('status', OLD.status, 'deleted_at', OLD.deleted_at), JSON_OBJECT('status', NEW.status, 'deleted_at', NEW.deleted_at));
+        VALUES (NULL, 'DELETE', 'visit', NEW.id, JSON_OBJECT('status', OLD.status, 'deleted_at', OLD.deleted_at), JSON_OBJECT('status', NEW.status, 'deleted_at', NEW.deleted_at));
     END IF;
 END;
 
@@ -1044,7 +1044,7 @@ AFTER UPDATE ON visit
     FOR EACH ROW BEGIN
     IF OLD.deleted_at IS NOT NULL AND NEW.deleted_at IS NULL THEN
         INSERT INTO logs (user_id, action, table_name, record_id, old_data, new_data)
-        VALUES (NEW.patient_id, 'RECOVER', 'visit', NEW.id, JSON_OBJECT('status', OLD.status, 'deleted_at', OLD.deleted_at), JSON_OBJECT('status', NEW.status, 'deleted_at', NEW.deleted_at));
+        VALUES (NULL, 'RECOVER', 'visit', NEW.id, JSON_OBJECT('status', OLD.status, 'deleted_at', OLD.deleted_at), JSON_OBJECT('status', NEW.status, 'deleted_at', NEW.deleted_at));
     END IF;
 END;
 
@@ -1124,7 +1124,7 @@ CREATE TRIGGER trg_log_prescription_insert
 AFTER INSERT ON prescription
     FOR EACH ROW BEGIN
     INSERT INTO logs (user_id, action, table_name, record_id, new_data)
-    VALUES (NEW.doctor_id, 'CREATE', 'prescription', NEW.id, JSON_OBJECT('patient_id', NEW.patient_id, 'doctor_id', NEW.doctor_id, 'status', NEW.status));
+    VALUES (NULL, 'CREATE', 'prescription', NEW.id, JSON_OBJECT('patient_id', NEW.patient_id, 'doctor_id', NEW.doctor_id, 'status', NEW.status));
 END;
 
 DROP TRIGGER IF EXISTS trg_log_prescription_update;
@@ -1133,7 +1133,7 @@ CREATE TRIGGER trg_log_prescription_update
 AFTER UPDATE ON prescription
     FOR EACH ROW BEGIN
     INSERT INTO logs (user_id, action, table_name, record_id, old_data, new_data)
-    VALUES (NEW.doctor_id, 'UPDATE', 'prescription', NEW.id, JSON_OBJECT('status', OLD.status), JSON_OBJECT('status', NEW.status));
+    VALUES (NULL, 'UPDATE', 'prescription', NEW.id, JSON_OBJECT('status', OLD.status), JSON_OBJECT('status', NEW.status));
 END;
 
 -- ============================================================
@@ -1191,7 +1191,7 @@ CREATE TRIGGER trg_log_doctor_visit_insert
 AFTER INSERT ON doctor_visit
     FOR EACH ROW BEGIN
     INSERT INTO logs (user_id, action, table_name, record_id, new_data)
-    VALUES (NEW.doctor_id, 'CREATE', 'doctor_visit', NEW.id, JSON_OBJECT('visit_id', NEW.visit_id, 'doctor_id', NEW.doctor_id));
+    VALUES (NULL, 'CREATE', 'doctor_visit', NEW.id, JSON_OBJECT('visit_id', NEW.visit_id, 'doctor_id', NEW.doctor_id));
 END;
 
 DROP TRIGGER IF EXISTS trg_log_doctor_visit_update;
@@ -1200,7 +1200,7 @@ CREATE TRIGGER trg_log_doctor_visit_update
 AFTER UPDATE ON doctor_visit
     FOR EACH ROW BEGIN
     INSERT INTO logs (user_id, action, table_name, record_id, old_data, new_data)
-    VALUES (NEW.doctor_id, 'UPDATE', 'doctor_visit', NEW.id, JSON_OBJECT('doctor_notes', OLD.doctor_notes), JSON_OBJECT('doctor_notes', NEW.doctor_notes));
+    VALUES (NULL, 'UPDATE', 'doctor_visit', NEW.id, JSON_OBJECT('doctor_notes', OLD.doctor_notes), JSON_OBJECT('doctor_notes', NEW.doctor_notes));
 END;
 
 -- ============================================================
@@ -1212,7 +1212,7 @@ CREATE TRIGGER trg_log_user_allergy_insert
 AFTER INSERT ON user_allergy
     FOR EACH ROW BEGIN
     INSERT INTO logs (user_id, action, table_name, record_id, new_data)
-    VALUES (NEW.user_id, 'CREATE', 'user_allergy', NEW.id, JSON_OBJECT('user_id', NEW.user_id, 'allergy_id', NEW.allergy_id, 'severity', NEW.severity));
+    VALUES (NULL, 'CREATE', 'user_allergy', NEW.id, JSON_OBJECT('user_id', NEW.user_id, 'allergy_id', NEW.allergy_id, 'severity', NEW.severity));
 END;
 
 DROP TRIGGER IF EXISTS trg_log_user_allergy_delete;
@@ -1221,7 +1221,7 @@ CREATE TRIGGER trg_log_user_allergy_delete
 AFTER DELETE ON user_allergy
     FOR EACH ROW BEGIN
     INSERT INTO logs (user_id, action, table_name, record_id, old_data)
-    VALUES (OLD.user_id, 'DELETE', 'user_allergy', OLD.id, JSON_OBJECT('user_id', OLD.user_id, 'allergy_id', OLD.allergy_id));
+    VALUES (NULL, 'DELETE', 'user_allergy', OLD.id, JSON_OBJECT('user_id', OLD.user_id, 'allergy_id', OLD.allergy_id));
 END;
 
 -- ============================================================
@@ -1233,7 +1233,7 @@ CREATE TRIGGER trg_log_parent_relationship_insert
 AFTER INSERT ON parent_relationship
     FOR EACH ROW BEGIN
     INSERT INTO logs (user_id, action, table_name, record_id, new_data)
-    VALUES (NEW.parent_id, 'CREATE', 'parent_relationship', NEW.parent_relationship_id, JSON_OBJECT('parent_id', NEW.parent_id, 'patient_id', NEW.patient_id, 'relationship', NEW.relationship));
+    VALUES (NULL, 'CREATE', 'parent_relationship', NEW.parent_relationship_id, JSON_OBJECT('parent_id', NEW.parent_id, 'patient_id', NEW.patient_id, 'relationship', NEW.relationship));
 END;
 
 DROP TRIGGER IF EXISTS trg_log_parent_relationship_delete;
@@ -1242,7 +1242,7 @@ CREATE TRIGGER trg_log_parent_relationship_delete
 AFTER DELETE ON parent_relationship
     FOR EACH ROW BEGIN
     INSERT INTO logs (user_id, action, table_name, record_id, old_data)
-    VALUES (OLD.parent_id, 'DELETE', 'parent_relationship', OLD.parent_relationship_id, JSON_OBJECT('parent_id', OLD.parent_id, 'patient_id', OLD.patient_id));
+    VALUES (NULL, 'DELETE', 'parent_relationship', OLD.parent_relationship_id, JSON_OBJECT('parent_id', OLD.parent_id, 'patient_id', OLD.patient_id));
 END;
 
 -- ============================================================
@@ -1254,7 +1254,7 @@ CREATE TRIGGER trg_log_vaccine_insert
 AFTER INSERT ON vaccine
     FOR EACH ROW BEGIN
     INSERT INTO logs (user_id, action, table_name, record_id, new_data)
-    VALUES (NEW.id, 'CREATE', 'vaccine', NEW.id, JSON_OBJECT('name', NEW.name, 'cvx_code', NEW.cvx_code, 'type', NEW.type, 'development', NEW.development));
+    VALUES (NULL, 'CREATE', 'vaccine', NEW.id, JSON_OBJECT('name', NEW.name, 'cvx_code', NEW.cvx_code, 'type', NEW.type, 'development', NEW.development));
 END;
 
 DROP TRIGGER IF EXISTS trg_log_vaccine_update;
@@ -1264,7 +1264,7 @@ AFTER UPDATE ON vaccine
     FOR EACH ROW BEGIN
     IF OLD.deleted_at IS NULL AND NEW.deleted_at IS NULL THEN
         INSERT INTO logs (user_id, action, table_name, record_id, old_data, new_data)
-        VALUES (NEW.id, 'UPDATE', 'vaccine', NEW.id, JSON_OBJECT('name', OLD.name, 'cvx_code', OLD.cvx_code), JSON_OBJECT('name', NEW.name, 'cvx_code', NEW.cvx_code));
+        VALUES (NULL, 'UPDATE', 'vaccine', NEW.id, JSON_OBJECT('name', OLD.name, 'cvx_code', OLD.cvx_code), JSON_OBJECT('name', NEW.name, 'cvx_code', NEW.cvx_code));
     END IF;
 END;
 
@@ -1274,7 +1274,7 @@ CREATE TRIGGER trg_log_vaccine_delete
 AFTER DELETE ON vaccine
     FOR EACH ROW BEGIN
     INSERT INTO logs (user_id, action, table_name, record_id, old_data)
-    VALUES (OLD.id, 'HARD_DELETE', 'vaccine', OLD.id, JSON_OBJECT('name', OLD.name, 'cvx_code', OLD.cvx_code));
+    VALUES (NULL, 'HARD_DELETE', 'vaccine', OLD.id, JSON_OBJECT('name', OLD.name, 'cvx_code', OLD.cvx_code));
 END;
 
 -- ============================================================
@@ -1286,7 +1286,7 @@ CREATE TRIGGER trg_log_vaccine_insert
 AFTER INSERT ON vaccine
     FOR EACH ROW BEGIN
     INSERT INTO logs (user_id, action, table_name, record_id, new_data)
-    VALUES (NEW.id, 'CREATE', 'vaccine', NEW.id, JSON_OBJECT('name', NEW.name, 'cvx_code', NEW.cvx_code, 'type', NEW.type));
+    VALUES (NULL, 'CREATE', 'vaccine', NEW.id, JSON_OBJECT('name', NEW.name, 'cvx_code', NEW.cvx_code, 'type', NEW.type));
 END;
 
 DROP TRIGGER IF EXISTS trg_log_vaccine_update;
@@ -1296,7 +1296,7 @@ AFTER UPDATE ON vaccine
     FOR EACH ROW BEGIN
     IF OLD.deleted_at IS NULL AND NEW.deleted_at IS NULL THEN
         INSERT INTO logs (user_id, action, table_name, record_id, old_data, new_data)
-        VALUES (NEW.id, 'UPDATE', 'vaccine', NEW.id,
+        VALUES (NULL, 'UPDATE', 'vaccine', NEW.id,
             JSON_OBJECT('name', OLD.name, 'cvx_code', OLD.cvx_code, 'type', OLD.type, 'status', OLD.status),
             JSON_OBJECT('name', NEW.name, 'cvx_code', NEW.cvx_code, 'type', NEW.type, 'status', NEW.status));
     END IF;
@@ -1308,7 +1308,7 @@ CREATE TRIGGER trg_log_vaccine_delete
 AFTER DELETE ON vaccine
     FOR EACH ROW BEGIN
     INSERT INTO logs (user_id, action, table_name, record_id, old_data)
-    VALUES (OLD.id, 'HARD_DELETE', 'vaccine', OLD.id, JSON_OBJECT('name', OLD.name, 'cvx_code', OLD.cvx_code));
+    VALUES (NULL, 'HARD_DELETE', 'vaccine', OLD.id, JSON_OBJECT('name', OLD.name, 'cvx_code', OLD.cvx_code));
 END;
 
 DROP TRIGGER IF EXISTS trg_log_vaccine_soft_delete;
@@ -1318,7 +1318,7 @@ AFTER UPDATE ON vaccine
     FOR EACH ROW BEGIN
     IF OLD.deleted_at IS NULL AND NEW.deleted_at IS NOT NULL THEN
         INSERT INTO logs (user_id, action, table_name, record_id, old_data)
-        VALUES (NEW.id, 'DELETE', 'vaccine', NEW.id, JSON_OBJECT('name', OLD.name, 'cvx_code', OLD.cvx_code));
+        VALUES (NULL, 'DELETE', 'vaccine', NEW.id, JSON_OBJECT('name', OLD.name, 'cvx_code', OLD.cvx_code));
     END IF;
 END;
 
@@ -1329,7 +1329,7 @@ AFTER UPDATE ON vaccine
     FOR EACH ROW BEGIN
     IF OLD.deleted_at IS NOT NULL AND NEW.deleted_at IS NULL THEN
         INSERT INTO logs (user_id, action, table_name, record_id, new_data)
-        VALUES (NEW.id, 'RECOVER', 'vaccine', NEW.id, JSON_OBJECT('name', NEW.name, 'cvx_code', NEW.cvx_code));
+        VALUES (NULL, 'RECOVER', 'vaccine', NEW.id, JSON_OBJECT('name', NEW.name, 'cvx_code', NEW.cvx_code));
     END IF;
 END;
 
