@@ -63,7 +63,9 @@ $_SESSION['last_activity'] = time();
 if (!isset($_SESSION['created'])) {
     $_SESSION['created'] = time();
 } elseif (time() - $_SESSION['created'] > 300) { // every 5 min
-    session_regenerate_id(true);
+    if (session_status() === PHP_SESSION_ACTIVE) {
+        session_regenerate_id(true);
+    }
     $_SESSION['created'] = time();
 }
 
@@ -98,10 +100,13 @@ function handle_patient(): void
         redirect_back('Invalid email or password.');
     }
 
-    session_regenerate_id(true);
+    if (session_status() === PHP_SESSION_ACTIVE) {
+        session_regenerate_id(true);
+    }
     $_SESSION['user_id'] = $patient->getId();
     $_SESSION['role']    = 'PATIENT';
-    header('Location: dashboard');
+    session_write_close();
+    header('Location: /dashboard');
     exit;
 }
 
@@ -128,16 +133,16 @@ function handle_staff(): void
     }
 
     $account = match ($role) {
-        Role::PHYSICIAN->value => new Physician(),
-        Role::NURSE->value => new Nurse(),
-        Role::PHARMACIST->value => new Pharmacist(),
-        Role::RADIOLOGIST->value => new Radiologist(),
-        Role::LAB_TECH->value => new LabTech(),
-        Role::SURGEON->value => new Surgeon(),
-        Role::RECEPTIONIST->value => new Receptionist(),
-        Role::BILLING->value => new Billing(),
-        Role::EMS->value => new EMS(),
-        Role::THERAPIST->value => new Therapist(),
+        role::PHYSICIAN->value => new Physician(),
+        role::NURSE->value => new Nurse(),
+        role::PHARMACIST->value => new Pharmacist(),
+        role::RADIOLOGIST->value => new Radiologist(),
+        role::LAB_TECH->value => new LabTech(),
+        role::SURGEON->value => new Surgeon(),
+        role::RECEPTIONIST->value => new Receptionist(),
+        role::BILLING->value => new Billing(),
+        role::EMS->value => new EMS(),
+        role::THERAPIST->value => new Therapist(),
         default    => null,
     };
 
@@ -145,10 +150,13 @@ function handle_staff(): void
         redirect_back('Invalid credentials.');
     }
 
-    session_regenerate_id(true);
+    if (session_status() === PHP_SESSION_ACTIVE) {
+        session_regenerate_id(true);
+    }
     $_SESSION['user_id'] = $account->getId();
     $_SESSION['role']    = $role;
-    header('Location: dashboard');
+    session_write_close();
+    header('Location: /dashboard');
     exit;
 }
 
@@ -172,10 +180,13 @@ function handle_admin(): void
         redirect_back('Invalid credentials.');
     }
 
-    session_regenerate_id(true);
+    if (session_status() === PHP_SESSION_ACTIVE) {
+        session_regenerate_id(true);
+    }
     $_SESSION['user_id'] = $admin->getId();
     $_SESSION['role']    = 'ADMIN';
-    header('Location: dashboard');
+    session_write_close();
+    header('Location: /dashboard');
     exit;
 }
 
