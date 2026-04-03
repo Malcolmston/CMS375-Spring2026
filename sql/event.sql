@@ -53,7 +53,7 @@ DO
 BEGIN
     INSERT INTO logs (user_id, action, table_name, record_id, new_data)
     SELECT
-        1,
+        NULL,
         'FAILED',
         'medicine',
         id,
@@ -69,7 +69,7 @@ BEGIN
 
     INSERT INTO logs (user_id, action, table_name, record_id, new_data)
     SELECT
-        1,
+        NULL,
         'FAILED',
         'medicine',
         id,
