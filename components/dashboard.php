@@ -5,17 +5,18 @@ use account\role;
 
 session_start();
 
-if (!isset($_SESSION['user_id'], $_SESSION['role'])) {
+if (!isset($_SESSION['user_id']) || !isset($_SESSION['role'])) {
     header('Location: /index');
     exit;
 }
 
-if (!role::isValid($_SESSION['role'])) {
+$roleValue = $_SESSION['role'];
+$role = role::tryFrom($roleValue);
+
+if ($role === null) {
     header('Location: /index');
     exit;
 }
-
-$role = role::from($_SESSION['role']);
 
 if (!isset($_SESSION['csrf_token'])) {
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
