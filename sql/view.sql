@@ -758,6 +758,50 @@ JOIN users u ON u.id = pr.patient_id
 WHERE pr.deleted_at IS NULL
   AND u.deleted_at  IS NULL;
 
+-- View: view_patients — flat list of active patients for staff patient-search
+CREATE OR REPLACE VIEW view_patients AS
+SELECT
+    u.id,
+    u.firstname,
+    u.lastname,
+    u.middlename,
+    u.age,
+    u.blood,
+    u.gender,
+    u.email,
+    u.phone
+FROM view_users u
+WHERE u.id IN (
+    SELECT user_id FROM user_role WHERE role = 'PATIENT'
+);
+
+-- View: view_renewal_requests — prescriptions awaiting renewal, with patient and doctor names
+CREATE OR REPLACE VIEW view_renewal_requests AS
+SELECT
+    p.id                AS prescription_id,
+    p.patient_id,
+    u_pat.firstname     AS patient_firstname,
+    u_pat.lastname      AS patient_lastname,
+    p.doctor_id,
+    u_doc.firstname     AS doctor_firstname,
+    u_doc.lastname      AS doctor_lastname,
+    p.issue_date,
+    p.expire_date,
+    p.notes,
+    p.status,
+    COALESCE(
+        (SELECT JSON_ARRAYAGG(m.generic_name)
+         FROM prescription_item pi
+         JOIN medicine m ON m.id = pi.medicine_id
+         WHERE pi.prescription_id = p.id),
+        JSON_ARRAY()
+    ) AS medicines
+FROM prescription p
+JOIN users u_pat ON u_pat.id = p.patient_id
+JOIN users u_doc ON u_doc.id = p.doctor_id
+WHERE p.status = 'renewal_requested'
+  AND p.deleted_at IS NULL;
+
 CREATE OR REPLACE VIEW view_all_interactions AS
     SELECT di.*,
            m.generic_name AS medicine_name,
