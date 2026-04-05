@@ -135,7 +135,7 @@ trait EmployedTrait
 
     public function viewMyInstitutions(): array|false
     {
-        $sql = "SELECT * FROM view_institution_staff WHERE id = ?";
+        $sql = "SELECT * FROM view_my_institutions WHERE user_id = ?";
         $stmt = $this->getConnection()->prepare($sql);
         $stmt->bind_param('i', $this->id);
         $stmt->execute();
