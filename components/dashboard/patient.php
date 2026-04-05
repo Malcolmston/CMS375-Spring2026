@@ -76,6 +76,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
+    // ── Request prescription renewal ────────────────────────────────────
+    if ($action === 'request_renewal') {
+        $rxId = (int) ($_POST['prescription_id'] ?? 0);
+        $ok   = $rxId > 0 && $patient->requestRenewal($rxId);
+        $_SESSION['flash'] = $ok
+            ? ['type' => 'success', 'msg' => 'Renewal request sent to your physician.']
+            : ['type' => 'error',   'msg' => 'Could not request renewal. The prescription may no longer be active.'];
+        header('Location: /dashboard/patient');
+        exit;
+    }
+
     // ── Password change ─────────────────────────────────────────────────
     if ($action === 'change_password') {
         $old     = $_POST['old_password']     ?? '';
@@ -255,6 +266,11 @@ $fullName = trim(
         <button class="sidebar-nav-item w-full flex items-center gap-3 px-2.5 py-2.5 rounded-xl text-slate-500 transition-all duration-200" data-panel="dependents" data-tooltip="My Dependents">
             <svg class="sidebar-icon w-5 h-5 flex-shrink-0 text-slate-400 transition-colors duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/></svg>
             <span class="sidebar-label text-sm font-medium text-slate-700">My Dependents</span>
+        </button>
+
+        <button class="sidebar-nav-item w-full flex items-center gap-3 px-2.5 py-2.5 rounded-xl text-slate-500 transition-all duration-200" data-panel="schedule" data-tooltip="Medication Schedule">
+            <svg class="sidebar-icon w-5 h-5 flex-shrink-0 text-slate-400 transition-colors duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <span class="sidebar-label text-sm font-medium text-slate-700">Schedule</span>
         </button>
 
         <button class="sidebar-nav-item w-full flex items-center gap-3 px-2.5 py-2.5 rounded-xl text-slate-500 transition-all duration-200" data-panel="quick-actions" data-tooltip="Quick Actions">
@@ -494,7 +510,21 @@ $fullName = trim(
                                 <?= htmlspecialchars($rx['generic_name']) ?>
                                 <?php if ($rx['brand_name']): ?><span class="font-normal text-slate-500">(<?= htmlspecialchars($rx['brand_name']) ?>)</span><?php endif; ?>
                             </p>
-                            <span class="flex-shrink-0 px-2 py-0.5 rounded-full text-xs font-semibold <?= $rx['status'] === 'active' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500' ?>"><?= htmlspecialchars(ucfirst($rx['status'])) ?></span>
+                            <div class="flex items-center gap-2 flex-shrink-0">
+                                <span class="px-2 py-0.5 rounded-full text-xs font-semibold <?= $rx['status'] === 'active' ? 'bg-emerald-100 text-emerald-700' : ($rx['status'] === 'renewal_requested' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-500') ?>">
+                                    <?= htmlspecialchars($rx['status'] === 'renewal_requested' ? 'Renewal Requested' : ucfirst($rx['status'])) ?>
+                                </span>
+                                <?php if ($rx['status'] === 'active'): ?>
+                                <form method="POST" action="/dashboard/patient" style="display:inline;">
+                                    <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token']) ?>">
+                                    <input type="hidden" name="action" value="request_renewal">
+                                    <input type="hidden" name="prescription_id" value="<?= (int) $rx['prescription_id'] ?>">
+                                    <button type="submit" class="px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition-colors">
+                                        Request Renewal
+                                    </button>
+                                </form>
+                                <?php endif; ?>
+                            </div>
                         </div>
                         <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
                             <div><p class="text-[10px] text-slate-400 uppercase">Dosage</p><p class="text-xs text-slate-700"><?= htmlspecialchars($rx['dosage']) ?></p></div>
@@ -582,6 +612,89 @@ $fullName = trim(
                     </div>
                     <?php endforeach; ?>
                 </div>
+            <?php endif; ?>
+        </div>
+    </div>
+
+    <!-- ══ PANEL: Medication Schedule ══ -->
+    <div id="panel-schedule" class="panel animate__animated animate__fadeIn">
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+            <h3 class="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-5">Daily Medication Schedule</h3>
+            <?php
+            // Build time-slot grid from active, non-expired prescriptions
+            $slots = ['Morning' => [], 'Noon' => [], 'Evening' => [], 'Bedtime' => []];
+            $asNeeded = [];
+            $today = date('Y-m-d');
+            foreach ($rx_details as $rx) {
+                if ($rx['status'] !== 'active') continue;
+                if (!empty($rx['expire_date']) && $rx['expire_date'] < $today) continue;
+                $freq = strtolower(trim($rx['frequency'] ?? ''));
+                $card = [
+                    'name'    => $rx['generic_name'],
+                    'brand'   => $rx['brand_name'],
+                    'dosage'  => $rx['dosage'],
+                    'route'   => $rx['route'],
+                    'instr'   => $rx['instructions'],
+                ];
+                switch ($freq) {
+                    case 'once daily':
+                        $slots['Morning'][] = $card; break;
+                    case 'twice daily': case 'every 12 hours':
+                        $slots['Morning'][] = $card; $slots['Evening'][] = $card; break;
+                    case 'three times daily': case 'every 8 hours':
+                        $slots['Morning'][] = $card; $slots['Noon'][] = $card; $slots['Evening'][] = $card; break;
+                    case 'four times daily': case 'every 6 hours':
+                        $slots['Morning'][] = $card; $slots['Noon'][] = $card;
+                        $slots['Evening'][] = $card; $slots['Bedtime'][] = $card; break;
+                    case 'every 4 hours':
+                        $card['note'] = 'Every 4 hrs';
+                        $slots['Morning'][] = $card; $slots['Noon'][] = $card;
+                        $slots['Evening'][] = $card; $slots['Bedtime'][] = $card; break;
+                    default:
+                        $asNeeded[] = $card; break;
+                }
+            }
+            $slotIcons = ['Morning' => '🌅', 'Noon' => '☀️', 'Evening' => '🌆', 'Bedtime' => '🌙'];
+            $hasAny = array_filter($slots, fn($s) => !empty($s));
+            ?>
+            <?php if (empty($hasAny) && empty($asNeeded)): ?>
+                <p class="text-sm text-slate-400 italic">No active medications to schedule.</p>
+            <?php else: ?>
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <?php foreach ($slots as $slotName => $meds): ?>
+                    <div class="rounded-xl border border-slate-200 overflow-hidden">
+                        <div class="px-4 py-2.5 bg-slate-50 border-b border-slate-200">
+                            <p class="text-xs font-semibold text-slate-600"><?= $slotIcons[$slotName] ?> <?= $slotName ?></p>
+                        </div>
+                        <div class="p-3 space-y-2 min-h-[80px]">
+                        <?php if (empty($meds)): ?>
+                            <p class="text-xs text-slate-300 italic">—</p>
+                        <?php else: foreach ($meds as $m): ?>
+                            <div class="p-2 rounded-lg bg-indigo-50 border border-indigo-100">
+                                <p class="text-xs font-semibold text-indigo-800 leading-tight"><?= htmlspecialchars($m['name']) ?></p>
+                                <?php if ($m['brand']): ?><p class="text-[10px] text-indigo-400"><?= htmlspecialchars($m['brand']) ?></p><?php endif; ?>
+                                <p class="text-[10px] text-slate-500 mt-0.5"><?= htmlspecialchars($m['dosage']) ?> · <?= htmlspecialchars($m['route']) ?></p>
+                                <?php if (!empty($m['note'])): ?><p class="text-[10px] text-amber-600"><?= htmlspecialchars($m['note']) ?></p><?php endif; ?>
+                            </div>
+                        <?php endforeach; endif; ?>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+                </div>
+                <?php if (!empty($asNeeded)): ?>
+                <div class="mt-2">
+                    <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">As Needed / Recurring</p>
+                    <div class="flex flex-wrap gap-2">
+                    <?php foreach ($asNeeded as $m): ?>
+                        <div class="px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-xs">
+                            <span class="font-semibold text-slate-700"><?= htmlspecialchars($m['name']) ?></span>
+                            <span class="text-slate-400"> · <?= htmlspecialchars($m['dosage']) ?></span>
+                            <?php if (!empty($m['instr'])): ?><span class="text-slate-400"> · <?= htmlspecialchars($m['instr']) ?></span><?php endif; ?>
+                        </div>
+                    <?php endforeach; ?>
+                    </div>
+                </div>
+                <?php endif; ?>
             <?php endif; ?>
         </div>
     </div>
@@ -676,6 +789,7 @@ const panelMeta = {
     'medical-overview':   { title:'Medical Overview',          sub:'Diagnoses, prescriptions & allergies' },
     'emergency-contacts': { title:'Emergency & Family',        sub:'Parents and legal guardians' },
     'dependents':         { title:'My Dependents',             sub:'Patients under your guardianship' },
+    'schedule':           { title:'Medication Schedule',       sub:'Daily time-slot view of your active medicines' },
     'quick-actions':      { title:'Quick Actions',             sub:'Common tasks and shortcuts' },
     'access-control':     { title:'Access Control & Security', sub:'Password and session management' },
     'data-retrieval':     { title:'Data Retrieval',            sub:'Export and download your records' },
