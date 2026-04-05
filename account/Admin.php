@@ -2,6 +2,8 @@
 
 namespace account;
 
+use services\InstitutionType;
+
 require_once __DIR__ . '/Account.php';
 require_once __DIR__ . '/Employed.php';
 require_once __DIR__ . '/EmployedTrait.php';
