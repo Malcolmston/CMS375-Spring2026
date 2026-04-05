@@ -33,7 +33,6 @@ RewriteRule ^index$ index.php [END]
 # Redirect full URLs to clean URLs
 RewriteRule ^components/login\.php$ /login [R=301,L]
 RewriteRule ^components/dashboard\.php$ /dashboard [R=301,L]
-RewriteRule ^logout\.php$ /logout [R=301,L]
 
 
 # Redirect /patient/login.html to components/patient/login.html
@@ -47,6 +46,16 @@ RewriteRule ^dashboard$ components/dashboard.php [END]
 RewriteRule ^dashboard/patient$ components/dashboard/patient.php [END]
 RewriteRule ^dashboard/admin$ components/dashboard/admin.php [END]
 RewriteRule ^dashboard/staff$ components/dashboard/staff.php [END]
+RewriteRule ^dashboard/staff/physician$ components/dashboard/staff/physician.php [END]
+RewriteRule ^dashboard/staff/nurse$ components/dashboard/staff/nurse.php [END]
+RewriteRule ^dashboard/staff/labtech$ components/dashboard/staff/labtech.php [END]
+RewriteRule ^dashboard/staff/radiologist$ components/dashboard/staff/radiologist.php [END]
+RewriteRule ^dashboard/staff/surgeon$ components/dashboard/staff/surgeon.php [END]
+RewriteRule ^dashboard/staff/therapist$ components/dashboard/staff/therapist.php [END]
+RewriteRule ^dashboard/staff/billing$ components/dashboard/staff/billing.php [END]
+RewriteRule ^dashboard/staff/ems$ components/dashboard/staff/ems.php [END]
+RewriteRule ^dashboard/staff/pharmacist$ components/dashboard/staff/pharmacist.php [END]
+RewriteRule ^dashboard/staff/receptionist$ components/dashboard/staff/receptionist.php [END]
 
 RewriteRule ^logout$ logout.php [END,PT]
 
