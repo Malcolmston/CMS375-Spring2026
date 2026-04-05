@@ -1,6 +1,6 @@
 <?php
 
-namespace account;
+namespace services;
 
 enum InstitutionType: string
 {
