@@ -721,6 +721,43 @@ FROM institution_user iu
 WHERE iu.deleted_at IS NULL AND u.deleted_at IS NULL AND i.deleted_at IS NULL;
 
 
+-- View: view_my_institutions - institutions assigned to a staff member (by user_id)
+-- Includes institution name, type, address, and contact info. Used by EmployedTrait::viewMyInstitutions().
+CREATE OR REPLACE VIEW view_my_institutions AS
+SELECT
+    iu.user_id,
+    iu.institution_id,
+    iu.role,
+    iu.created_at  AS joined_at,
+    i.name         AS institution_name,
+    i.institution_type,
+    i.address,
+    i.phone        AS institution_phone,
+    i.email        AS institution_email
+FROM institution_user iu
+JOIN institution i ON i.id = iu.institution_id
+WHERE iu.deleted_at IS NULL
+  AND i.deleted_at  IS NULL;
+
+-- View: view_guardian_dependents - patients linked to a guardian (for patient dashboard)
+-- Returns basic info about each dependent patient. Used by Guardian::getMyPatients() display.
+CREATE OR REPLACE VIEW view_guardian_dependents AS
+SELECT
+    pr.parent_id                                                AS guardian_id,
+    pr.relationship,
+    u.id                                                        AS patient_id,
+    u.firstname                                                 AS patient_firstname,
+    u.lastname                                                  AS patient_lastname,
+    u.age                                                       AS patient_age,
+    u.blood                                                     AS patient_blood,
+    u.gender                                                    AS patient_gender,
+    u.phone                                                     AS patient_phone,
+    u.email                                                     AS patient_email
+FROM parent_relationship pr
+JOIN users u ON u.id = pr.patient_id
+WHERE pr.deleted_at IS NULL
+  AND u.deleted_at  IS NULL;
+
 CREATE OR REPLACE VIEW view_all_interactions AS
     SELECT di.*,
            m.generic_name AS medicine_name,
