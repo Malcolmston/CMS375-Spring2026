@@ -132,8 +132,9 @@ class Patient extends Account
      */
     public function changeMyPassword(string $old, string $new): bool
     {
+        // Verify old password against view_users (soft-deleted users excluded)
         $stmt = $this->getConnection()->prepare(
-            "SELECT password FROM users WHERE id = ? AND deleted_at IS NULL LIMIT 1"
+            "SELECT password FROM view_users WHERE id = ? LIMIT 1"
         );
         $stmt->bind_param('i', $this->id);
         $stmt->execute();
@@ -145,12 +146,29 @@ class Patient extends Account
         }
 
         $hash = self::encryptPassword($new);
-        $stmt = $this->getConnection()->prepare(
-            "UPDATE users SET password = ?, updated_at = NOW() WHERE id = ?"
-        );
-        $stmt->bind_param('si', $hash, $this->id);
-        $ok = $stmt->execute() && $stmt->affected_rows > 0;
+        $stmt = $this->getConnection()->prepare("CALL update_password(?, ?)");
+        $stmt->bind_param('is', $this->id, $hash);
+        $stmt->execute();
         $stmt->close();
-        return $ok;
+        return true;
+    }
+
+    /**
+     * Request renewal of an active prescription owned by this patient.
+     * Uses stored procedure to set status to 'renewal_requested'.
+     */
+    public function requestRenewal(int $prescriptionId): bool
+    {
+        $stmt = $this->getConnection()->prepare(
+            "CALL request_prescription_renewal(?, ?, @affected)"
+        );
+        if (!$stmt) return false;
+        $stmt->bind_param('ii', $prescriptionId, $this->id);
+        $stmt->execute();
+        $stmt->close();
+
+        $result = $this->getConnection()->query("SELECT @affected AS ok");
+        $row = $result->fetch_assoc();
+        return (bool) ($row['ok'] ?? false);
     }
 }
