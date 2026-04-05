@@ -145,7 +145,7 @@ CREATE TABLE IF NOT EXISTS prescription(
     doctor_id INTEGER NOT NULL,
     issue_date DATE NOT NULL,
     expire_date DATE,
-    status ENUM('active', 'filled', 'partially filled', 'cancelled', 'expired') NOT NULL DEFAULT 'active',
+    status ENUM('active', 'filled', 'partially filled', 'cancelled', 'expired', 'renewal_requested') NOT NULL DEFAULT 'active',
     notes VARCHAR(500),
 
     CONSTRAINT fk_prescription_patient8
