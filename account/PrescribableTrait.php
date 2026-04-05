@@ -261,6 +261,22 @@ trait PrescribableTrait
     }
 
     /**
+     * Get all renewal-requested prescriptions written by this doctor.
+     */
+    public function getRenewalRequests(): array
+    {
+        $stmt = $this->conn->prepare(
+            "SELECT * FROM view_renewal_requests WHERE doctor_id = ? ORDER BY expire_date ASC"
+        );
+        if (!$stmt) return [];
+        $stmt->bind_param('i', $this->id);
+        $stmt->execute();
+        $rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+        $stmt->close();
+        return $rows;
+    }
+
+    /**
      * General interaction check between any two agents (medicine or vaccine).
      * Accepts 'medicine' or 'vaccine' as type strings.
      *
