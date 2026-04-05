@@ -1,6 +1,7 @@
 <?php
 /**
- * Base staff dashboard template - extend this for each staff type
+ * Base staff dashboard template - shared by all staff roles.
+ * Requires: $staff (role-specific Account instance), $flash, $staffRole, $user_id
  */
 
 use account\role;
@@ -52,6 +53,56 @@ $roleLabel = match ($staffRole) {
     role::BILLING      => 'Billing',
     role::EMS          => 'EMS',
     default            => 'Staff',
+};
+
+$dashboardUrl = match ($staffRole) {
+    role::PHYSICIAN    => '/dashboard/staff/physician',
+    role::NURSE        => '/dashboard/staff/nurse',
+    role::PHARMACIST   => '/dashboard/staff/pharmacist',
+    role::RECEPTIONIST => '/dashboard/staff/receptionist',
+    role::LAB_TECH     => '/dashboard/staff/labtech',
+    role::RADIOLOGIST  => '/dashboard/staff/radiologist',
+    role::SURGEON      => '/dashboard/staff/surgeon',
+    role::THERAPIST    => '/dashboard/staff/therapist',
+    role::BILLING      => '/dashboard/staff/billing',
+    role::EMS          => '/dashboard/staff/ems',
+    default            => '/dashboard/staff',
+};
+
+// ── Data loading ───────────────────────────────────────────────────────────
+$institutions = $staff->viewMyInstitutions() ?: [];
+
+// Prescriptions for roles that write/fill them
+$prescriptions = [];
+$prescriptionsByRx = [];
+$hasPrescriptions = in_array($staffRole, [role::PHYSICIAN, role::SURGEON, role::PHARMACIST]);
+if ($hasPrescriptions) {
+    $prescriptions = $staff->getMyPrescriptions();
+    // Group by prescription_id for a header-level view
+    foreach ($prescriptions as $row) {
+        $rxId = $row['prescription_id'];
+        if (!isset($prescriptionsByRx[$rxId])) {
+            $prescriptionsByRx[$rxId] = [
+                'prescription_id'    => $rxId,
+                'patient_firstname'  => $row['patient_firstname'],
+                'patient_lastname'   => $row['patient_lastname'],
+                'issue_date'         => $row['issue_date'],
+                'expire_date'        => $row['expire_date'],
+                'status'             => $row['status'],
+                'items'              => 0,
+            ];
+        }
+        $prescriptionsByRx[$rxId]['items']++;
+    }
+    $prescriptionsByRx = array_values($prescriptionsByRx);
+}
+
+// Role-specific sidebar extra tab config
+$extraTab = match ($staffRole) {
+    role::PHYSICIAN, role::SURGEON => ['panel' => 'clinical', 'icon' => 'fa-user-injured', 'label' => 'Patients'],
+    role::PHARMACIST               => ['panel' => 'clinical', 'icon' => 'fa-prescription-bottle-alt', 'label' => 'Prescriptions'],
+    role::RECEPTIONIST             => ['panel' => 'clinical', 'icon' => 'fa-calendar-check', 'label' => 'Appointments'],
+    default                        => null,
 };
 ?>
 <!DOCTYPE html>
@@ -146,6 +197,13 @@ $roleLabel = match ($staffRole) {
             <span class="sidebar-label text-sm font-medium text-slate-700">Tasks</span>
         </button>
 
+        <?php if ($extraTab): ?>
+        <button class="sidebar-nav-item w-full flex items-center gap-3 px-2.5 py-2.5 rounded-xl text-slate-500 transition-all duration-200" data-panel="<?= $extraTab['panel'] ?>" data-tooltip="<?= $extraTab['label'] ?>">
+            <i class="sidebar-icon fas <?= $extraTab['icon'] ?> w-5 h-5 flex-shrink-0 text-slate-400 transition-colors duration-200"></i>
+            <span class="sidebar-label text-sm font-medium text-slate-700"><?= $extraTab['label'] ?></span>
+        </button>
+        <?php endif; ?>
+
         <div class="py-3 px-2">
             <div class="relative flex items-center">
                 <div class="flex-grow border-t border-slate-200"></div>
@@ -215,10 +273,10 @@ $roleLabel = match ($staffRole) {
     <!-- Panels Grid -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-        <!-- Account Panel -->
+        <!-- ══ Account Panel ══ -->
         <section id="panel-account" class="panel lg:col-span-2 bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
             <h2 class="text-lg font-semibold text-slate-800 mb-4">Account Information</h2>
-            <form method="POST" action="/dashboard/staff" class="space-y-5">
+            <form method="POST" action="<?= $dashboardUrl ?>" class="space-y-5">
                 <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
                 <input type="hidden" name="action" value="update_profile">
 
@@ -258,9 +316,9 @@ $roleLabel = match ($staffRole) {
                         <label class="block text-sm font-medium text-slate-600 mb-1">Gender</label>
                         <select name="gender" class="w-full px-4 py-2 rounded-lg border border-slate-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 outline-none transition">
                             <option value="">Select...</option>
-                            <option value="Male" <?= ($staff->getGender() ?? '') === 'Male' ? 'selected' : '' ?>>Male</option>
+                            <option value="Male"   <?= ($staff->getGender() ?? '') === 'Male'   ? 'selected' : '' ?>>Male</option>
                             <option value="Female" <?= ($staff->getGender() ?? '') === 'Female' ? 'selected' : '' ?>>Female</option>
-                            <option value="Other" <?= ($staff->getGender() ?? '') === 'Other' ? 'selected' : '' ?>>Other</option>
+                            <option value="Other"  <?= ($staff->getGender() ?? '') === 'Other'  ? 'selected' : '' ?>>Other</option>
                         </select>
                     </div>
                     <div>
@@ -270,7 +328,7 @@ $roleLabel = match ($staffRole) {
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-slate-600 mb-1">Employee ID</label>
-                        <input type="text" value="<?= htmlspecialchars($staff->getEmployId() ?? '') ?>" disabled
+                        <input type="text" value="<?= htmlspecialchars($staff->getEmployid() ?? '') ?>" disabled
                                class="w-full px-4 py-2 rounded-lg bg-slate-50 border border-slate-200 text-slate-500">
                     </div>
                 </div>
@@ -295,7 +353,7 @@ $roleLabel = match ($staffRole) {
                     <i class="fas fa-id-badge w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center"></i>
                     <div>
                         <p class="text-xs text-indigo-200">Employee ID</p>
-                        <p class="font-medium"><?= htmlspecialchars($staff->getEmployId() ?? '—') ?></p>
+                        <p class="font-medium"><?= htmlspecialchars($staff->getEmployid() ?? '—') ?></p>
                     </div>
                 </div>
                 <div class="flex items-center gap-3">
@@ -309,31 +367,352 @@ $roleLabel = match ($staffRole) {
                     <i class="fas fa-calendar w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center"></i>
                     <div>
                         <p class="text-xs text-indigo-200">Joined</p>
-                        <p class="font-medium"><?= $staff->getCreatedAt() ? (($staff->getCreatedAt() instanceof DateTime) ? $staff->getCreatedAt()->format('M j, Y') : date('M j, Y', strtotime($staff->getCreatedAt()))) : '—' ?></p>
+                        <p class="font-medium"><?= $staff->getCreatedAt() instanceof \DateTime ? $staff->getCreatedAt()->format('M j, Y') : '—' ?></p>
                     </div>
                 </div>
+                <?php if (!empty($institutions)): ?>
+                <div class="flex items-center gap-3">
+                    <i class="fas fa-hospital w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center"></i>
+                    <div>
+                        <p class="text-xs text-indigo-200">Institution<?= count($institutions) > 1 ? 's' : '' ?></p>
+                        <p class="font-medium"><?= count($institutions) ?> assigned</p>
+                    </div>
+                </div>
+                <?php endif; ?>
             </div>
         </aside>
 
-        <!-- Workplace Panel -->
-        <section id="panel-workplace" class="panel lg:col-span-2 bg-white rounded-2xl shadow-sm border border-slate-200 p-6 hidden">
-            <h2 class="text-lg font-semibold text-slate-800 mb-4">Workplace Information</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="p-5 rounded-xl bg-slate-50 border border-slate-200">
-                    <h4 class="font-medium text-slate-700 mb-2">Department</h4>
-                    <p class="text-slate-500">Not assigned</p>
+        <!-- ══ Workplace Panel ══ -->
+        <section id="panel-workplace" class="panel lg:col-span-3 bg-white rounded-2xl shadow-sm border border-slate-200 p-6 hidden">
+            <h2 class="text-lg font-semibold text-slate-800 mb-4">Workplace</h2>
+
+            <?php if (empty($institutions)): ?>
+                <div class="flex flex-col items-center justify-center py-12 text-center">
+                    <div class="w-14 h-14 rounded-2xl bg-slate-100 flex items-center justify-center mb-4">
+                        <i class="fas fa-hospital text-slate-400 text-2xl"></i>
+                    </div>
+                    <p class="font-medium text-slate-600">No institution assigned</p>
+                    <p class="text-sm text-slate-400 mt-1">Contact your administrator to be linked to a facility.</p>
                 </div>
-                <div class="p-5 rounded-xl bg-slate-50 border border-slate-200">
-                    <h4 class="font-medium text-slate-700 mb-2">Institution</h4>
-                    <p class="text-slate-500">Not assigned</p>
+            <?php else: ?>
+                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                <?php foreach ($institutions as $inst): ?>
+                    <div class="p-5 rounded-xl border border-slate-200 hover:border-indigo-300 hover:shadow-sm transition-all">
+                        <div class="flex items-start justify-between mb-3">
+                            <div class="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center flex-shrink-0">
+                                <i class="fas fa-hospital text-indigo-500"></i>
+                            </div>
+                            <span class="text-xs font-medium px-2 py-1 rounded-full bg-slate-100 text-slate-600">
+                                <?= htmlspecialchars(ucwords(strtolower(str_replace('_', ' ', $inst['institution_type'] ?? 'Facility')))) ?>
+                            </span>
+                        </div>
+                        <h4 class="font-semibold text-slate-800 mb-1"><?= htmlspecialchars($inst['institution_name'] ?? '—') ?></h4>
+                        <?php if (!empty($inst['address'])): ?>
+                            <p class="text-sm text-slate-500 flex items-start gap-1.5 mb-1">
+                                <i class="fas fa-map-marker-alt mt-0.5 flex-shrink-0 text-slate-400"></i>
+                                <?= htmlspecialchars($inst['address']) ?>
+                            </p>
+                        <?php endif; ?>
+                        <?php if (!empty($inst['institution_phone'])): ?>
+                            <p class="text-sm text-slate-500 flex items-center gap-1.5">
+                                <i class="fas fa-phone flex-shrink-0 text-slate-400"></i>
+                                <?= htmlspecialchars($inst['institution_phone']) ?>
+                            </p>
+                        <?php endif; ?>
+                        <p class="text-xs text-slate-400 mt-3">Joined <?= !empty($inst['joined_at']) ? date('M j, Y', strtotime($inst['joined_at'])) : '—' ?></p>
+                    </div>
+                <?php endforeach; ?>
                 </div>
-            </div>
+            <?php endif; ?>
         </section>
 
-        <!-- Access Control Panel -->
+        <!-- ══ Tasks Panel ══ -->
+        <section id="panel-tasks" class="panel lg:col-span-3 bg-white rounded-2xl shadow-sm border border-slate-200 p-6 hidden">
+            <?php
+            $tasksTitle = match ($staffRole) {
+                role::PHYSICIAN    => 'My Prescriptions',
+                role::SURGEON      => 'My Prescriptions',
+                role::PHARMACIST   => 'Prescriptions',
+                role::NURSE        => 'Nursing Tasks',
+                role::RECEPTIONIST => 'Appointment Management',
+                role::LAB_TECH     => 'Lab Orders',
+                role::RADIOLOGIST  => 'Imaging Requests',
+                role::THERAPIST    => 'Therapy Sessions',
+                role::EMS          => 'Emergency Incidents',
+                role::BILLING      => 'Billing Summary',
+                default            => 'Tasks',
+            };
+            ?>
+            <h2 class="text-lg font-semibold text-slate-800 mb-4"><?= $tasksTitle ?></h2>
+
+            <?php if ($hasPrescriptions): ?>
+                <?php if (empty($prescriptionsByRx)): ?>
+                    <div class="flex flex-col items-center justify-center py-10 text-center">
+                        <div class="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center mb-3">
+                            <i class="fas fa-prescription-bottle-alt text-slate-400 text-xl"></i>
+                        </div>
+                        <p class="font-medium text-slate-600">No prescriptions on record</p>
+                        <p class="text-sm text-slate-400 mt-1">Prescriptions you create will appear here.</p>
+                    </div>
+                <?php else: ?>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm">
+                            <thead>
+                                <tr class="border-b border-slate-200 text-left">
+                                    <th class="pb-3 pr-4 font-semibold text-slate-600">Patient</th>
+                                    <th class="pb-3 pr-4 font-semibold text-slate-600">Issued</th>
+                                    <th class="pb-3 pr-4 font-semibold text-slate-600">Expires</th>
+                                    <th class="pb-3 pr-4 font-semibold text-slate-600">Items</th>
+                                    <th class="pb-3 font-semibold text-slate-600">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100">
+                            <?php foreach (array_slice($prescriptionsByRx, 0, 20) as $rx): ?>
+                                <?php
+                                $statusColor = match (strtolower($rx['status'] ?? '')) {
+                                    'active'    => 'bg-emerald-100 text-emerald-700',
+                                    'cancelled' => 'bg-red-100 text-red-700',
+                                    'expired'   => 'bg-slate-100 text-slate-500',
+                                    default     => 'bg-blue-100 text-blue-700',
+                                };
+                                ?>
+                                <tr class="hover:bg-slate-50 transition-colors">
+                                    <td class="py-3 pr-4 font-medium text-slate-800">
+                                        <?= htmlspecialchars(($rx['patient_firstname'] ?? '') . ' ' . ($rx['patient_lastname'] ?? '')) ?>
+                                    </td>
+                                    <td class="py-3 pr-4 text-slate-500"><?= htmlspecialchars($rx['issue_date'] ?? '—') ?></td>
+                                    <td class="py-3 pr-4 text-slate-500"><?= htmlspecialchars($rx['expire_date'] ?? '—') ?></td>
+                                    <td class="py-3 pr-4 text-slate-500"><?= (int) $rx['items'] ?></td>
+                                    <td class="py-3">
+                                        <span class="px-2 py-0.5 rounded-full text-xs font-medium <?= $statusColor ?>">
+                                            <?= ucfirst(strtolower($rx['status'] ?? 'unknown')) ?>
+                                        </span>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                        <?php if (count($prescriptionsByRx) > 20): ?>
+                            <p class="text-xs text-slate-400 mt-3">Showing 20 of <?= count($prescriptionsByRx) ?> prescriptions.</p>
+                        <?php endif; ?>
+                    </div>
+                <?php endif; ?>
+
+            <?php elseif ($staffRole === role::NURSE): ?>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="p-5 rounded-xl border border-slate-200 bg-slate-50">
+                        <div class="flex items-center gap-3 mb-2">
+                            <i class="fas fa-heartbeat text-rose-500"></i>
+                            <h4 class="font-semibold text-slate-700">Patient Rounds</h4>
+                        </div>
+                        <p class="text-sm text-slate-500">Patient visit scheduling and round management coming soon.</p>
+                    </div>
+                    <div class="p-5 rounded-xl border border-slate-200 bg-slate-50">
+                        <div class="flex items-center gap-3 mb-2">
+                            <i class="fas fa-notes-medical text-indigo-500"></i>
+                            <h4 class="font-semibold text-slate-700">Care Notes</h4>
+                        </div>
+                        <p class="text-sm text-slate-500">Patient care notes and observation logging coming soon.</p>
+                    </div>
+                </div>
+
+            <?php elseif ($staffRole === role::RECEPTIONIST): ?>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="p-5 rounded-xl border border-slate-200 bg-slate-50">
+                        <div class="flex items-center gap-3 mb-2">
+                            <i class="fas fa-calendar-plus text-indigo-500"></i>
+                            <h4 class="font-semibold text-slate-700">Schedule Appointment</h4>
+                        </div>
+                        <p class="text-sm text-slate-500">Appointment booking and patient visit management coming soon.</p>
+                    </div>
+                    <div class="p-5 rounded-xl border border-slate-200 bg-slate-50">
+                        <div class="flex items-center gap-3 mb-2">
+                            <i class="fas fa-calendar-alt text-emerald-500"></i>
+                            <h4 class="font-semibold text-slate-700">Today's Schedule</h4>
+                        </div>
+                        <p class="text-sm text-slate-500">Daily appointment overview and check-in management coming soon.</p>
+                    </div>
+                </div>
+
+            <?php elseif ($staffRole === role::LAB_TECH): ?>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="p-5 rounded-xl border border-slate-200 bg-slate-50">
+                        <div class="flex items-center gap-3 mb-2">
+                            <i class="fas fa-flask text-purple-500"></i>
+                            <h4 class="font-semibold text-slate-700">Pending Lab Orders</h4>
+                        </div>
+                        <p class="text-sm text-slate-500">Lab test order queue and result entry coming soon.</p>
+                    </div>
+                    <div class="p-5 rounded-xl border border-slate-200 bg-slate-50">
+                        <div class="flex items-center gap-3 mb-2">
+                            <i class="fas fa-vial text-slate-500"></i>
+                            <h4 class="font-semibold text-slate-700">Completed Results</h4>
+                        </div>
+                        <p class="text-sm text-slate-500">Completed lab result history and reporting coming soon.</p>
+                    </div>
+                </div>
+
+            <?php elseif ($staffRole === role::RADIOLOGIST): ?>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="p-5 rounded-xl border border-slate-200 bg-slate-50">
+                        <div class="flex items-center gap-3 mb-2">
+                            <i class="fas fa-x-ray text-blue-500"></i>
+                            <h4 class="font-semibold text-slate-700">Imaging Queue</h4>
+                        </div>
+                        <p class="text-sm text-slate-500">Pending imaging requests and scan assignments coming soon.</p>
+                    </div>
+                    <div class="p-5 rounded-xl border border-slate-200 bg-slate-50">
+                        <div class="flex items-center gap-3 mb-2">
+                            <i class="fas fa-file-medical text-slate-500"></i>
+                            <h4 class="font-semibold text-slate-700">Radiology Reports</h4>
+                        </div>
+                        <p class="text-sm text-slate-500">Radiology report creation and delivery to referring physicians coming soon.</p>
+                    </div>
+                </div>
+
+            <?php elseif ($staffRole === role::THERAPIST): ?>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="p-5 rounded-xl border border-slate-200 bg-slate-50">
+                        <div class="flex items-center gap-3 mb-2">
+                            <i class="fas fa-brain text-pink-500"></i>
+                            <h4 class="font-semibold text-slate-700">Session Schedule</h4>
+                        </div>
+                        <p class="text-sm text-slate-500">Therapy session scheduling and patient progress tracking coming soon.</p>
+                    </div>
+                    <div class="p-5 rounded-xl border border-slate-200 bg-slate-50">
+                        <div class="flex items-center gap-3 mb-2">
+                            <i class="fas fa-clipboard-check text-slate-500"></i>
+                            <h4 class="font-semibold text-slate-700">Treatment Plans</h4>
+                        </div>
+                        <p class="text-sm text-slate-500">Patient treatment plan management and outcome documentation coming soon.</p>
+                    </div>
+                </div>
+
+            <?php elseif ($staffRole === role::EMS): ?>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="p-5 rounded-xl border border-slate-200 bg-slate-50">
+                        <div class="flex items-center gap-3 mb-2">
+                            <i class="fas fa-ambulance text-red-500"></i>
+                            <h4 class="font-semibold text-slate-700">Active Incidents</h4>
+                        </div>
+                        <p class="text-sm text-slate-500">Emergency incident tracking and patient triage management coming soon.</p>
+                    </div>
+                    <div class="p-5 rounded-xl border border-slate-200 bg-slate-50">
+                        <div class="flex items-center gap-3 mb-2">
+                            <i class="fas fa-history text-slate-500"></i>
+                            <h4 class="font-semibold text-slate-700">Incident History</h4>
+                        </div>
+                        <p class="text-sm text-slate-500">Past emergency response records and patient handoff notes coming soon.</p>
+                    </div>
+                </div>
+
+            <?php elseif ($staffRole === role::BILLING): ?>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="p-5 rounded-xl border border-slate-200 bg-slate-50">
+                        <div class="flex items-center gap-3 mb-2">
+                            <i class="fas fa-file-invoice-dollar text-green-600"></i>
+                            <h4 class="font-semibold text-slate-700">Pending Invoices</h4>
+                        </div>
+                        <p class="text-sm text-slate-500">Patient invoice generation and payment tracking coming soon.</p>
+                    </div>
+                    <div class="p-5 rounded-xl border border-slate-200 bg-slate-50">
+                        <div class="flex items-center gap-3 mb-2">
+                            <i class="fas fa-chart-bar text-slate-500"></i>
+                            <h4 class="font-semibold text-slate-700">Billing Reports</h4>
+                        </div>
+                        <p class="text-sm text-slate-500">Revenue summaries and insurance claim management coming soon.</p>
+                    </div>
+                </div>
+
+            <?php else: ?>
+                <div class="flex flex-col items-center justify-center py-10 text-center">
+                    <div class="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center mb-3">
+                        <i class="fas fa-tasks text-slate-400 text-xl"></i>
+                    </div>
+                    <p class="font-medium text-slate-600">Tasks coming soon</p>
+                    <p class="text-sm text-slate-400 mt-1">Role-specific task management will be available here.</p>
+                </div>
+            <?php endif; ?>
+        </section>
+
+        <!-- ══ Clinical Panel (physician/surgeon/pharmacist/receptionist extra tab) ══ -->
+        <?php if ($extraTab): ?>
+        <section id="panel-clinical" class="panel lg:col-span-3 bg-white rounded-2xl shadow-sm border border-slate-200 p-6 hidden">
+            <?php if ($staffRole === role::PHYSICIAN || $staffRole === role::SURGEON): ?>
+                <h2 class="text-lg font-semibold text-slate-800 mb-1">Patient Prescriptions</h2>
+                <p class="text-sm text-slate-500 mb-4">Prescriptions you have written for patients.</p>
+                <?php if (empty($prescriptionsByRx)): ?>
+                    <p class="text-slate-400 italic text-sm">No prescriptions found.</p>
+                <?php else: ?>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm">
+                            <thead>
+                                <tr class="border-b border-slate-200 text-left">
+                                    <th class="pb-3 pr-4 font-semibold text-slate-600">Patient</th>
+                                    <th class="pb-3 pr-4 font-semibold text-slate-600">Issued</th>
+                                    <th class="pb-3 pr-4 font-semibold text-slate-600">Expires</th>
+                                    <th class="pb-3 pr-4 font-semibold text-slate-600">Items</th>
+                                    <th class="pb-3 font-semibold text-slate-600">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100">
+                            <?php foreach ($prescriptionsByRx as $rx): ?>
+                                <?php
+                                $statusColor = match (strtolower($rx['status'] ?? '')) {
+                                    'active'    => 'bg-emerald-100 text-emerald-700',
+                                    'cancelled' => 'bg-red-100 text-red-700',
+                                    'expired'   => 'bg-slate-100 text-slate-500',
+                                    default     => 'bg-blue-100 text-blue-700',
+                                };
+                                ?>
+                                <tr class="hover:bg-slate-50 transition-colors">
+                                    <td class="py-3 pr-4 font-medium text-slate-800">
+                                        <?= htmlspecialchars(($rx['patient_firstname'] ?? '') . ' ' . ($rx['patient_lastname'] ?? '')) ?>
+                                    </td>
+                                    <td class="py-3 pr-4 text-slate-500"><?= htmlspecialchars($rx['issue_date'] ?? '—') ?></td>
+                                    <td class="py-3 pr-4 text-slate-500"><?= htmlspecialchars($rx['expire_date'] ?? '—') ?></td>
+                                    <td class="py-3 pr-4 text-slate-500"><?= (int) $rx['items'] ?></td>
+                                    <td class="py-3">
+                                        <span class="px-2 py-0.5 rounded-full text-xs font-medium <?= $statusColor ?>">
+                                            <?= ucfirst(strtolower($rx['status'] ?? 'unknown')) ?>
+                                        </span>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                <?php endif; ?>
+
+            <?php elseif ($staffRole === role::PHARMACIST): ?>
+                <h2 class="text-lg font-semibold text-slate-800 mb-1">Prescriptions</h2>
+                <p class="text-sm text-slate-500 mb-4">Active prescriptions to review and dispense.</p>
+                <div class="flex flex-col items-center justify-center py-10 text-center">
+                    <div class="w-12 h-12 rounded-xl bg-indigo-50 flex items-center justify-center mb-3">
+                        <i class="fas fa-prescription-bottle-alt text-indigo-400 text-xl"></i>
+                    </div>
+                    <p class="font-medium text-slate-600">Prescription dispensing coming soon</p>
+                    <p class="text-sm text-slate-400 mt-1">Pending prescriptions assigned to your pharmacy will appear here.</p>
+                </div>
+
+            <?php elseif ($staffRole === role::RECEPTIONIST): ?>
+                <h2 class="text-lg font-semibold text-slate-800 mb-1">Appointments</h2>
+                <p class="text-sm text-slate-500 mb-4">Manage and schedule patient appointments.</p>
+                <div class="flex flex-col items-center justify-center py-10 text-center">
+                    <div class="w-12 h-12 rounded-xl bg-indigo-50 flex items-center justify-center mb-3">
+                        <i class="fas fa-calendar-check text-indigo-400 text-xl"></i>
+                    </div>
+                    <p class="font-medium text-slate-600">Appointment scheduling coming soon</p>
+                    <p class="text-sm text-slate-400 mt-1">Patient appointment creation and calendar management will be available here.</p>
+                </div>
+            <?php endif; ?>
+        </section>
+        <?php endif; ?>
+
+        <!-- ══ Access Control Panel ══ -->
         <section id="panel-access-control" class="panel bg-white rounded-2xl shadow-sm border border-slate-200 p-6 hidden">
             <h2 class="text-lg font-semibold text-slate-800 mb-4">Security</h2>
-            <form method="POST" action="/dashboard/staff" class="space-y-4">
+            <form method="POST" action="<?= $dashboardUrl ?>" class="space-y-4">
                 <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
                 <input type="hidden" name="action" value="change_password">
                 <div>
@@ -357,26 +736,7 @@ $roleLabel = match ($staffRole) {
             </form>
         </section>
 
-        <!-- Tasks Panel -->
-        <section id="panel-tasks" class="panel bg-white rounded-2xl shadow-sm border border-slate-200 p-6 hidden">
-            <h2 class="text-lg font-semibold text-slate-800 mb-4">My Tasks</h2>
-            <div class="space-y-3">
-                <div class="p-4 rounded-lg border border-slate-200 hover:border-indigo-500 transition-colors cursor-pointer">
-                    <p class="font-medium text-slate-700">Today's Schedule</p>
-                    <p class="text-sm text-slate-500">View your appointments and rounds</p>
-                </div>
-                <div class="p-4 rounded-lg border border-slate-200 hover:border-indigo-500 transition-colors cursor-pointer">
-                    <p class="font-medium text-slate-700">Pending Tasks</p>
-                    <p class="text-sm text-slate-500">Review items awaiting your action</p>
-                </div>
-                <div class="p-4 rounded-lg border border-slate-200 hover:border-indigo-500 transition-colors cursor-pointer">
-                    <p class="font-medium text-slate-700">Recent Activity</p>
-                    <p class="text-sm text-slate-500">View your recent actions</p>
-                </div>
-            </div>
-        </section>
-
-        <!-- Data Retrieval Panel -->
+        <!-- ══ Data Retrieval Panel ══ -->
         <section id="panel-data" class="panel lg:col-span-2 bg-white rounded-2xl shadow-sm border border-slate-200 p-6 hidden">
             <h2 class="text-lg font-semibold text-slate-800 mb-4">Data Retrieval</h2>
             <p class="text-slate-500 mb-4">Export your data in various formats.</p>
@@ -398,30 +758,16 @@ $roleLabel = match ($staffRole) {
                     <span class="text-sm">Email Report</span>
                 </button>
             </div>
-            <p class="text-xs text-slate-400 mt-4">Coming soon</p>
+            <p class="text-xs text-slate-400 mt-4">Export functionality is planned for a future release.</p>
         </section>
 
     </div>
 </main>
 
-<!-- Sidebar Toggle -->
-<script>
-$(document).ready(function() {
-    $('#sidebar-tabs a').on('click', function(e) {
-        var target = $(this).attr('href');
-        if (target.startsWith('#')) {
-            e.preventDefault();
-            var offset = $(target).offset().top - 20;
-            $('html, body').animate({ scrollTop: offset }, 300);
-        }
-    });
-});
-</script>
-
 <script>
 $(function() {
     // Sidebar toggle
-    $('#sidebar-toggle, #sidebar-toggle-mobile').on('click', function() {
+    $('#sidebar-toggle, #sidebar-toggle-mobile, #sidebar-toggle-desktop').on('click', function() {
         $('#dashboard-sidebar').toggleClass('expanded');
     });
 
@@ -429,11 +775,8 @@ $(function() {
     $('.sidebar-nav-item[data-panel]').on('click', function() {
         var panel = $(this).data('panel');
         if (panel) {
-            // Hide all panels
-            $('.panel').removeClass('active').removeClass('animate__fadeIn').addClass('hidden');
-            // Show selected panel
+            $('.panel').removeClass('active animate__fadeIn').addClass('hidden');
             $('#panel-' + panel).removeClass('hidden').addClass('active animate__animated animate__fadeIn');
-            // Update active state
             $('.sidebar-nav-item').removeClass('active');
             $(this).addClass('active');
         }
