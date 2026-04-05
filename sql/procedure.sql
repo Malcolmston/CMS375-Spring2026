@@ -1012,3 +1012,21 @@ BEGIN
     INSERT INTO parent_relationship (parent_id, patient_id, relationship)
     VALUES (p_parent_id, p_patient_id, p_relationship);
 END;
+
+-- Request renewal of an active prescription (patient initiates)
+DROP PROCEDURE IF EXISTS request_prescription_renewal;
+
+CREATE PROCEDURE request_prescription_renewal(
+    IN  p_prescription_id INT,
+    IN  p_patient_id      INT,
+    OUT p_affected        BOOLEAN
+)
+BEGIN
+    UPDATE prescription
+    SET status = 'renewal_requested'
+    WHERE id = p_prescription_id
+      AND patient_id = p_patient_id
+      AND status = 'active';
+
+    SET p_affected = ROW_COUNT() > 0;
+END;
