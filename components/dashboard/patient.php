@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../../account/role.php';
 require_once __DIR__ . '/../../account/Patient.php';
+require_once __DIR__ . '/../../account/Gaurduan.php';
 require_once __DIR__ . '/../../account/Account.php';
 require_once __DIR__ . '/../../account/blood.php';
 require_once __DIR__ . '/../../account/prefix.php';
@@ -30,6 +31,10 @@ $diagnoses  = $patient->getMyDiagnoses();
 $allergies  = $patient->getMyAllergies();
 $rx_details = $patient->getMyPrescriptionDetails();
 $guardians  = $patient->getMyGuardians();
+
+// Load dependents this patient is a guardian/parent of
+$guardianSelf = \account\Guardian::getUserById($user_id);
+$dependents   = $guardianSelf->getMyDependents();
 
 // ── Flash messages ─────────────────────────────────────────────────────────
 $flash = $_SESSION['flash'] ?? null;
@@ -245,6 +250,11 @@ $fullName = trim(
         <button class="sidebar-nav-item w-full flex items-center gap-3 px-2.5 py-2.5 rounded-xl text-slate-500 transition-all duration-200" data-panel="emergency-contacts" data-tooltip="Emergency Contacts">
             <svg class="sidebar-icon w-5 h-5 flex-shrink-0 text-slate-400 transition-colors duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z"/></svg>
             <span class="sidebar-label text-sm font-medium text-slate-700">Emergency Contacts</span>
+        </button>
+
+        <button class="sidebar-nav-item w-full flex items-center gap-3 px-2.5 py-2.5 rounded-xl text-slate-500 transition-all duration-200" data-panel="dependents" data-tooltip="My Dependents">
+            <svg class="sidebar-icon w-5 h-5 flex-shrink-0 text-slate-400 transition-colors duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/></svg>
+            <span class="sidebar-label text-sm font-medium text-slate-700">My Dependents</span>
         </button>
 
         <button class="sidebar-nav-item w-full flex items-center gap-3 px-2.5 py-2.5 rounded-xl text-slate-500 transition-all duration-200" data-panel="quick-actions" data-tooltip="Quick Actions">
@@ -529,6 +539,53 @@ $fullName = trim(
         </div>
     </div>
 
+    <!-- ══ PANEL: My Dependents ══ -->
+    <div id="panel-dependents" class="panel animate__animated animate__fadeIn">
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+            <h3 class="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-4">My Dependents</h3>
+            <p class="text-sm text-slate-500 mb-5">Patients you are a parent or legal guardian of.</p>
+            <?php if (empty($dependents)): ?>
+                <div class="flex flex-col items-center justify-center py-8 text-center">
+                    <div class="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center mb-3">
+                        <svg class="w-6 h-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/></svg>
+                    </div>
+                    <p class="text-sm font-medium text-slate-600">No dependents on record</p>
+                    <p class="text-xs text-slate-400 mt-1">Contact your healthcare provider to link dependent patients to your account.</p>
+                </div>
+            <?php else: ?>
+                <div class="divide-y divide-slate-100">
+                    <?php foreach ($dependents as $dep): ?>
+                    <div class="py-4 flex items-center gap-4">
+                        <div class="w-11 h-11 rounded-full bg-indigo-100 flex-shrink-0 flex items-center justify-center text-indigo-600 font-semibold text-sm">
+                            <?= strtoupper(substr($dep['patient_firstname'] ?? '?', 0, 1) . substr($dep['patient_lastname'] ?? '', 0, 1)) ?>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-semibold text-slate-800">
+                                <?= htmlspecialchars(($dep['patient_firstname'] ?? '') . ' ' . ($dep['patient_lastname'] ?? '')) ?>
+                            </p>
+                            <div class="flex flex-wrap gap-1.5 mt-1">
+                                <span class="px-2 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700">
+                                    <?= htmlspecialchars(ucwords(strtolower(str_replace('_', ' ', $dep['relationship'] ?? '')))) ?>
+                                </span>
+                                <?php if (!empty($dep['patient_age'])): ?>
+                                <span class="px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">
+                                    Age <?= (int) $dep['patient_age'] ?>
+                                </span>
+                                <?php endif; ?>
+                                <?php if (!empty($dep['patient_blood'])): ?>
+                                <span class="px-2 py-0.5 rounded-full text-xs font-medium bg-red-50 text-red-600">
+                                    <?= htmlspecialchars($dep['patient_blood']) ?>
+                                </span>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    </div>
+                    <?php endforeach; ?>
+                </div>
+            <?php endif; ?>
+        </div>
+    </div>
+
     <!-- ══ PANEL: Quick Actions ══ -->
     <div id="panel-quick-actions" class="panel animate__animated animate__fadeIn">
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -618,6 +675,7 @@ const panelMeta = {
     'health-profile':     { title:'Health & Profile',          sub:'Your personal health summary' },
     'medical-overview':   { title:'Medical Overview',          sub:'Diagnoses, prescriptions & allergies' },
     'emergency-contacts': { title:'Emergency & Family',        sub:'Parents and legal guardians' },
+    'dependents':         { title:'My Dependents',             sub:'Patients under your guardianship' },
     'quick-actions':      { title:'Quick Actions',             sub:'Common tasks and shortcuts' },
     'access-control':     { title:'Access Control & Security', sub:'Password and session management' },
     'data-retrieval':     { title:'Data Retrieval',            sub:'Export and download your records' },

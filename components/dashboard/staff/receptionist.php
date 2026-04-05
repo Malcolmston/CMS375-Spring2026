@@ -34,6 +34,9 @@ if (!$staff) {
     exit;
 }
 
+require_once __DIR__ . '/../utils/staff_post.php';
+handle_staff_post($staff, '/dashboard/staff/receptionist');
+
 $flash = $_SESSION['flash'] ?? null;
 unset($_SESSION['flash']);
 
