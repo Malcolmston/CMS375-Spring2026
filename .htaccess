@@ -56,6 +56,12 @@ RewriteRule ^dashboard/staff/billing$ components/dashboard/staff/billing.php [EN
 RewriteRule ^dashboard/staff/ems$ components/dashboard/staff/ems.php [END]
 RewriteRule ^dashboard/staff/pharmacist$ components/dashboard/staff/pharmacist.php [END]
 RewriteRule ^dashboard/staff/receptionist$ components/dashboard/staff/receptionist.php [END]
+RewriteRule ^dashboard/institution$ components/dashboard/institution.php [END]
+
+RewriteRule ^api/search-patient$ components/api/search_patient.php [END]
+RewriteRule ^api/search-medicine$ components/api/search_medicine.php [END]
+RewriteRule ^api/check-interaction$ components/api/check_interaction.php [END]
+RewriteRule ^api/get-diagnoses$ components/api/get_diagnoses.php [END]
 
 RewriteRule ^logout$ logout.php [END,PT]
 
