@@ -2,6 +2,8 @@
 
 namespace account;
 
+use services\Institution;
+
 require_once __DIR__ . '/Institution.php';
 
 trait EmployedTrait
@@ -143,6 +145,29 @@ trait EmployedTrait
         $institutions = $result->fetch_all(MYSQLI_ASSOC);
         $stmt->close();
         return $institutions;
+    }
+
+    public function getPatients(): array
+    {
+        $stmt = $this->getConnection()->prepare("SELECT * FROM view_patients");
+        if (!$stmt) return [];
+        $stmt->execute();
+        $rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+        $stmt->close();
+        return $rows;
+    }
+
+    public function getPatientById(int $id): array
+    {
+        $stmt = $this->getConnection()->prepare(
+            "SELECT * FROM view_patient_summary WHERE patient_id = ? LIMIT 1"
+        );
+        if (!$stmt) return [];
+        $stmt->bind_param('i', $id);
+        $stmt->execute();
+        $row = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
+        return $row ?? [];
     }
 
     public function getInstitution(int $institutionId): ?Institution
