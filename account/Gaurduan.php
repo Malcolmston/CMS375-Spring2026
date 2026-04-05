@@ -43,7 +43,7 @@ class Guardian extends Patient
     }
 
     /**
-     * Get all patients this guardian is responsible for.
+     * Get all patients this guardian is responsible for as Patient objects.
      *
      * @return Patient[]
      */
@@ -62,6 +62,27 @@ class Guardian extends Patient
             fn($row) => Patient::getUserById($row['patient_id']),
             $rows
         );
+    }
+
+    /**
+     * Get basic info about all dependent patients as a flat array.
+     * Uses view_guardian_dependents — more efficient than getMyPatients() for display.
+     *
+     * @return array  Each row: guardian_id, relationship, patient_id, patient_firstname,
+     *                patient_lastname, patient_age, patient_blood, patient_gender,
+     *                patient_phone, patient_email
+     */
+    public function getMyDependents(): array
+    {
+        $stmt = $this->getConnection()->prepare(
+            "SELECT * FROM view_guardian_dependents WHERE guardian_id = ?"
+        );
+        if (!$stmt) return [];
+        $stmt->bind_param('i', $this->id);
+        $stmt->execute();
+        $rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+        $stmt->close();
+        return $rows;
     }
 
     /**
