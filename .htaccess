@@ -1,5 +1,8 @@
 PassEnv NEWS_API_KEY DB_HOST DB_PORT DB_USER DB_PASS DB_NAME MAIL_HOST MAIL_PORT
 
+# Allow CSS files
+RewriteRule ^components/dashboard/css/.*$ - [L]
+
 RewriteEngine On
 
 # Force HTTPS (Modified for local Docker port mapping)
