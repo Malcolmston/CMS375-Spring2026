@@ -97,6 +97,21 @@ if ($hasPrescriptions) {
     $prescriptionsByRx = array_values($prescriptionsByRx);
 }
 
+// Renewal requests for physician / surgeon
+$renewalRequests = [];
+if ($staffRole === role::PHYSICIAN || $staffRole === role::SURGEON) {
+    $renewalRequests = $staff->getRenewalRequests();
+}
+
+// DiagnosibleTrait roles
+$canDiagnose = in_array($staffRole, [
+    role::PHYSICIAN, role::SURGEON, role::NURSE, role::LAB_TECH,
+    role::RADIOLOGIST, role::THERAPIST, role::EMS,
+]);
+
+// PrescribableTrait roles (create prescriptions)
+$canPrescribe = in_array($staffRole, [role::PHYSICIAN, role::SURGEON]);
+
 // Role-specific sidebar extra tab config
 $extraTab = match ($staffRole) {
     role::PHYSICIAN, role::SURGEON => ['panel' => 'clinical', 'icon' => 'fa-user-injured', 'label' => 'Patients'],
@@ -201,6 +216,20 @@ $extraTab = match ($staffRole) {
         <button class="sidebar-nav-item w-full flex items-center gap-3 px-2.5 py-2.5 rounded-xl text-slate-500 transition-all duration-200" data-panel="<?= $extraTab['panel'] ?>" data-tooltip="<?= $extraTab['label'] ?>">
             <i class="sidebar-icon fas <?= $extraTab['icon'] ?> w-5 h-5 flex-shrink-0 text-slate-400 transition-colors duration-200"></i>
             <span class="sidebar-label text-sm font-medium text-slate-700"><?= $extraTab['label'] ?></span>
+        </button>
+        <?php endif; ?>
+
+        <?php if ($canPrescribe): ?>
+        <button class="sidebar-nav-item w-full flex items-center gap-3 px-2.5 py-2.5 rounded-xl text-slate-500 transition-all duration-200" data-panel="prescribe" data-tooltip="Prescribe">
+            <i class="sidebar-icon fas fa-prescription w-5 h-5 flex-shrink-0 text-slate-400 transition-colors duration-200"></i>
+            <span class="sidebar-label text-sm font-medium text-slate-700">Prescribe</span>
+        </button>
+        <?php endif; ?>
+
+        <?php if ($canDiagnose): ?>
+        <button class="sidebar-nav-item w-full flex items-center gap-3 px-2.5 py-2.5 rounded-xl text-slate-500 transition-all duration-200" data-panel="diagnose" data-tooltip="Diagnose">
+            <i class="sidebar-icon fas fa-stethoscope w-5 h-5 flex-shrink-0 text-slate-400 transition-colors duration-200"></i>
+            <span class="sidebar-label text-sm font-medium text-slate-700">Diagnose</span>
         </button>
         <?php endif; ?>
 
@@ -709,6 +738,176 @@ $extraTab = match ($staffRole) {
         </section>
         <?php endif; ?>
 
+        <!-- ══ Prescribe Panel (physician / surgeon) ══ -->
+        <?php if ($canPrescribe): ?>
+        <section id="panel-prescribe" class="panel lg:col-span-3 bg-white rounded-2xl shadow-sm border border-slate-200 p-6 hidden">
+            <h2 class="text-lg font-semibold text-slate-800 mb-1">Create Prescription</h2>
+            <p class="text-sm text-slate-500 mb-5">Search for a patient and add medicines to a new prescription.</p>
+
+            <?php if (!empty($renewalRequests)): ?>
+            <div class="mb-6 p-4 rounded-xl border border-amber-200 bg-amber-50">
+                <h3 class="font-semibold text-amber-800 mb-3 flex items-center gap-2">
+                    <i class="fas fa-redo text-amber-600"></i> Renewal Requests
+                    <span class="ml-auto px-2 py-0.5 rounded-full bg-amber-200 text-amber-800 text-xs font-bold"><?= count($renewalRequests) ?></span>
+                </h3>
+                <div class="space-y-2">
+                <?php foreach ($renewalRequests as $rr): ?>
+                    <div class="flex items-center justify-between bg-white rounded-lg px-4 py-3 border border-amber-100">
+                        <div class="text-sm">
+                            <span class="font-medium text-slate-800">
+                                <?= htmlspecialchars(($rr['patient_firstname'] ?? '') . ' ' . ($rr['patient_lastname'] ?? '')) ?>
+                            </span>
+                            <span class="text-slate-400 mx-1">·</span>
+                            <span class="text-slate-500">Expires <?= htmlspecialchars($rr['expire_date'] ?? '—') ?></span>
+                            <?php
+                            $meds = json_decode($rr['medicines'] ?? '[]', true) ?? [];
+                            if (!empty($meds)):
+                            ?>
+                            <span class="text-slate-400 mx-1">·</span>
+                            <span class="text-slate-500 text-xs"><?= htmlspecialchars(implode(', ', $meds)) ?></span>
+                            <?php endif; ?>
+                        </div>
+                        <div class="flex gap-2 ml-3 flex-shrink-0">
+                            <form method="POST" action="<?= $dashboardUrl ?>">
+                                <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
+                                <input type="hidden" name="action" value="approve_renewal">
+                                <input type="hidden" name="prescription_id" value="<?= (int) $rr['prescription_id'] ?>">
+                                <input type="hidden" name="expire_date" value="<?= date('Y-m-d', strtotime('+6 months')) ?>">
+                                <button type="submit" class="px-3 py-1 rounded-lg bg-emerald-100 text-emerald-700 text-xs font-medium hover:bg-emerald-200 transition-colors">Renew</button>
+                            </form>
+                            <form method="POST" action="<?= $dashboardUrl ?>">
+                                <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
+                                <input type="hidden" name="action" value="dismiss_renewal">
+                                <input type="hidden" name="prescription_id" value="<?= (int) $rr['prescription_id'] ?>">
+                                <button type="submit" class="px-3 py-1 rounded-lg bg-slate-100 text-slate-600 text-xs font-medium hover:bg-slate-200 transition-colors">Dismiss</button>
+                            </form>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+                </div>
+            </div>
+            <?php endif; ?>
+
+            <form method="POST" action="<?= $dashboardUrl ?>" id="prescribe-form" class="space-y-5">
+                <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
+                <input type="hidden" name="action" value="create_prescription">
+                <input type="hidden" name="patient_id" id="rx-patient-id">
+
+                <!-- Patient Search -->
+                <div>
+                    <label class="block text-sm font-medium text-slate-600 mb-1">Patient</label>
+                    <div class="relative">
+                        <input id="rx-patient-input" type="text" placeholder="Search patient by name..."
+                               autocomplete="off"
+                               class="w-full px-4 py-2 rounded-lg border border-slate-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 outline-none transition">
+                        <div id="rx-patient-results" class="absolute z-10 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg hidden max-h-48 overflow-y-auto"></div>
+                    </div>
+                    <div id="rx-patient-card" class="hidden mt-2 p-3 rounded-lg bg-indigo-50 border border-indigo-100 text-sm text-indigo-800"></div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-600 mb-1">Issue Date</label>
+                        <input type="date" name="issue_date" value="<?= date('Y-m-d') ?>"
+                               class="w-full px-4 py-2 rounded-lg border border-slate-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 outline-none transition">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-600 mb-1">Expiry Date</label>
+                        <input type="date" name="expire_date" value="<?= date('Y-m-d', strtotime('+30 days')) ?>"
+                               class="w-full px-4 py-2 rounded-lg border border-slate-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 outline-none transition">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-600 mb-1">Notes</label>
+                        <input type="text" name="rx_notes" placeholder="Optional notes..."
+                               class="w-full px-4 py-2 rounded-lg border border-slate-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 outline-none transition">
+                    </div>
+                </div>
+
+                <!-- Medicine Rows -->
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <label class="block text-sm font-medium text-slate-600">Medicines</label>
+                        <button type="button" id="add-med-row" class="text-sm text-indigo-600 hover:text-indigo-800 font-medium flex items-center gap-1">
+                            <i class="fas fa-plus-circle"></i> Add Medicine
+                        </button>
+                    </div>
+                    <div id="med-rows" class="space-y-3"></div>
+                    <div id="rx-interaction-warning" class="hidden mt-2 p-3 rounded-lg bg-orange-50 border border-orange-200 text-orange-800 text-sm"></div>
+                </div>
+
+                <button type="submit" class="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition-colors">
+                    Create Prescription
+                </button>
+            </form>
+        </section>
+        <?php endif; ?>
+
+        <!-- ══ Diagnose Panel (DiagnosibleTrait roles) ══ -->
+        <?php if ($canDiagnose): ?>
+        <section id="panel-diagnose" class="panel lg:col-span-3 bg-white rounded-2xl shadow-sm border border-slate-200 p-6 hidden">
+            <h2 class="text-lg font-semibold text-slate-800 mb-1">Diagnose Patient</h2>
+            <p class="text-sm text-slate-500 mb-5">Search for a patient to view existing diagnoses and add new ones.</p>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Left: patient search + history -->
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-600 mb-1">Patient</label>
+                        <div class="relative">
+                            <input id="diag-patient-input" type="text" placeholder="Search patient by name..."
+                                   autocomplete="off"
+                                   class="w-full px-4 py-2 rounded-lg border border-slate-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 outline-none transition">
+                            <div id="diag-patient-results" class="absolute z-10 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg hidden max-h-48 overflow-y-auto"></div>
+                        </div>
+                        <div id="diag-patient-card" class="hidden mt-2 p-3 rounded-lg bg-indigo-50 border border-indigo-100 text-sm text-indigo-800"></div>
+                    </div>
+
+                    <div id="diag-history" class="hidden">
+                        <h4 class="text-sm font-semibold text-slate-700 mb-2">Existing Diagnoses</h4>
+                        <div id="diag-history-list" class="space-y-2 max-h-64 overflow-y-auto"></div>
+                    </div>
+                </div>
+
+                <!-- Right: new diagnosis form -->
+                <div>
+                    <form method="POST" action="<?= $dashboardUrl ?>" id="diagnose-form" class="space-y-4">
+                        <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
+                        <input type="hidden" name="action" value="create_diagnosis">
+                        <input type="hidden" name="patient_id" id="diag-patient-id">
+
+                        <div>
+                            <label class="block text-sm font-medium text-slate-600 mb-1">Condition</label>
+                            <input type="text" name="condition" placeholder="e.g. Type 2 Diabetes"
+                                   class="w-full px-4 py-2 rounded-lg border border-slate-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 outline-none transition">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-slate-600 mb-1">
+                                Severity: <span id="sev-label" class="font-semibold text-indigo-600">Moderate (3)</span>
+                            </label>
+                            <input type="range" name="severity" id="sev-slider" min="0" max="5" value="3"
+                                   class="w-full accent-indigo-600">
+                            <div class="flex justify-between text-xs text-slate-400 mt-1">
+                                <span>0 – None</span><span>1 – Minimal</span><span>2 – Mild</span>
+                                <span>3 – Moderate</span><span>4 – Severe</span><span>5 – Critical</span>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-slate-600 mb-1">Notes</label>
+                            <textarea name="diag_notes" rows="3" placeholder="Clinical notes, observations..."
+                                      class="w-full px-4 py-2 rounded-lg border border-slate-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 outline-none transition resize-none"></textarea>
+                        </div>
+
+                        <button type="submit" class="w-full px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition-colors">
+                            Record Diagnosis
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </section>
+        <?php endif; ?>
+
         <!-- ══ Access Control Panel ══ -->
         <section id="panel-access-control" class="panel bg-white rounded-2xl shadow-sm border border-slate-200 p-6 hidden">
             <h2 class="text-lg font-semibold text-slate-800 mb-4">Security</h2>
@@ -781,7 +980,227 @@ $(function() {
             $(this).addClass('active');
         }
     });
+
+    // ── Patient search (shared helper) ─────────────────────────────────────
+    function setupPatientSearch(inputId, resultsId, cardId, hiddenId) {
+        var $input   = $('#' + inputId);
+        var $results = $('#' + resultsId);
+        var $card    = $('#' + cardId);
+        var $hidden  = $('#' + hiddenId);
+        var timer;
+
+        $input.on('input', function() {
+            var q = $(this).val().trim();
+            $hidden.val('');
+            $card.addClass('hidden');
+            clearTimeout(timer);
+            if (q.length < 2) { $results.addClass('hidden').html(''); return; }
+            timer = setTimeout(function() {
+                $.getJSON('/api/search-patient', { q: q }, function(data) {
+                    if (!data || !data.length) {
+                        $results.html('<div class="px-4 py-2 text-sm text-slate-400">No patients found</div>').removeClass('hidden');
+                        return;
+                    }
+                    var html = '';
+                    $.each(data, function(i, p) {
+                        var name = p.firstname + ' ' + p.lastname;
+                        html += '<div class="pat-option px-4 py-2 text-sm hover:bg-indigo-50 cursor-pointer flex justify-between" ' +
+                                'data-id="' + p.id + '" data-name="' + $('<div>').text(name).html() + '" ' +
+                                'data-age="' + p.age + '" data-blood="' + $('<div>').text(p.blood || '—').html() + '" data-gender="' + $('<div>').text(p.gender || '—').html() + '">' +
+                                '<span class="font-medium">' + $('<div>').text(name).html() + '</span>' +
+                                '<span class="text-slate-400 text-xs">' + (p.age || '?') + ' y/o · ' + $('<div>').text(p.blood || '—').html() + '</span>' +
+                                '</div>';
+                    });
+                    $results.html(html).removeClass('hidden');
+                });
+            }, 300);
+        });
+
+        $results.on('click', '.pat-option', function() {
+            var $opt = $(this);
+            $input.val($opt.data('name'));
+            $hidden.val($opt.data('id'));
+            $results.addClass('hidden');
+            $card.html('<i class="fas fa-user-circle mr-2"></i><strong>' + $opt.data('name') + '</strong>' +
+                       ' &nbsp;·&nbsp; ' + $opt.data('age') + ' y/o' +
+                       ' &nbsp;·&nbsp; Blood: ' + $opt.data('blood') +
+                       ' &nbsp;·&nbsp; ' + $opt.data('gender')).removeClass('hidden');
+        });
+
+        $(document).on('click', function(e) {
+            if (!$(e.target).closest('#' + inputId + ', #' + resultsId).length) {
+                $results.addClass('hidden');
+            }
+        });
+    }
+
+    <?php if ($canPrescribe): ?>
+    // ── Prescribe panel ────────────────────────────────────────────────────
+    setupPatientSearch('rx-patient-input', 'rx-patient-results', 'rx-patient-card', 'rx-patient-id');
+
+    var medRowTemplate = function(idx) {
+        return '<div class="med-row grid grid-cols-2 md:grid-cols-4 gap-2 p-3 rounded-lg border border-slate-200 bg-slate-50 relative" data-idx="' + idx + '">' +
+            '<input type="hidden" name="med_id[]" class="med-id-hidden">' +
+            '<div class="col-span-2">' +
+                '<input type="text" class="med-name-input w-full px-3 py-1.5 rounded-md border border-slate-200 text-sm focus:border-indigo-400 outline-none" placeholder="Medicine name..." autocomplete="off">' +
+                '<div class="med-name-results hidden absolute z-10 bg-white border border-slate-200 rounded-lg shadow-lg mt-1 max-h-40 overflow-y-auto" style="width:calc(50% - 0.25rem)"></div>' +
+            '</div>' +
+            '<input type="text" name="med_route[]" placeholder="Route (oral/IV...)" class="px-3 py-1.5 rounded-md border border-slate-200 text-sm focus:border-indigo-400 outline-none">' +
+            '<input type="text" name="med_dosage[]" placeholder="Dosage (e.g. 500mg)" class="px-3 py-1.5 rounded-md border border-slate-200 text-sm focus:border-indigo-400 outline-none">' +
+            '<select name="med_frequency[]" class="col-span-2 px-3 py-1.5 rounded-md border border-slate-200 text-sm focus:border-indigo-400 outline-none bg-white">' +
+                '<option value="">Frequency...</option>' +
+                '<option value="once daily">Once daily</option>' +
+                '<option value="twice daily">Twice daily</option>' +
+                '<option value="three times daily">Three times daily</option>' +
+                '<option value="four times daily">Four times daily</option>' +
+                '<option value="every 12 hours">Every 12 hours</option>' +
+                '<option value="every 8 hours">Every 8 hours</option>' +
+                '<option value="every 6 hours">Every 6 hours</option>' +
+                '<option value="every 4 hours">Every 4 hours</option>' +
+                '<option value="as needed">As needed (PRN)</option>' +
+                '<option value="weekly">Weekly</option>' +
+                '<option value="monthly">Monthly</option>' +
+            '</select>' +
+            '<input type="number" name="med_duration[]" placeholder="Days" min="1" class="px-3 py-1.5 rounded-md border border-slate-200 text-sm focus:border-indigo-400 outline-none">' +
+            '<input type="number" name="med_quantity[]" placeholder="Qty" min="1" class="px-3 py-1.5 rounded-md border border-slate-200 text-sm focus:border-indigo-400 outline-none">' +
+            '<input type="text" name="med_instructions[]" placeholder="Instructions (optional)" class="col-span-2 md:col-span-4 px-3 py-1.5 rounded-md border border-slate-200 text-sm focus:border-indigo-400 outline-none">' +
+            '<button type="button" class="remove-med-row absolute top-2 right-2 text-slate-400 hover:text-red-500 transition-colors"><i class="fas fa-times text-xs"></i></button>' +
+        '</div>';
+    };
+
+    var medRowCount = 0;
+    var addedMedIds = [];
+
+    $('#add-med-row').on('click', function() {
+        var html = medRowTemplate(medRowCount++);
+        var $row = $(html);
+        $('#med-rows').append($row);
+        setupMedRowAutocomplete($row);
+    });
+
+    $('#med-rows').on('click', '.remove-med-row', function() {
+        var $row = $(this).closest('.med-row');
+        var medId = $row.find('.med-id-hidden').val();
+        addedMedIds = addedMedIds.filter(function(id) { return id != medId; });
+        $row.remove();
+    });
+
+    function setupMedRowAutocomplete($row) {
+        var $input   = $row.find('.med-name-input');
+        var $results = $row.find('.med-name-results');
+        var $hidden  = $row.find('.med-id-hidden');
+        var timer;
+
+        $input.on('input', function() {
+            var q = $(this).val().trim();
+            $hidden.val('');
+            clearTimeout(timer);
+            if (q.length < 2) { $results.addClass('hidden').html(''); return; }
+            timer = setTimeout(function() {
+                $.getJSON('/api/search-medicine', { q: q }, function(data) {
+                    if (!data || !data.length) {
+                        $results.html('<div class="px-4 py-2 text-sm text-slate-400">No medicines found</div>').removeClass('hidden');
+                        return;
+                    }
+                    var html = '';
+                    $.each(data, function(i, m) {
+                        html += '<div class="med-opt px-3 py-2 text-sm hover:bg-indigo-50 cursor-pointer" data-id="' + m.id + '" data-name="' + $('<div>').text(m.generic_name).html() + '">' +
+                                '<span class="font-medium">' + $('<div>').text(m.generic_name).html() + '</span>' +
+                                (m.brand_name ? '<span class="text-slate-400 text-xs ml-1">(' + $('<div>').text(m.brand_name).html() + ')</span>' : '') +
+                                '</div>';
+                    });
+                    $results.html(html).removeClass('hidden');
+                });
+            }, 300);
+        });
+
+        $results.on('click', '.med-opt', function() {
+            var newId = $(this).data('id');
+            $input.val($(this).data('name'));
+            $hidden.val(newId);
+            $results.addClass('hidden');
+
+            // Check interactions against all already-added medicines
+            var conflicts = [];
+            var checks = [];
+            $.each(addedMedIds, function(i, existingId) {
+                if (existingId && existingId != newId) {
+                    checks.push($.getJSON('/api/check-interaction', { m1: newId, m2: existingId }));
+                }
+            });
+            addedMedIds.push(newId);
+
+            if (checks.length) {
+                $.when.apply($, checks).done(function() {
+                    var results = checks.length === 1 ? [arguments] : Array.from(arguments).map(function(a) { return a; });
+                    var warnings = [];
+                    $.each(results, function(i, res) {
+                        var data = $.isArray(res) ? res[0] : res;
+                        if (data && !$.isEmptyObject(data)) {
+                            var item = $.isArray(data) ? data[0] : data;
+                            if (item && item.severity) warnings.push(item);
+                        }
+                    });
+                    if (warnings.length) {
+                        var html = '<i class="fas fa-exclamation-triangle mr-2"></i><strong>Interaction Warning:</strong> ';
+                        $.each(warnings, function(i, w) {
+                            html += '<span class="capitalize">' + $('<div>').text(w.severity).html() + '</span> — ' + $('<div>').text(w.description || '').html() + ' ';
+                        });
+                        $('#rx-interaction-warning').html(html).removeClass('hidden');
+                    }
+                });
+            }
+        });
+
+        $(document).on('click', function(e) {
+            if (!$(e.target).closest($input).length && !$(e.target).closest($results).length) {
+                $results.addClass('hidden');
+            }
+        });
+    }
+    <?php endif; ?>
+
+    <?php if ($canDiagnose): ?>
+    // ── Diagnose panel ─────────────────────────────────────────────────────
+    setupPatientSearch('diag-patient-input', 'diag-patient-results', 'diag-patient-card', 'diag-patient-id');
+
+    // Severity slider label
+    var sevLabels = ['None (0)', 'Minimal (1)', 'Mild (2)', 'Moderate (3)', 'Severe (4)', 'Critical (5)'];
+    $('#sev-slider').on('input', function() {
+        $('#sev-label').text(sevLabels[$(this).val()] || '');
+    });
+
+    // Load diagnoses when patient is selected
+    $('#diag-patient-results').on('click', '.pat-option', function() {
+        var patId = $(this).data('id');
+        if (!patId) return;
+        $('#diag-history-list').html('<p class="text-sm text-slate-400">Loading...</p>');
+        $('#diag-history').removeClass('hidden');
+        $.getJSON('/api/get-diagnoses', { patient_id: patId }, function(data) {
+            if (!data || !data.length) {
+                $('#diag-history-list').html('<p class="text-sm text-slate-400 italic">No diagnoses on record.</p>');
+                return;
+            }
+            var html = '';
+            $.each(data, function(i, d) {
+                var sevColors = ['bg-slate-100 text-slate-600', 'bg-blue-100 text-blue-700', 'bg-yellow-100 text-yellow-700',
+                                 'bg-orange-100 text-orange-700', 'bg-red-100 text-red-700', 'bg-red-200 text-red-900'];
+                var cls = sevColors[Math.min(parseInt(d.severity) || 0, 5)];
+                html += '<div class="flex items-start gap-3 p-3 rounded-lg border border-slate-100 bg-slate-50 text-sm">' +
+                    '<span class="px-2 py-0.5 rounded-full text-xs font-medium flex-shrink-0 mt-0.5 ' + cls + '">' + d.severity + '</span>' +
+                    '<div><p class="font-medium text-slate-800">' + $('<div>').text(d.condition).html() + '</p>' +
+                    (d.notes ? '<p class="text-slate-500 text-xs mt-0.5">' + $('<div>').text(d.notes).html() + '</p>' : '') + '</div>' +
+                '</div>';
+            });
+            $('#diag-history-list').html(html);
+        }).fail(function() {
+            $('#diag-history-list').html('<p class="text-sm text-red-500">Could not load diagnoses.</p>');
+        });
+    });
+    <?php endif; ?>
 });
 </script>
+
+<?php require_once __DIR__ . '/../utils/drug_interaction_widget.php'; ?>
 </body>
 </html>
