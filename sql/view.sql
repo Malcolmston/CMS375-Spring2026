@@ -105,6 +105,26 @@ FROM prescription p
     INNER JOIN view_users patient ON patient.id = p.patient_id
     INNER JOIN view_users doctor  ON doctor.id  = p.doctor_id;
 
+-- View: view_prescription_item - prescription line items
+CREATE OR REPLACE VIEW view_prescription_item AS
+SELECT
+    pi.id,
+    pi.prescription_id,
+    pi.medicine_id,
+    pi.vaccine_id,
+    pi.dosage,
+    pi.frequency,
+    pi.route,
+    pi.duration_days,
+    pi.quantity_prescribed,
+    pi.instructions,
+    pi.filled_date,
+    pi.created_at,
+    pi.updated_at,
+    pi.deleted_at
+FROM prescription_item pi
+WHERE pi.deleted_at IS NULL;
+
 -- View: view_prescription_detail expands each prescription line item
 -- with full medicine info and patient/doctor names from view_prescriptions.
 CREATE OR REPLACE VIEW view_prescription_detail AS
