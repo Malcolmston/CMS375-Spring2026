@@ -289,6 +289,25 @@ abstract class Account extends Connect
         return $institutions;
     }
 
+    /**
+     * Search patients by name using stored function.
+     *
+     * @param string $query Search term.
+     * @param int $limit Maximum results.
+     * @return array List of patients.
+     */
+    public static function searchPatients(string $query, int $limit = 20): array
+    {
+        $instance = new static();
+        $stmt = $instance->getConnection()->prepare("SELECT search_patients(?, ?) AS result");
+        $stmt->bind_param("si", $query, $limit);
+        $stmt->execute();
+        $row = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
+        $json = $row['result'] ?? '[]';
+        return json_decode($json, true) ?: [];
+    }
+
     public static function getPatientSummary(int $patient_id): array
     {
         $instance = new static();
