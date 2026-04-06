@@ -137,12 +137,8 @@ session_start();
                             <i class="fas fa-chevron-down text-slate-400 text-[10px] ml-auto"></i>
                         </button>
                         <div id="color-dropdown"
-                             class="hidden absolute z-10 left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden">
-                            <div class="color-option flex items-center gap-2.5 px-3 py-2 hover:bg-slate-50 cursor-pointer transition-colors" data-value="indigo"  data-label="Indigo"><span class="w-3.5 h-3.5 rounded-sm flex-shrink-0 bg-indigo-500"></span><span class="text-sm text-slate-700">Indigo</span></div>
-                            <div class="color-option flex items-center gap-2.5 px-3 py-2 hover:bg-slate-50 cursor-pointer transition-colors" data-value="emerald" data-label="Emerald"><span class="w-3.5 h-3.5 rounded-sm flex-shrink-0 bg-emerald-500"></span><span class="text-sm text-slate-700">Emerald</span></div>
-                            <div class="color-option flex items-center gap-2.5 px-3 py-2 hover:bg-slate-50 cursor-pointer transition-colors" data-value="rose"    data-label="Rose"><span class="w-3.5 h-3.5 rounded-sm flex-shrink-0 bg-rose-500"></span><span class="text-sm text-slate-700">Rose</span></div>
-                            <div class="color-option flex items-center gap-2.5 px-3 py-2 hover:bg-slate-50 cursor-pointer transition-colors" data-value="amber"   data-label="Amber"><span class="w-3.5 h-3.5 rounded-sm flex-shrink-0 bg-amber-500"></span><span class="text-sm text-slate-700">Amber</span></div>
-                            <div class="color-option flex items-center gap-2.5 px-3 py-2 hover:bg-slate-50 cursor-pointer transition-colors" data-value="sky"     data-label="Sky"><span class="w-3.5 h-3.5 rounded-sm flex-shrink-0 bg-sky-500"></span><span class="text-sm text-slate-700">Sky</span></div>
+                             class="hidden absolute z-10 left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden max-h-48 overflow-y-auto">
+                            <!-- populated from COLOR_CLASSES by JS -->
                         </div>
                     </div>
                 </div>
@@ -264,6 +260,16 @@ $(function () {
         rose:    { pill: 'bg-rose-100 text-rose-700',        dot: 'bg-rose-500'    },
         amber:   { pill: 'bg-amber-100 text-amber-700',      dot: 'bg-amber-500'   },
         sky:     { pill: 'bg-sky-100 text-sky-700',          dot: 'bg-sky-500'     },
+        lime:    { pill: 'bg-lime-100 text-lime-700',        dot: 'bg-lime-500'    },
+        green:   { pill: 'bg-green-100 text-green-700',      dot: 'bg-green-500'   },
+        yellow:  { pill: 'bg-yellow-100 text-yellow-700',    dot: 'bg-yellow-500'  },
+        orange:  { pill: 'bg-orange-100 text-orange-700',    dot: 'bg-orange-500'  },
+        red:     { pill: 'bg-red-100 text-red-700',          dot: 'bg-red-500'     },
+        purple:  { pill: 'bg-purple-100 text-purple-700',    dot: 'bg-purple-500'  },
+        blue:    { pill: 'bg-blue-100 text-blue-700',        dot: 'bg-blue-500'    },
+        cyan:    { pill: 'bg-cyan-100 text-cyan-700',         dot: 'bg-cyan-500'    },
+        fuchsia: { pill: 'bg-fuchsia-100 text-fuchsia-700',  dot: 'bg-fuchsia-500' },
+        pink:    { pill: 'bg-pink-100 text-pink-700',         dot: 'bg-pink-500'    },
     };
     const TYPE_ICON = { medication: 'fa-pills', appointment: 'fa-user-md', other: 'fa-calendar-plus' };
     const MONTHS = ['January','February','March','April','May','June',
@@ -555,35 +561,36 @@ $(function () {
     /**
      * Resets the color picker to its default state.
      */
-    function resetColorPicker() {
-        $('#event-color').val('indigo');
-        $('#color-label').text('Indigo');
-        $('#color-swatch').attr('class', 'w-3.5 h-3.5 rounded-sm flex-shrink-0 bg-indigo-500');
+    // Build color dropdown from COLOR_CLASSES
+    (function buildColorDropdown() {
+        const $dd = $('#color-dropdown');
+        Object.keys(COLOR_CLASSES).forEach(function (key) {
+            const label = key.charAt(0).toUpperCase() + key.slice(1);
+            const swatch = COLOR_CLASSES[key].dot;
+            $('<div>', {
+                class: 'color-option flex items-center gap-2.5 px-3 py-2 hover:bg-slate-50 cursor-pointer transition-colors',
+                'data-value': key,
+                'data-label': label,
+                'data-swatch': swatch
+            }).html(`<span class="w-3.5 h-3.5 rounded-sm flex-shrink-0 ${swatch}"></span><span class="text-sm text-slate-700">${label}</span>`)
+              .appendTo($dd);
+        });
+    })();
+
+    function setColorPicker(key) {
+        const label  = key.charAt(0).toUpperCase() + key.slice(1);
+        const swatch = COLOR_CLASSES[key] ? COLOR_CLASSES[key].dot : COLOR_CLASSES.indigo.dot;
+        $('#event-color').val(key);
+        $('#color-label').text(label);
+        $('#color-swatch').attr('class', 'w-3.5 h-3.5 rounded-sm flex-shrink-0 ' + swatch);
         $('#color-dropdown').addClass('hidden');
     }
 
-    /**
-     * Handles the click event for color picker trigger.
-     * Toggles the visibility of the color dropdown.
-     */
+    function resetColorPicker() { setColorPicker('indigo'); }
+
     $('#color-trigger').on('click', function (e) { e.stopPropagation(); $('#color-dropdown').toggleClass('hidden'); });
-
-    /**
-     * Handles the click event for color option selection.
-     * Updates the color picker with the selected color and closes the dropdown.
-     */
     $(document).on('click', function (e) { if (!$(e.target).closest('#color-picker').length) $('#color-dropdown').addClass('hidden'); });
-
-    /**
-     * Handles the click event for color option selection.
-     * Updates the color picker with the selected color and closes the dropdown.
-     */
-    $(document).on('click', '.color-option', function () {
-        $('#event-color').val($(this).data('value'));
-        $('#color-label').text($(this).data('label'));
-        $('#color-swatch').attr('class', $(this).find('span').first().attr('class'));
-        $('#color-dropdown').addClass('hidden');
-    });
+    $(document).on('click', '.color-option', function () { setColorPicker($(this).data('value')); });
 
     /**
      * Handles the click event for navigation buttons.
