@@ -799,8 +799,7 @@ SELECT
 FROM prescription p
 JOIN users u_pat ON u_pat.id = p.patient_id
 JOIN users u_doc ON u_doc.id = p.doctor_id
-WHERE p.status = 'renewal_requested'
-  AND p.deleted_at IS NULL;
+WHERE p.status = 'renewal_requested';
 
 CREATE OR REPLACE VIEW view_all_interactions AS
     SELECT di.*,
