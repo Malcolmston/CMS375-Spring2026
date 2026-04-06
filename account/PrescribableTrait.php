@@ -156,6 +156,23 @@ trait PrescribableTrait
         return $rows;
     }
 
+    /**
+     * Request a refill for a prescription.
+     *
+     * @param int $prescriptionId The prescription ID to request refill for.
+     * @param int $patientId The patient ID (must match the prescription).
+     * @return bool True if successful, false otherwise.
+     */
+    public function requestPrescriptionRefill(int $prescriptionId, int $patientId): bool
+    {
+        $stmt = $this->conn->prepare("CALL request_prescription_renewal(?, ?, @affected)");
+        if (!$stmt) return false;
+        $stmt->bind_param('ii', $prescriptionId, $patientId);
+        $ok = $stmt->execute();
+        $stmt->close();
+        return $ok;
+    }
+
     public function getMyPrescriptions(): array
     {
         $stmt = $this->conn->prepare(
