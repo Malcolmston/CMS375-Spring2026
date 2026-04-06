@@ -199,6 +199,26 @@ CREATE TABLE IF NOT EXISTS medicine(
      deleted_at TIMESTAMP DEFAULT NULL
 );
 
+CREATE TABLE IF NOT EXISTS vaccine (
+    id INTEGER PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(1024) NOT NULL,
+    cvx_code VARCHAR(20) DEFAULT NULL,
+    status VARCHAR(50) DEFAULT NULL,
+    last_updated_date DATE DEFAULT NULL,
+    manufacturer VARCHAR(255) DEFAULT NULL,
+    type ENUM('MRNA','LIVE_ATTENUATED','INACTIVATED','TOXOID','SUBUNIT','VECTOR','DNA','PROTEIN','UNKNOWN') NOT NULL DEFAULT 'UNKNOWN',
+    development ENUM('RELEASED','TESTING','PRECLINICAL','DISCONTINUED','UNKNOWN') NOT NULL DEFAULT 'UNKNOWN',
+    recommended_age VARCHAR(100) DEFAULT NULL,
+    dose_count INTEGER DEFAULT NULL,
+    lethal_dose_mg_per_kg DECIMAL(10,3) DEFAULT NULL,
+    lethal_dose_route ENUM('ORAL','IV','IM','INHALATION','DERMAL','UNKNOWN') DEFAULT 'UNKNOWN',
+    lethal_dose_source VARCHAR(255) DEFAULT NULL,
+    extra VARCHAR(2000) DEFAULT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP DEFAULT NULL
+);
+
 CREATE TABLE IF NOT EXISTS prescription_item(
     id INTEGER PRIMARY KEY AUTO_INCREMENT,
     prescription_id INTEGER NOT NULL,
@@ -430,47 +450,4 @@ CREATE TABLE IF NOT EXISTS user_allergy (
         ON DELETE CASCADE ON UPDATE CASCADE,
 
     CONSTRAINT uq_user_allergy UNIQUE (user_id, allergy_id)
-);
-
-CREATE TABLE IF NOT EXISTS vaccine (
-                                       id INTEGER PRIMARY KEY AUTO_INCREMENT,
-
-                                       name VARCHAR(1024) NOT NULL,
-                                       cvx_code VARCHAR(20) DEFAULT NULL,
-                                       status VARCHAR(50) DEFAULT NULL,
-                                       last_updated_date DATE DEFAULT NULL,
-                                       manufacturer VARCHAR(255) DEFAULT NULL,
-
-                                       type ENUM(
-                                           'MRNA',
-                                           'LIVE_ATTENUATED',
-                                           'INACTIVATED',
-                                           'TOXOID',
-                                           'SUBUNIT',
-                                           'VECTOR',
-                                           'DNA',
-                                           'PROTEIN',
-                                           'UNKNOWN'
-                                           ) NOT NULL DEFAULT 'UNKNOWN',
-
-                                       development ENUM(
-                                           'RELEASED',
-                                           'TESTING',
-                                           'PRECLINICAL',
-                                           'DISCONTINUED',
-                                           'UNKNOWN'
-                                           ) NOT NULL DEFAULT 'UNKNOWN',
-
-                                       recommended_age VARCHAR(100) DEFAULT NULL,  -- e.g., "2 months+", "Adults", etc.
-                                       dose_count INTEGER DEFAULT NULL,            -- e.g., 2 doses, 3 doses
-
-                                       lethal_dose_mg_per_kg DECIMAL(10,3) DEFAULT NULL,
-                                       lethal_dose_route ENUM('ORAL','IV','IM','INHALATION','DERMAL','UNKNOWN') DEFAULT 'UNKNOWN',
-                                       lethal_dose_source VARCHAR(255) DEFAULT NULL,       -- citation/source label
-
-                                       extra VARCHAR(2000) DEFAULT NULL,
-
-                                       created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                                       updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-                                       deleted_at TIMESTAMP DEFAULT NULL
 );
