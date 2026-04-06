@@ -1,96 +1,124 @@
 PassEnv NEWS_API_KEY DB_HOST DB_PORT DB_USER DB_PASS DB_NAME MAIL_HOST MAIL_PORT
 
-# Allow CSS files
-RewriteRule ^components/dashboard/css/.*$ - [L]
-
 RewriteEngine On
 
-# Force HTTPS (Modified for local Docker port mapping)
+# Allow static assets through first
+RewriteRule ^components/dashboard/css/.*$ - [L]
+RewriteRule ^components/home/css/.*$      - [L]
+
+# HTTPS redirect
+# localhost:8080 → localhost:8443
 RewriteCond %{HTTPS} off
-# If on localhost:8080, redirect to localhost:8443 (307 preserves POST body)
 RewriteCond %{HTTP_HOST} ^localhost:8080$
 RewriteRule ^(.*)$ https://localhost:8443/$1 [L,R=307]
 
-# General rule for other hosts or if no port 8080 is specified
+# All other hosts
 RewriteCond %{HTTPS} off
 RewriteCond %{HTTP_HOST} !^localhost:8080$
 RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=307]
 
-# Cookie Management - Defense-in-Depth
-# Ensures all cookies (including non-PHP) are secure, even if PHP misses them
+# Security headers
 <IfModule mod_headers.c>
     Header edit Set-Cookie ^(.*)$ "$1; HttpOnly; Secure; SameSite=Strict"
 </IfModule>
 
-# Block directory traversal and dotfile access
-RewriteCond %{REQUEST_URI} \.\. [OR]
-RewriteCond %{REQUEST_URI} ^.*/\..*$
+# Block directory traversal (../)
+RewriteCond %{REQUEST_URI} \.\.
+RewriteRule .* - [F,L]
 
-# Redirect /index to home dashboard.php
-RewriteRule ^index\.php$ /index [R=301,L]
-RewriteRule ^index$ index.php [END]
+# Allow nxthelp through (next.html and scan.php for the JS scanner)
+RewriteRule ^nxthelp/.*$                                     - [L]
 
-# Redirect full URLs to clean URLs
-RewriteRule ^components/login\.php$ /login [R=301,L]
-RewriteRule ^components/dashboard\.php$ /dashboard [R=301,L]
+# Block hidden files (anything starting with dot after a slash): /path/.hidden but NOT /path/file.html
+RewriteCond %{REQUEST_URI} /+\.[^/]
+RewriteRule .* - [F,L]
+
+# Block access to sensitive directories
+RewriteRule ^account/.*$                                     - [F,L]
+RewriteRule ^sql/.*$                                         - [F,L]
+RewriteRule ^(Dockerfile|compose\.yml|README\.md|docs/.*)$  - [F,L]
 
 
-# Redirect /patient/login.html to components/patient/login.html
-RewriteRule ^patient/login\.html$ components/patient/login.html [L]
-RewriteRule ^staff/login\.html$ components/staff/login.html [L]
-RewriteRule ^admin/login\.html$ components/admin/login.html [L]
-RewriteRule ^login\.html$ components/patient/login.html [L]
+RewriteRule ^index\.php$                   /                       [R=301,L]
+RewriteRule ^components/login\.php$        /login                  [R=301,L]
+RewriteRule ^components/dashboard\.php$    /dashboard              [R=301,L]
 
-RewriteRule ^login$ components/login.php [END]
-RewriteRule ^dashboard$ components/dashboard.php [END]
-RewriteRule ^dashboard/patient$ components/dashboard/patient.php [END]
-RewriteRule ^dashboard/admin$ components/dashboard/admin.php [END]
-RewriteRule ^dashboard/staff$ components/dashboard/staff.php [END]
-RewriteRule ^dashboard/staff/physician$ components/dashboard/staff/physician.php [END]
-RewriteRule ^dashboard/staff/nurse$ components/dashboard/staff/nurse.php [END]
-RewriteRule ^dashboard/staff/labtech$ components/dashboard/staff/labtech.php [END]
-RewriteRule ^dashboard/staff/radiologist$ components/dashboard/staff/radiologist.php [END]
-RewriteRule ^dashboard/staff/surgeon$ components/dashboard/staff/surgeon.php [END]
-RewriteRule ^dashboard/staff/therapist$ components/dashboard/staff/therapist.php [END]
-RewriteRule ^dashboard/staff/billing$ components/dashboard/staff/billing.php [END]
-RewriteRule ^dashboard/staff/ems$ components/dashboard/staff/ems.php [END]
-RewriteRule ^dashboard/staff/pharmacist$ components/dashboard/staff/pharmacist.php [END]
-RewriteRule ^dashboard/staff/receptionist$ components/dashboard/staff/receptionist.php [END]
-RewriteRule ^dashboard/institution$ components/dashboard/institution.php [END]
+# Legacy /tool/* → top-level
+RewriteRule ^tool/map$                     /map                    [R=301,L]
+RewriteRule ^tool/schedule$                /schedule               [R=301,L]
+RewriteRule ^tool/calender$                /schedule               [R=301,L]
 
-RewriteRule ^api/search-patient$ components/api/search_patient.php [END]
-RewriteRule ^api/search-medicine$ components/api/search_medicine.php [END]
-RewriteRule ^api/check-interaction$ components/api/check_interaction.php [END]
-RewriteRule ^api/get-diagnoses$ components/api/get_diagnoses.php [END]
+# Legacy .html login pages → unified login
+RewriteRule ^patient/login\.html$          /login                  [R=301,L]
+RewriteRule ^staff/login\.html$            /login                  [R=301,L]
+RewriteRule ^admin/login\.html$            /login                  [R=301,L]
+RewriteRule ^login\.html$                  /login                  [R=301,L]
 
-RewriteRule ^tool/map$ components/map.php [END]
-RewriteRule ^tool/schedule$ components/schedule.php [END]
-RewriteRule ^tool/calender$ /tool/schedule [R=301,L]
+# Core
+RewriteRule ^index$                        index.php                                        [END]
+RewriteRule ^login$                        components/login.php                             [END]
+RewriteRule ^logout$                       logout.php                                       [END]
+RewriteRule ^dashboard$                    components/dashboard.php                         [END]
 
-RewriteRule ^logout$ logout.php [END,PT]
+# Patient dashboard
+RewriteRule ^dashboard/patient$            components/dashboard/patient.php                 [END]
 
-RewriteRule ^about/story$ components/home/pages/story.php [L]
-RewriteRule ^about/team$ components/home/pages/team.php [L]
-RewriteRule ^about/careers$ components/home/pages/careers.php [L]
-RewriteRule ^services/primary-care$ components/home/pages/primary-care.php [L]
-RewriteRule ^services/specialists$ components/home/pages/specialists.php [L]
-RewriteRule ^services/telemedicine$ components/home/pages/telemedicine.php [L]
-RewriteRule ^services/lab$ components/home/pages/lab-services.php [L]
-RewriteRule ^blog$ components/home/pages/blog.php [L]
-RewriteRule ^faq$ components/home/pages/faq.php [L]
-RewriteRule ^contact$ components/home/pages/contact.php [L]
-RewriteRule ^privacy$ components/home/pages/privacy.php [L]
+# Tools (patient)
+RewriteRule ^map$                          components/map.php                               [END]
+RewriteRule ^schedule$                     components/schedule.php                          [END]
 
-# Block access to the account folder
-RewriteRule ^account/.*$ - [F,L]
+# Patient standalone pages
+RewriteRule ^appointments$                 components/appointments.php                      [END]
+RewriteRule ^prescriptions$                components/prescriptions.php                     [END]
+RewriteRule ^lab-results$                  components/lab-results.php                       [END]
+RewriteRule ^visits$                       components/visits.php                            [END]
 
-# Block access to the sql folder
-RewriteRule ^sql/.*$ - [F,L]
+# Auth / registration
+RewriteRule ^register$                     components/register.php                          [END]
+RewriteRule ^forgot-password$              components/forgot-password.php                   [END]
+RewriteRule ^reset-password$               components/reset-password.php                    [END]
 
-# Block sensitive project files
-RewriteRule ^(Dockerfile|compose\.yml|README\.md|cms\ 350\ db\.pdf|docs/.*)$ - [F,L]
+# Admin / institution
+RewriteRule ^dashboard/admin$              components/dashboard/admin.php                   [END]
+RewriteRule ^dashboard/institution$        components/dashboard/institution.php             [END]
 
-# Error Pages
+# Staff dashboards
+RewriteRule ^dashboard/staff$              components/dashboard/staff.php                   [END]
+RewriteRule ^dashboard/staff/physician$    components/dashboard/staff/physician.php         [END]
+RewriteRule ^dashboard/staff/surgeon$      components/dashboard/staff/surgeon.php           [END]
+RewriteRule ^dashboard/staff/nurse$        components/dashboard/staff/nurse.php             [END]
+RewriteRule ^dashboard/staff/pharmacist$   components/dashboard/staff/pharmacist.php        [END]
+RewriteRule ^dashboard/staff/labtech$      components/dashboard/staff/labtech.php           [END]
+RewriteRule ^dashboard/staff/billing$      components/dashboard/staff/billing.php           [END]
+RewriteRule ^dashboard/staff/ems$          components/dashboard/staff/ems.php               [END]
+RewriteRule ^dashboard/staff/radiologist$  components/dashboard/staff/radiologist.php       [END]
+RewriteRule ^dashboard/staff/receptionist$ components/dashboard/staff/receptionist.php      [END]
+RewriteRule ^dashboard/staff/therapist$    components/dashboard/staff/therapist.php         [END]
+
+# API endpoints
+RewriteRule ^api/nearest-institutions$     components/api/nearest_institutions.php          [END]
+RewriteRule ^api/search-patient$           components/api/search_patient.php                [END]
+RewriteRule ^api/search-medicine$          components/api/search_medicine.php               [END]
+RewriteRule ^api/check-interaction$        components/api/check_interaction.php             [END]
+RewriteRule ^api/get-diagnoses$            components/api/get_diagnoses.php                 [END]
+
+# Public home pages
+RewriteRule ^about/story$                  components/home/pages/story.php                  [L]
+RewriteRule ^about/team$                   components/home/pages/team.php                   [L]
+RewriteRule ^about/careers$                components/home/pages/careers.php                [L]
+RewriteRule ^services/primary-care$        components/home/pages/primary-care.php           [L]
+RewriteRule ^services/specialists$         components/home/pages/specialists.php            [L]
+RewriteRule ^services/telemedicine$        components/home/pages/telemedicine.php           [L]
+RewriteRule ^services/lab$                 components/home/pages/lab-services.php           [L]
+RewriteRule ^blog$                         components/home/pages/blog.php                   [L]
+RewriteRule ^faq$                          components/home/pages/faq.php                    [L]
+RewriteRule ^contact$                      components/home/pages/contact.php                [L]
+RewriteRule ^privacy$                      components/home/pages/privacy.php                [L]
+
+# Dev tools (internal only)
+RewriteRule ^next$                         nxthelp/next.html                                [END]
+
+# Error pages
 ErrorDocument 400 /error/400.html
 ErrorDocument 401 /error/401.html
 ErrorDocument 403 /error/403.html
