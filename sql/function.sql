@@ -1354,6 +1354,36 @@ BEGIN
     RETURN COALESCE(v_is_staff, FALSE);
 END;
 
+-- ============================================================
+-- Search patients by name (returns JSON array)
+-- ============================================================
+DROP FUNCTION IF EXISTS search_patients;
+
+CREATE FUNCTION search_patients(p_search VARCHAR(100), p_limit INT)
+    RETURNS JSON
+    READS SQL DATA
+BEGIN
+    DECLARE v_like VARCHAR(101) DEFAULT CONCAT('%', p_search, '%');
+
+    RETURN COALESCE(
+        (SELECT JSON_ARRAYAGG(
+            JSON_OBJECT(
+                'id', id,
+                'firstname', firstname,
+                'lastname', lastname,
+                'age', age,
+                'blood', blood,
+                'gender', gender
+            )
+        )
+        FROM view_patients
+        WHERE firstname LIKE v_like OR lastname LIKE v_like
+        ORDER BY lastname, firstname
+        LIMIT p_limit),
+        JSON_ARRAY()
+    );
+END;
+
 DROP FUNCTION IF EXISTS is_admin;
 
 CREATE FUNCTION is_admin(user_id INT)
