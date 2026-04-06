@@ -76,6 +76,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'PUT') {
             <i class="fas fa-phone w-4 text-center text-slate-500"></i>
             <span>Call</span>
         </div>
+        <div id="ctx-schedule" class="flex items-center gap-2.5 px-4 py-3 cursor-pointer hover:bg-indigo-50 text-indigo-600 transition-colors">
+            <i class="fas fa-calendar-plus w-4 text-center"></i>
+            <span>Schedule appointment</span>
+        </div>
         <div id="ctx-hide" class="flex items-center gap-2.5 px-4 py-3 cursor-pointer hover:bg-slate-100 transition-colors">
             <i class="fas fa-eye-slash w-4 text-center text-slate-500"></i>
             <span>Hide</span>
@@ -84,6 +88,57 @@ if ($_SERVER['REQUEST_METHOD'] === 'PUT') {
             <i class="fas fa-trash w-4 text-center"></i>
             <span>Remove</span>
         </div>
+    </div>
+
+    <!-- Schedule Appointment Modal -->
+    <div id="schedule-backdrop" class="hidden fixed inset-0 z-50 flex items-center justify-center px-4" style="background:rgba(15,23,42,0.35);backdrop-filter:blur(2px);">
+        <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-sm animate__animated animate__fadeInUp animate__faster">
+            <div class="flex items-center justify-between px-6 pt-5 pb-4 border-b border-slate-100">
+                <div>
+                    <h2 class="text-lg font-semibold text-slate-800" style="font-family:'DM Serif Display',serif;">Schedule Appointment</h2>
+                    <p id="sched-institution-name" class="text-sm text-slate-400 mt-0.5"></p>
+                </div>
+                <button id="sched-close" class="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors">
+                    <i class="fas fa-times text-sm"></i>
+                </button>
+            </div>
+            <form id="sched-form" class="px-6 py-5 space-y-4">
+                <div>
+                    <label class="block text-[11px] font-semibold text-slate-400 uppercase tracking-widest mb-1">Date</label>
+                    <input id="sched-date" type="date" required
+                           class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-800 focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-[11px] font-semibold text-slate-400 uppercase tracking-widest mb-1">Time</label>
+                        <input id="sched-time" type="time"
+                               class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-800 focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-semibold text-slate-400 uppercase tracking-widest mb-1">Duration</label>
+                        <select id="sched-duration"
+                                class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-800 focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition bg-white">
+                            <option value="">—</option>
+                            <option value="15 min">15 min</option>
+                            <option value="30 min">30 min</option>
+                            <option value="45 min">45 min</option>
+                            <option value="1 hr">1 hr</option>
+                            <option value="1.5 hr">1.5 hr</option>
+                            <option value="2 hr">2 hr</option>
+                        </select>
+                    </div>
+                </div>
+                <button type="submit"
+                        class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-xl transition-colors shadow-sm">
+                    <i class="fas fa-calendar-check mr-1.5"></i>Save to Schedule
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="sched-toast" class="hidden fixed bottom-24 left-1/2 -translate-x-1/2 z-50 px-5 py-3 bg-emerald-600 text-white text-sm font-medium rounded-xl shadow-lg animate__animated animate__fadeInUp">
+        <i class="fas fa-check mr-2"></i>Appointment saved to your schedule
     </div>
 
     <!-- Map -->
@@ -285,6 +340,68 @@ $(function () {
 
 
     $('#sidebar-close').on('click', closeSidebar);
+
+    // ── Schedule appointment ─────────────────────────────────────────────
+
+    const SCHEDULE_KEY = 'medhealth_schedule_v1';
+
+    function loadSchedule() { try { return JSON.parse(localStorage.getItem(SCHEDULE_KEY)) || {}; } catch(e) { return {}; } }
+    function saveSchedule(s) { localStorage.setItem(SCHEDULE_KEY, JSON.stringify(s)); }
+
+    function padZ(n) { return String(n).padStart(2, '0'); }
+    function dateKey(d) { return `${d.getFullYear()}-${padZ(d.getMonth()+1)}-${padZ(d.getDate())}`; }
+
+    $('#ctx-schedule').on('click', function () {
+        if (!contextLocation) { hideContextMenu(); return; }
+        hideContextMenu();
+
+        // Pre-fill date to today
+        const today = new Date();
+        $('#sched-date').val(`${today.getFullYear()}-${padZ(today.getMonth()+1)}-${padZ(today.getDate())}`);
+        $('#sched-time').val('');
+        $('#sched-duration').val('');
+        $('#sched-institution-name').text(contextLocation.name || '');
+        $('#schedule-backdrop').removeClass('hidden');
+        setTimeout(() => $('#sched-date').focus(), 150);
+    });
+
+    $('#sched-close').on('click', function () { $('#schedule-backdrop').addClass('hidden'); });
+    $('#schedule-backdrop').on('click', function (e) { if ($(e.target).is('#schedule-backdrop')) $('#schedule-backdrop').addClass('hidden'); });
+
+    $('#sched-form').on('submit', function (e) {
+        e.preventDefault();
+        const dateStr = $('#sched-date').val();
+        if (!dateStr) return;
+
+        const ev = {
+            type:     'appointment',
+            title:    contextLocation.name || 'Appointment',
+            time:     $('#sched-time').val()     || null,
+            duration: $('#sched-duration').val() || null,
+            location: contextLocation.address    || '',
+            color:    'sky',
+        };
+        if (!ev.duration) delete ev.duration;
+
+        const schedule = loadSchedule();
+        const arr = schedule[dateStr] || [];
+        arr.push(ev);
+        arr.sort((a, b) => {
+            if (!a.time && !b.time) return 0; if (!a.time) return 1; if (!b.time) return -1;
+            return a.time.localeCompare(b.time);
+        });
+        schedule[dateStr] = arr;
+        saveSchedule(schedule);
+
+        $('#schedule-backdrop').addClass('hidden');
+
+        // Toast
+        const $toast = $('#sched-toast').removeClass('hidden animate__fadeOutDown').addClass('animate__fadeInUp');
+        setTimeout(function () {
+            $toast.removeClass('animate__fadeInUp').addClass('animate__fadeOutDown');
+            setTimeout(() => $toast.addClass('hidden'), 500);
+        }, 2500);
+    });
 
     // ── get user location ────────────────────────────────────────────────
 
