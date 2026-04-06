@@ -428,6 +428,20 @@ BEGIN
     VALUES (p_patient_id, p_institution_id, p_visit_type, p_scheduled_at, p_reason, p_notes);
 END;
 
+-- ============================================================
+-- cancel_visit cancels a scheduled visit by updating its status
+-- ============================================================
+DROP PROCEDURE IF EXISTS cancel_visit;
+
+CREATE PROCEDURE cancel_visit(IN p_visit_id INT)
+BEGIN
+    UPDATE visit
+    SET status = 'CANCELLED', updated_at = NOW()
+    WHERE id = p_visit_id
+      AND status = 'SCHEDULED'
+      AND deleted_at IS NULL;
+END;
+
 DROP PROCEDURE IF EXISTS create_doctor_visit;
 CREATE PROCEDURE create_doctor_visit(
     IN p_visit_id INTEGER,
