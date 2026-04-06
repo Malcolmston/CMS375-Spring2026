@@ -1,0 +1,99 @@
+/* Sidebar - default collapsed */
+#sidebar {
+    width: 64px;
+    overflow: hidden;
+    transition: width 0.3s ease;
+}
+
+#sidebar.expanded {
+    width: 224px;
+}
+
+#sidebar .sidebar-label {
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+    white-space: nowrap;
+}
+
+#sidebar.expanded .sidebar-label {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Main content margin */
+#main-content {
+    margin-left: 64px;
+    transition: margin-left 0.3s ease;
+}
+
+#sidebar.expanded ~ #main-content {
+    margin-left: 224px;
+}
+
+/* Nav item styling */
+.sidebar-nav-item:hover {
+    background: #f1f5f9;
+}
+
+.sidebar-nav-item.active {
+    background: #eef2ff;
+    color: #4f46e5;
+}
+
+.sidebar-nav-item.active .fa,
+.sidebar-nav-item.active .sidebar-icon {
+    color: #4f46e5;
+}
+
+/* Mobile: always show icons only */
+@media (max-width: 767px) {
+    #sidebar {
+        width: 64px !important;
+    }
+
+    #sidebar.expanded {
+        width: 64px !important;
+    }
+
+    #sidebar .sidebar-label {
+        display: none !important;
+        opacity: 0 !important;
+        visibility: hidden !important;
+    }
+
+    #main-content {
+        margin-left: 64px !important;
+    }
+
+    #sidebar.expanded ~ #main-content {
+        margin-left: 64px !important;
+    }
+}
+
+/* Desktop: expand on hover or toggle */
+@media (min-width: 768px) {
+    #sidebar:hover,
+    #sidebar.expanded {
+        width: 224px;
+    }
+
+    #sidebar:hover .sidebar-label,
+    #sidebar.expanded .sidebar-label {
+        opacity: 1;
+        visibility: visible;
+    }
+}
+
+/* Toggle button for mobile */
+#sidebar-toggle,
+#sidebar-toggle-desktop {
+    cursor: pointer;
+}
+
+@media (max-width: 767px) {
+    #sidebar-toggle,
+    #sidebar-toggle-desktop {
+        display: flex;
+    }
+}
