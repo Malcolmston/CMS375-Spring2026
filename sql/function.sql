@@ -24,6 +24,27 @@ BEGIN
 END;
 
 -- ============================================================
+-- user_exists_by_email checks if an active (non-deleted) user exists with the given email
+-- - p_email is the email address to check
+-- - Returns TRUE if an active user exists, FALSE otherwise
+-- ============================================================
+DROP FUNCTION IF EXISTS user_exists_by_email;
+
+CREATE FUNCTION user_exists_by_email(p_email VARCHAR(255))
+    RETURNS BOOLEAN
+    READS SQL DATA
+BEGIN
+    DECLARE v_exists BOOLEAN DEFAULT FALSE;
+
+    SELECT TRUE INTO v_exists
+    FROM view_users
+    WHERE email = p_email
+    LIMIT 1;
+
+    RETURN COALESCE(v_exists, FALSE);
+END;
+
+-- ============================================================
 -- Is deleted checks if a user has been soft-deleted
 -- - p_id is the user's id
 -- - Returns true if deleted_at is set, false otherwise
