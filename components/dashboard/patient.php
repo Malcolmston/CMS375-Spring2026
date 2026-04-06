@@ -273,6 +273,11 @@ $fullName = trim(
             <span class="sidebar-label text-sm font-medium text-slate-700">Schedule</span>
         </button>
 
+        <button class="sidebar-nav-item w-full flex items-center gap-3 px-2.5 py-2.5 rounded-xl text-slate-500 transition-all duration-200" data-panel="nearby-institutions" data-tooltip="Nearby Institutions">
+            <svg class="sidebar-icon w-5 h-5 flex-shrink-0 text-slate-400 transition-colors duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg>
+            <span class="sidebar-label text-sm font-medium text-slate-700">Nearby Institutions</span>
+        </button>
+
         <button class="sidebar-nav-item w-full flex items-center gap-3 px-2.5 py-2.5 rounded-xl text-slate-500 transition-all duration-200" data-panel="quick-actions" data-tooltip="Quick Actions">
             <svg class="sidebar-icon w-5 h-5 flex-shrink-0 text-slate-400 transition-colors duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z"/></svg>
             <span class="sidebar-label text-sm font-medium text-slate-700">Quick Actions</span>
@@ -699,6 +704,19 @@ $fullName = trim(
         </div>
     </div>
 
+    <!-- ══ PANEL: Nearby Institutions ══ -->
+    <div id="panel-nearby-institutions" class="panel animate__animated animate__fadeIn">
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+            <p class="text-sm text-slate-500 mb-5">Loads the nearest 100 health facilities to your registered address and opens them on the interactive map.</p>
+            <button id="btn-open-map"
+                    class="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-xl transition-colors shadow-sm">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg>
+                <span id="btn-open-map-label">Open Nearby Institutions</span>
+            </button>
+            <p id="map-status" class="text-xs text-slate-400 mt-3 hidden"></p>
+        </div>
+    </div>
+
     <!-- ══ PANEL: Quick Actions ══ -->
     <div id="panel-quick-actions" class="panel animate__animated animate__fadeIn">
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -789,8 +807,9 @@ const panelMeta = {
     'medical-overview':   { title:'Medical Overview',          sub:'Diagnoses, prescriptions & allergies' },
     'emergency-contacts': { title:'Emergency & Family',        sub:'Parents and legal guardians' },
     'dependents':         { title:'My Dependents',             sub:'Patients under your guardianship' },
-    'schedule':           { title:'Medication Schedule',       sub:'Daily time-slot view of your active medicines' },
-    'quick-actions':      { title:'Quick Actions',             sub:'Common tasks and shortcuts' },
+    'schedule':               { title:'Medication Schedule',       sub:'Daily time-slot view of your active medicines' },
+    'nearby-institutions':    { title:'Nearby Institutions',       sub:'Find the closest health facilities on the map' },
+    'quick-actions':          { title:'Quick Actions',             sub:'Common tasks and shortcuts' },
     'access-control':     { title:'Access Control & Security', sub:'Password and session management' },
     'data-retrieval':     { title:'Data Retrieval',            sub:'Export and download your records' },
 };
@@ -827,6 +846,41 @@ $(function () {
     // Deep-link via hash (e.g. redirect after form submit lands on #access-control)
     const hash = location.hash.replace('#', '');
     if (hash && panelMeta[hash]) switchPanel(hash);
+
+    // ── Nearby Institutions → map ──────────────────────────────────────────
+    $('#btn-open-map').on('click', function () {
+        const $btn    = $(this);
+        const $label  = $('#btn-open-map-label');
+        const $status = $('#map-status');
+
+        $btn.prop('disabled', true);
+        $label.text('Loading…');
+        $status.text('Fetching nearest institutions…').removeClass('hidden text-red-500').addClass('text-slate-400');
+
+        $.getJSON('/api/nearest_institutions')
+            .done(function (institutions) {
+                $status.text('Sending to map…');
+                $.ajax({
+                    url: '/map',
+                    method: 'PUT',
+                    contentType: 'application/json',
+                    data: JSON.stringify(institutions)
+                })
+                .done(function () {
+                    window.location.href = '/map';
+                })
+                .fail(function () {
+                    $status.text('Failed to load map. Please try again.').addClass('text-red-500').removeClass('text-slate-400');
+                    $btn.prop('disabled', false);
+                    $label.text('Open Nearby Institutions');
+                });
+            })
+            .fail(function () {
+                $status.text('Could not fetch institutions. Please try again.').addClass('text-red-500').removeClass('text-slate-400');
+                $btn.prop('disabled', false);
+                $label.text('Open Nearby Institutions');
+            });
+    });
 });
 </script>
 </body>
