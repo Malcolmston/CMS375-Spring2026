@@ -256,6 +256,39 @@ abstract class Account extends Connect
         return $instance;
     }
 
+    /**
+     * Check if an active (non-deleted) user exists with the given email.
+     *
+     * @param string $email The email address to check.
+     * @return bool True if an active user exists, false otherwise.
+     */
+    public static function emailExists(string $email): bool
+    {
+        $instance = new static();
+        $stmt = $instance->getConnection()->prepare("SELECT user_exists_by_email(?) AS exists");
+        $stmt->bind_param("s", $email);
+        $stmt->execute();
+        $row = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
+        return (bool) ($row['exists'] ?? false);
+    }
+
+    /**
+     * Get all active (non-deleted) institutions.
+     *
+     * @return array List of institutions.
+     */
+    public static function getAllInstitutions(): array
+    {
+        $instance = new static();
+        $stmt = $instance->getConnection()->prepare("SELECT * FROM view_active_institutions ORDER BY name");
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $institutions = $result->fetch_all(MYSQLI_ASSOC);
+        $stmt->close();
+        return $institutions;
+    }
+
     public static function getPatientSummary(int $patient_id): array
     {
         $instance = new static();
