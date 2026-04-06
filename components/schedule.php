@@ -83,7 +83,6 @@ session_start();
 
 </div>
 
-<!-- ════ EVENT MODAL ════ -->
 <div id="modal-backdrop" class="hidden fixed inset-0 z-50 flex items-center justify-center px-4">
     <div id="modal" class="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-md animate__animated animate__fadeInUp animate__faster">
         <div class="flex items-center justify-between px-6 pt-5 pb-4 border-b border-slate-100">
@@ -250,18 +249,15 @@ session_start();
 <script>
 $(function () {
 
-    // ── Storage ───────────────────────────────────────────────────────────────
     const STORE_KEY = 'medhealth_schedule_v1';
     function loadEvents() { try { return JSON.parse(localStorage.getItem(STORE_KEY)) || {}; } catch(e) { return {}; } }
     function saveEvents(e) { localStorage.setItem(STORE_KEY, JSON.stringify(e)); }
 
-    // ── State ─────────────────────────────────────────────────────────────────
     const today    = new Date();
     let   viewYear = today.getFullYear();
     let   viewMonth= today.getMonth();
     let   selectedDateKey = null;
 
-    // ── Constants ─────────────────────────────────────────────────────────────
     const COLOR_CLASSES = {
         indigo:  { pill: 'bg-indigo-100 text-indigo-700',   dot: 'bg-indigo-500'  },
         emerald: { pill: 'bg-emerald-100 text-emerald-700', dot: 'bg-emerald-500' },
