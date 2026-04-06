@@ -63,6 +63,10 @@ RewriteRule ^api/search-medicine$ components/api/search_medicine.php [END]
 RewriteRule ^api/check-interaction$ components/api/check_interaction.php [END]
 RewriteRule ^api/get-diagnoses$ components/api/get_diagnoses.php [END]
 
+RewriteRule ^tool/map$ components/map.php [END]
+RewriteRule ^tool/schedule$ components/schedule.php [END]
+RewriteRule ^tool/calender$ /tool/schedule [R=301,L]
+
 RewriteRule ^logout$ logout.php [END,PT]
 
 RewriteRule ^about/story$ components/home/pages/story.php [L]
