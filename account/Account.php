@@ -290,6 +290,26 @@ abstract class Account extends Connect
     }
 
     /**
+     * Get nearest institutions to a given location.
+     *
+     * @param float $lat Latitude.
+     * @param float $lng Longitude.
+     * @param int $limit Max results.
+     * @return array List of institutions with distance.
+     */
+    public static function getNearestInstitutions(float $lat, float $lng, int $limit = 100): array
+    {
+        $instance = new static();
+        $stmt = $instance->getConnection()->prepare("SELECT get_nearest_institutions(?, ?, ?) AS result");
+        $stmt->bind_param("dii", $lat, $lng, $limit);
+        $stmt->execute();
+        $row = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
+        $json = $row['result'] ?? '[]';
+        return json_decode($json, true) ?: [];
+    }
+
+    /**
      * Search patients by name using stored function.
      *
      * @param string $query Search term.
