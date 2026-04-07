@@ -1401,3 +1401,50 @@ BEGIN
 
     RETURN COALESCE(v_is_admin, FALSE);
 END;
+
+-- ============================================================
+-- Get nearest institutions to a given location
+-- ============================================================
+DROP FUNCTION IF EXISTS get_nearest_institutions;
+
+CREATE FUNCTION get_nearest_institutions(p_lat DECIMAL(10,6), p_lng DECIMAL(10,6), p_limit INT)
+    RETURNS JSON
+    READS SQL DATA
+BEGIN
+    RETURN COALESCE(
+        (SELECT JSON_ARRAYAGG(
+            JSON_OBJECT(
+                'id', id,
+                'name', name,
+                'institution_type', institution_type,
+                'phone', phone,
+                'address', address,
+                'loc_x', loc_x,
+                'loc_y', loc_y,
+                'distance_km', distance_km
+            )
+        )
+        FROM (
+            SELECT
+                id,
+                name,
+                institution_type,
+                phone,
+                address,
+                loc_x,
+                loc_y,
+                (6371 * ACOS(
+                    COS(RADIANS(p_lat)) * COS(RADIANS(loc_x)) *
+                    COS(RADIANS(loc_y) - RADIANS(p_lng)) +
+                    SIN(RADIANS(p_lat)) * SIN(RADIANS(loc_x))
+                )) AS distance_km
+            FROM institution
+            WHERE deleted_at IS NULL
+              AND loc_x IS NOT NULL
+              AND loc_y IS NOT NULL
+            ORDER BY distance_km ASC
+            LIMIT p_limit
+        ) AS nearest),
+        JSON_ARRAY()
+    );
+END;
