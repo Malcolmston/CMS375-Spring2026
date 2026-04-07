@@ -31,7 +31,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $userId = \account\Account::validatePasswordResetToken($token);
         if ($userId) {
             \account\Account::updatePassword($userId, $password);
-            \account\Account::clearPasswordResetToken($userId);
             $success = true;
         } else {
             $error = 'Invalid or expired token.';
