@@ -451,3 +451,20 @@ CREATE TABLE IF NOT EXISTS user_allergy (
 
     CONSTRAINT uq_user_allergy UNIQUE (user_id, allergy_id)
 );
+
+-- Password reset tokens table
+CREATE TABLE IF NOT EXISTS password_reset_tokens (
+    id INTEGER PRIMARY KEY AUTO_INCREMENT,
+    user_id INTEGER NOT NULL,
+    token VARCHAR(64) NOT NULL UNIQUE,
+    expires_at DATETIME NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    used_at TIMESTAMP DEFAULT NULL,
+
+    CONSTRAINT fk_password_reset_tokens_user
+        FOREIGN KEY (user_id) REFERENCES users(id)
+        ON DELETE CASCADE ON UPDATE CASCADE,
+
+    INDEX idx_token (token),
+    INDEX idx_user_id (user_id)
+);
