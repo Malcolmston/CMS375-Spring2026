@@ -65,4 +65,27 @@ class Mail
         $message = ob_get_clean();
         return self::send($to, $from, $subject, $message);
     }
+
+    /**
+     * Sends an account creation email to the specified recipient.
+     *
+     * @param string $fullname The full name of the account holder.
+     * @param string $to The recipient's email address.
+     * @param string $account_type The type of account that was created.
+     * @param string $created_at The date and time when the account was created.
+     * @return bool Returns true if the account creation email was sent successfully, or false if an error occurred.
+     */
+    public static function send_account_create($fullname, $to, $account_type, $created_at): bool
+    {
+        $from = MailType::DEFAULT->toString();
+        $subject = "Account created";
+        $template = "account_create.php";
+        $data = [
+            '$full_name' => $fullname,
+            'email' => $to,
+            'account_type' => $account_type,
+            'created_at' => $created_at
+        ];
+        return self::sendTemplate($to, $from, $subject, $template, $data);
+    }
 }
