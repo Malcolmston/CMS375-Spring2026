@@ -63,7 +63,6 @@ DB_PASS=app
 DB_NAME=med_helth
 MAIL_HOST=mailpit
 MAIL_PORT=1025
-
 ```
 
 ### routing diagram:
