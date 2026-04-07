@@ -19,6 +19,9 @@ class Institution extends Connect
     public string $updatedAt;
     public ?string $deletedAt;
 
+    /**
+     * @throws \Exception
+     */
     public function __construct()
     {
         parent::__construct();
@@ -28,8 +31,7 @@ class Institution extends Connect
     {
         $inst = new Institution();
         $stmt = $inst->getConnection()->prepare(
-            "SELECT id, name, institution_type, phone, email, address, created_at, updated_at, deleted_at
-             FROM institution WHERE id = ? AND deleted_at IS NULL LIMIT 1"
+            "SELECT * FROM view_active_institutions WHERE id = ? LIMIT 1"
         );
         if (!$stmt) return null;
         $stmt->bind_param('i', $id);
