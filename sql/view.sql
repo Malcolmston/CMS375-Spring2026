@@ -831,3 +831,16 @@ CREATE OR REPLACE VIEW view_all_interactions AS
              LEFT JOIN view_active_vaccines v ON di.agent_1_type = 'vaccine' AND di.agent_1_id = v.id
         OR di.agent_2_type = 'vaccine' AND di.agent_2_id = v.id
     AND di.deleted_at IS NULL;
+
+-- View: view_password_reset_tokens - users with valid reset tokens
+CREATE OR REPLACE VIEW view_password_reset_tokens AS
+SELECT
+    prt.id,
+    prt.user_id,
+    u.email,
+    prt.token AS reset_token,
+    prt.expires_at AS reset_expires
+FROM password_reset_tokens prt
+JOIN users u ON prt.user_id = u.id
+WHERE prt.used_at IS NULL
+  AND prt.expires_at > NOW();
