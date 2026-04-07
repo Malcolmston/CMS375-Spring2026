@@ -17,6 +17,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!$email || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $error = 'Please enter a valid email address.';
     } else {
+        // Check if email exists and generate reset token
+        if (\account\Account::emailExists($email)) {
+            \account\Account::generatePasswordResetToken($email);
+            // TODO: Send reset email via EmailService
+        }
         // Don't reveal if email exists - always show success
         $success = true;
     }
