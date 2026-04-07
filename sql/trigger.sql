@@ -1470,3 +1470,42 @@ AFTER UPDATE ON institution_user
     END IF;
 END;
 
+-- ============================================================
+-- Log password change
+-- ============================================================
+DROP TRIGGER IF EXISTS trg_log_password_change;
+
+CREATE TRIGGER trg_log_password_change
+AFTER UPDATE ON users
+    FOR EACH ROW BEGIN
+    IF OLD.password != NEW.password THEN
+        INSERT INTO logs (user_id, action, table_name, record_id, old_data, new_data)
+        VALUES (NEW.id, 'UPDATE', 'users', NEW.id, JSON_OBJECT('password', 'CHANGED'), JSON_OBJECT('password', 'CHANGED'));
+    END IF;
+END;
+
+-- ============================================================
+-- Log password reset token created
+-- ============================================================
+DROP TRIGGER IF EXISTS trg_log_password_reset_token_create;
+
+CREATE TRIGGER trg_log_password_reset_token_create
+AFTER INSERT ON password_reset_tokens
+    FOR EACH ROW BEGIN
+    INSERT INTO logs (user_id, action, table_name, record_id, new_data)
+    VALUES (NEW.user_id, 'CREATE', 'password_reset_tokens', NEW.id, JSON_OBJECT('token', NEW.token, 'expires_at', NEW.expires_at));
+END;
+
+-- ============================================================
+-- Log password reset token used
+-- ============================================================
+DROP TRIGGER IF EXISTS trg_log_password_reset_token_use;
+
+CREATE TRIGGER trg_log_password_reset_token_use
+AFTER UPDATE ON password_reset_tokens
+    FOR EACH ROW BEGIN
+    IF OLD.used_at IS NULL AND NEW.used_at IS NOT NULL THEN
+        INSERT INTO logs (user_id, action, table_name, record_id, new_data)
+        VALUES (NEW.user_id, 'USE', 'password_reset_tokens', NEW.id, JSON_OBJECT('used_at', NEW.used_at));
+    END IF;
+END;
