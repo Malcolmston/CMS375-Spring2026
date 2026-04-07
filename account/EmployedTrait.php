@@ -4,7 +4,7 @@ namespace account;
 
 use services\Institution;
 
-require_once __DIR__ . '/Institution.php';
+require_once __DIR__ . '/../services/Institution.php';
 
 trait EmployedTrait
 {
