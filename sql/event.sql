@@ -83,3 +83,16 @@ BEGIN
     WHERE stock_quantity <= 20
       AND controlled_substance = TRUE;
 END;
+
+-- ============================================================
+-- Clean expired password reset tokens
+-- ============================================================
+DROP EVENT IF EXISTS clean_expired_password_tokens;
+
+CREATE EVENT clean_expired_password_tokens
+ON SCHEDULE EVERY 1 HOUR
+DO
+BEGIN
+    DELETE FROM password_reset_tokens
+    WHERE expires_at < NOW();
+END;
