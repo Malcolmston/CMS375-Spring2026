@@ -1044,3 +1044,58 @@ BEGIN
 
     SET p_affected = ROW_COUNT() > 0;
 END;
+
+-- ============================================================
+-- Generate password reset token for a user
+-- ============================================================
+DROP PROCEDURE IF EXISTS generate_password_reset_token;
+
+CREATE PROCEDURE generate_password_reset_token(
+    IN p_email VARCHAR(255),
+    IN p_token VARCHAR(64),
+    IN p_expires DATETIME
+)
+BEGIN
+    DECLARE v_user_id INT DEFAULT NULL;
+
+    SELECT id INTO v_user_id FROM users WHERE email = p_email AND deleted_at IS NULL LIMIT 1;
+
+    IF v_user_id IS NOT NULL THEN
+        -- Clear any existing tokens for this user
+        DELETE FROM password_reset_tokens WHERE user_id = v_user_id;
+        -- Insert new token
+        INSERT INTO password_reset_tokens (user_id, token, expires_at)
+        VALUES (v_user_id, p_token, p_expires);
+    END IF;
+END;
+
+-- ============================================================
+-- Validate password reset token and return user ID
+-- ============================================================
+DROP PROCEDURE IF EXISTS validate_password_reset_token;
+
+CREATE PROCEDURE validate_password_reset_token(
+    IN p_token VARCHAR(64)
+)
+BEGIN
+    SELECT user_id
+    FROM password_reset_tokens
+    WHERE token = p_token
+      AND used_at IS NULL
+      AND expires_at > NOW()
+    LIMIT 1;
+END;
+
+-- ============================================================
+-- Clear password reset token after successful reset
+-- ============================================================
+DROP PROCEDURE IF EXISTS clear_password_reset_token;
+
+CREATE PROCEDURE clear_password_reset_token(IN p_user_id INT)
+BEGIN
+    -- Mark token as used
+    UPDATE password_reset_tokens
+    SET used_at = NOW()
+    WHERE user_id = p_user_id
+      AND used_at IS NULL;
+END;
