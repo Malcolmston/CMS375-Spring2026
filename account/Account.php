@@ -308,6 +308,91 @@ abstract class Account extends Connect
         return json_decode($json, true) ?: [];
     }
 
+    /**
+     * Generate a password reset token and store it (for forgot-password).
+     *
+     * @param string $email User's email.
+     * @return string|false The reset token if user exists, false otherwise.
+     */
+    public static function generatePasswordResetToken(string $email): string|false
+    {
+        $instance = new static();
+        $token = bin2hex(random_bytes(32));
+        $expires = date('Y-m-d H:i:s', strtotime('+1 hour'));
+
+        $stmt = $instance->getConnection()->prepare("CALL generate_password_reset_token(?, ?, ?)");
+        $stmt->bind_param("sss", $email, $token, $expires);
+        $stmt->execute();
+        $affected = $stmt->affected_rows;
+        $stmt->close();
+
+        return $affected > 0 ? $token : false;
+    }
+
+    /**
+     * Validate a password reset token and get user ID.
+     *
+     * @param string $token The reset token.
+     * @return int|false The user ID if valid, false otherwise.
+     */
+    public static function validatePasswordResetToken(string $token): int|false
+    {
+        $instance = new static();
+        $stmt = $instance->getConnection()->prepare(
+            "SELECT user_id, reset_expires FROM view_password_reset_tokens WHERE reset_token = ? LIMIT 1"
+        );
+        $stmt->bind_param("s", $token);
+        $stmt->execute();
+        $row = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
+
+        if (!$row) return false;
+
+        $expires = $row['reset_expires'] ?? '';
+
+        if (strtotime($expires) < time()) return false;
+
+        return (int) $row['user_id'];
+    }
+
+    /**
+     * Update user password using the procedure.
+     *
+     * @param int $userId User ID.
+     * @param string $newPassword New plain password (will be hashed).
+     * @return bool True if successful.
+     */
+    public static function updatePassword(int $userId, string $newPassword): bool
+    {
+        $instance = new static();
+        $hash = self::encryptPassword($newPassword);
+        $stmt = $instance->getConnection()->prepare("CALL update_password(?, ?)");
+        $stmt->bind_param("is", $userId, $hash);
+        $ok = $stmt->execute();
+        $stmt->close();
+
+        // Clear password reset token after successful update
+        if ($ok) {
+            self::clearPasswordResetToken($userId);
+        }
+
+        return $ok;
+    }
+
+    /**
+     * Clear password reset token (mark as used).
+     *
+     * @param int $userId User ID.
+     */
+    public static function clearPasswordResetToken(int $userId): void
+    {
+        $instance = new static();
+        $stmt = $instance->getConnection()->prepare("CALL clear_password_reset_token(?)");
+        $stmt->bind_param("i", $userId);
+        $stmt->execute();
+        $stmt->close();
+    }
+
     public static function getPatientSummary(int $patient_id): array
     {
         $instance = new static();
