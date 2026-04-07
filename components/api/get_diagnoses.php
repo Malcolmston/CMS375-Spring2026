@@ -13,19 +13,20 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 
-require_once __DIR__ . '/../../Connect.php';
-
 $patientId = (int) ($_GET['patient_id'] ?? 0);
 if ($patientId <= 0) {
     echo json_encode([]);
     exit;
 }
 
+require_once __DIR__ . '/../../Connect.php';
+
 $conn = \Connect::getInstance()->getConnection();
-$stmt = $conn->prepare("SELECT id, `condition`, severity, notes, created_at FROM view_active_diagnoses WHERE patient_id = ? ORDER BY created_at DESC");
+$stmt = $conn->prepare("SELECT my_diagnosis(?) AS result");
 $stmt->bind_param('i', $patientId);
 $stmt->execute();
-$rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+$row = $stmt->get_result()->fetch_assoc();
 $stmt->close();
 
-echo json_encode($rows);
+$diagnoses = ($row && $row['result']) ? json_decode($row['result'], true) : [];
+echo json_encode($diagnoses ?? []);
