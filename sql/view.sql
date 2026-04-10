@@ -364,8 +364,28 @@ JOIN allergy a ON ua.allergy_id = a.id
 WHERE a.deleted_at IS NULL;
 
 CREATE OR REPLACE VIEW view_active_institutions AS
-    SELECT * FROM institution i
-    WHERE i.deleted_at IS NULL;
+SELECT
+    i.id,
+    i.name,
+    i.institution_type,
+    i.phone,
+    i.email,
+    i.address,
+    i.location,
+    i.created_at,
+    i.updated_at,
+    i.deleted_at
+FROM institution i
+WHERE i.deleted_at IS NULL;
+
+CREATE OR REPLACE VIEW view_institution_with_location AS
+SELECT
+    i.id,
+    i.name,
+    i.address,
+    ST_X(i.location) AS loc_x,
+    ST_Y(i.location) AS loc_y
+FROM view_active_institutions i;
 
 CREATE OR REPLACE VIEW view_full_visit AS
 SELECT
