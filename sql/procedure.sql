@@ -1099,3 +1099,12 @@ BEGIN
     WHERE user_id = p_user_id
       AND used_at IS NULL;
 END;
+
+DROP PROCEDURE IF EXISTS generate_point;
+
+CREATE PROCEDURE generate_point(IN p_address VARCHAR(2000), OUT p_point POINT, OUT loc_x DOUBLE, OUT loc_y DOUBLE)
+BEGIN
+    SET p_point = addr_to_point(p_address);
+    SET loc_x = ST_X(p_point);
+    SET loc_y = ST_Y(p_point);
+END;
