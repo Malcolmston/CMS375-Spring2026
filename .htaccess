@@ -56,7 +56,11 @@ RewriteRule ^login\.html$                  /login                  [R=301,L]
 
 # Core
 RewriteRule ^index$                        index.php                                        [END]
-RewriteRule ^login$                        components/login.php                             [END]
+# Login: serve HTML form for GET, PHP handler for POST
+RewriteCond %{REQUEST_METHOD} GET
+RewriteRule ^login$                        components/basic/login.html                  [L]
+RewriteCond %{REQUEST_METHOD} POST
+RewriteRule ^login$                        components/login.php                         [END]
 RewriteRule ^logout$                       logout.php                                       [END]
 RewriteRule ^dashboard$                    components/dashboard.php                         [END]
 
