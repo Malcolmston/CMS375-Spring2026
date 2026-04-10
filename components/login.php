@@ -10,15 +10,18 @@ require_once __DIR__ . '/../account/Receptionist.php';
 require_once __DIR__ . '/../account/Surgeon.php';
 require_once __DIR__ . '/../account/Ems.php';
 require_once __DIR__ . '/../account/Therapist.php';
-
+require_once __DIR__ . '/../account/Physician.php';
+require_once __DIR__ . '/../account/Nurse.php';
 
 
 use account\Ems;
+use account\Nurse;
 use account\Patient;
 use account\Admin;
 use account\Billing;
 use account\LabTech;
 use account\Pharmacist;
+use account\Physician;
 use account\Radiologist;
 use account\Receptionist;
 use account\role;
@@ -37,7 +40,6 @@ session_set_cookie_params([
     'httponly' => true,    // JS cannot access cookie
     'samesite' => 'Strict'
 ]);
-
 
 session_start();
 
