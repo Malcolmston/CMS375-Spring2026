@@ -1509,3 +1509,18 @@ AFTER UPDATE ON password_reset_tokens
         VALUES (NEW.user_id, 'USE', 'password_reset_tokens', NEW.id, JSON_OBJECT('used_at', NEW.used_at));
     END IF;
 END;
+
+-- Trigger to populate location from address using procedure
+DROP TRIGGER IF EXISTS trg_institution_location;
+
+
+CREATE TRIGGER trg_institution_location
+    BEFORE INSERT ON institution
+    FOR EACH ROW
+BEGIN
+    DECLARE p_point POINT;
+    DECLARE loc_x DOUBLE;
+    DECLARE loc_y DOUBLE;
+    CALL generate_point(NEW.address, p_point, loc_x, loc_y);
+    SET NEW.location = p_point;
+END;
