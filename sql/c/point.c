@@ -28,9 +28,9 @@ Point get_point(char *address) {
     CURL *curl = curl_easy_init();
 
     if (curl) {
-        const char *api_key = getenv("GEOCODE_API_KEY");
+        const char *api_key = getenv("OWM_API_KEY");
         if (!api_key) {
-            fprintf(stderr, "GEOCODE_API_KEY not set\n");
+            fprintf(stderr, "OWM_API_KEY not set\n");
             curl_easy_cleanup(curl);
             return p;
         }
@@ -38,8 +38,8 @@ Point get_point(char *address) {
         char *encoded = curl_easy_escape(curl, address, 0);
         char url[1024];
         snprintf(url, sizeof(url),
-                 "https://api.geocode.farm/forward/?key=%s&addr=%s",
-                 api_key, encoded);
+                 "http://api.openweathermap.org/geo/1.0/direct?q=%s&limit=1&appid=%s",
+                 encoded, api_key);
         curl_free(encoded);
 
         struct ResponseBuffer response = {0};
@@ -55,11 +55,11 @@ Point get_point(char *address) {
         if (res != CURLE_OK) {
             fprintf(stderr, "Request failed: %s\n", curl_easy_strerror(res));
         } else if (response.data) {
-            char *lat_str = strstr(response.data, "\"lat\": \"");
-            char *lon_str = strstr(response.data, "\"lon\": \"");
+            char *lat_str = strstr(response.data, "\"lat\":");
+            char *lon_str = strstr(response.data, "\"lon\":");
             if (lat_str && lon_str) {
-                lat_str += strlen("\"lat\": \"");
-                lon_str += strlen("\"lon\": \"");
+                lat_str += strlen("\"lat\":");
+                lon_str += strlen("\"lon\":");
                 p.lat = atof(lat_str);
                 p.lon = atof(lon_str);
             }
