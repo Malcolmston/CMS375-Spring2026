@@ -7,11 +7,21 @@
 #include "point.h"
 
 int main() {
-    char* address = "1600 Amphitheatre Parkway, Mountain View, CA 94043";
+    char* address = "5456 Cedar Avenue, Aurora, MS 47691";
 
-    Point point = get_point(address);
-    printf("Latitude:  %.6f\n", point.lat);
-    printf("Longitude: %.6f\n", point.lon);
+    printf("Searching for: %s\n\n", address);
+
+    SearchResults sr = quick_search(address);
+
+    if (sr.count == 0) {
+        printf("No results found.\n");
+    } else {
+        for (int i = 0; i < sr.count; i++) {
+            Point *p = &sr.results[i];
+            printf("[%d] %s\n    Lat: %.6f  Lon: %.6f\n\n",
+                   i + 1, p->display_name[0] ? p->display_name : "(unknown)", p->lat, p->lon);
+        }
+    }
 
     return 0;
 }
