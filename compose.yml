@@ -62,7 +62,9 @@ services:
       MYSQL_PWD: root
     command: >
       mysql -h mysql -u root med_helth
-      -e "CREATE FUNCTION IF NOT EXISTS addr_to_point RETURNS STRING SONAME 'addr_to_point.so';"
+      -e "CREATE FUNCTION IF NOT EXISTS addr_to_point RETURNS STRING SONAME 'addr_to_point.so';
+          CREATE FUNCTION IF NOT EXISTS is_valid_address RETURNS INTEGER SONAME 'addr_to_point.so';
+          CREATE FUNCTION IF NOT EXISTS near_address RETURNS STRING SONAME 'addr_to_point.so';"
     restart: "no"
     networks:
       - web
