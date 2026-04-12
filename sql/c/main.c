@@ -7,10 +7,11 @@
 #include "point.h"
 
 int main() {
-    char* address = "1600 Amphitheatre Parkway, Mountain View, CA";
+    char* address = "1600 Amphitheatre Parkway, Mountain View, CA 94043";
 
     Point point = get_point(address);
-    printf("Latitude: %.6f, Longitude: %.6f\n", point.lat, point.lon);
+    printf("Latitude:  %.6f\n", point.lat);
+    printf("Longitude: %.6f\n", point.lon);
 
     return 0;
 }

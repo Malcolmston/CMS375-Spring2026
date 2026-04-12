@@ -24,14 +24,14 @@ static size_t write_callback(void *contents, size_t size, size_t nmemb, void *us
 }
 
 Point get_point(char *address) {
-    Point p = {0, 0};
+    Point p = {0, 0, ""};
     CURL *curl = curl_easy_init();
 
     if (curl) {
         char *encoded = curl_easy_escape(curl, address, 0);
         char url[1024];
         snprintf(url, sizeof(url),
-                 "https://nominatim.openstreetmap.org/search?q=%s&format=json&limit=1",
+                 "https://nominatim.openstreetmap.org/search?q=%s&format=json&addressdetails=1&limit=1",
                  encoded);
         curl_free(encoded);
 
@@ -52,6 +52,7 @@ Point get_point(char *address) {
             /* Nominatim returns lat/lon as quoted strings: "lat":"37.42..." */
             char *lat_str = strstr(response.data, "\"lat\":\"");
             char *lon_str = strstr(response.data, "\"lon\":\"");
+            char *dn_str = strstr(response.data, "\"display_name\":\"");
             if (lat_str && lon_str) {
                 lat_str += strlen("\"lat\":\"");
                 lon_str += strlen("\"lon\":\"");
@@ -59,6 +60,22 @@ Point get_point(char *address) {
                 p.lon = atof(lon_str);
             } else {
                 fprintf(stderr, "Could not find lat/lon in response\n");
+            }
+
+            if (dn_str) {
+                dn_str += strlen("\"display_name\":\"");
+                size_t i = 0;
+                while (*dn_str && i < sizeof(p.display_name) - 1) {
+                    if (dn_str[0] == '\\' && dn_str[1] == '"') {
+                        p.display_name[i++] = '"';
+                        dn_str += 2;
+                    } else if (*dn_str == '"') {
+                        break;
+                    } else {
+                        p.display_name[i++] = *dn_str++;
+                    }
+                }
+                p.display_name[i] = '\0';
             }
         }
 
