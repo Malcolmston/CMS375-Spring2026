@@ -25,8 +25,6 @@ services:
     container_name: spring2026-udf-builder
     volumes:
       - mysql_plugins:/mysql-plugins
-    env_file:
-      - ./sql/c/.env
     restart: "no"
 
   mysql:
@@ -62,8 +60,6 @@ services:
         condition: service_completed_successfully
     environment:
       MYSQL_PWD: root
-    env_file:
-      - ./sql/c/.env
     command: >
       mysql -h mysql -u root med_helth
       -e "CREATE FUNCTION IF NOT EXISTS addr_to_point RETURNS STRING SONAME 'addr_to_point.so';"
