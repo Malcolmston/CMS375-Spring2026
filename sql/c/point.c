@@ -28,18 +28,11 @@ Point get_point(char *address) {
     CURL *curl = curl_easy_init();
 
     if (curl) {
-        const char *api_key = getenv("OWM_API_KEY");
-        if (!api_key) {
-            fprintf(stderr, "OWM_API_KEY not set\n");
-            curl_easy_cleanup(curl);
-            return p;
-        }
-
         char *encoded = curl_easy_escape(curl, address, 0);
         char url[1024];
         snprintf(url, sizeof(url),
-                 "http://api.openweathermap.org/geo/1.0/direct?q=%s&limit=1&appid=%s",
-                 encoded, api_key);
+                 "https://nominatim.openstreetmap.org/search?q=%s&format=json&limit=1",
+                 encoded);
         curl_free(encoded);
 
         struct ResponseBuffer response = {0};
@@ -47,6 +40,7 @@ Point get_point(char *address) {
         response.size = 0;
 
         curl_easy_setopt(curl, CURLOPT_URL, url);
+        curl_easy_setopt(curl, CURLOPT_USERAGENT, "CMS375/1.0");
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback);
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
 
@@ -55,13 +49,16 @@ Point get_point(char *address) {
         if (res != CURLE_OK) {
             fprintf(stderr, "Request failed: %s\n", curl_easy_strerror(res));
         } else if (response.data) {
-            char *lat_str = strstr(response.data, "\"lat\":");
-            char *lon_str = strstr(response.data, "\"lon\":");
+            /* Nominatim returns lat/lon as quoted strings: "lat":"37.42..." */
+            char *lat_str = strstr(response.data, "\"lat\":\"");
+            char *lon_str = strstr(response.data, "\"lon\":\"");
             if (lat_str && lon_str) {
-                lat_str += strlen("\"lat\":");
-                lon_str += strlen("\"lon\":");
+                lat_str += strlen("\"lat\":\"");
+                lon_str += strlen("\"lon\":\"");
                 p.lat = atof(lat_str);
                 p.lon = atof(lon_str);
+            } else {
+                fprintf(stderr, "Could not find lat/lon in response\n");
             }
         }
 
