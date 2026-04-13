@@ -286,6 +286,13 @@ $fullName = trim(
             <span class="sidebar-label text-sm font-medium text-slate-700">Calendar</span>
         </button>
 
+        <button class="sidebar-nav-item w-full flex items-center gap-3 px-2.5 py-2.5 rounded-xl text-slate-500 transition-all duration-200" data-panel="results" data-tooltip="Results">
+
+            <i class="fa-regular fa-clipboard-prescription sidebar-icon flex-shrink-0 text-slate-400 transition-colors duration-200"></i>
+
+            <span class="sidebar-label text-sm font-medium text-slate-700">Results</span>
+        </button>
+
         <button class="sidebar-nav-item w-full flex items-center gap-3 px-2.5 py-2.5 rounded-xl text-slate-500 transition-all duration-200" data-panel="nearby-institutions" data-tooltip="Nearby Institutions">
 
             <i class="fa-regular fa-location-dot sidebar-icon flex-shrink-0 text-slate-400 transition-colors duration-200"></i>
@@ -747,6 +754,13 @@ $fullName = trim(
         </div>
     </div>
 
+    <!-- ══ PANEL: results ══ -->
+    <div id="panel-results" class="panel animate__animated animate__fadeIn hidden">
+        <?php include_once __DIR__ . '/../lab-results.php'; ?>
+    </div>
+
+
+
     <!-- ══ PANEL: Quick Actions ══ -->
     <div id="panel-quick-actions" class="panel animate__animated animate__fadeIn">
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -810,7 +824,7 @@ $fullName = trim(
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 opacity-60">
                 <div class="flex items-center gap-3 mb-2">
-                    <svg class="w-5 h-5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m.75 12l3 3m0 0l3-3m-3 3v-6m-1.5-9H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
+                    <i class="fa-regular fa-file-arrow-down text-slate-500"></i>
                     <p class="text-sm font-semibold text-slate-700">Download Medical Record</p>
                 </div>
                 <p class="text-xs text-slate-400">Export a full summary of your medical history as PDF.</p>
@@ -818,7 +832,7 @@ $fullName = trim(
             </div>
             <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 opacity-60">
                 <div class="flex items-center gap-3 mb-2">
-                    <svg class="w-5 h-5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M3.375 19.5h17.25m-17.25 0a1.125 1.125 0 01-1.125-1.125M3.375 19.5h7.5c.621 0 1.125-.504 1.125-1.125m-9.75 0V5.625m0 12.75v-1.5c0-.621.504-1.125 1.125-1.125m18.375 2.625V5.625m0 12.75c0 .621-.504 1.125-1.125 1.125m1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125m0 3.75h-7.5A1.125 1.125 0 0112 18.375m9.75-12.75c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125m19.5 0v1.5c0 .621-.504 1.125-1.125 1.125M2.25 5.625v1.5c0 .621.504 1.125 1.125 1.125m0 0h17.25m-17.25 0h7.5c.621 0 1.125.504 1.125 1.125M3.375 8.25c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375z"/></svg>
+                    <i class="fa-regular fa-file-export text-slate-500"></i>
                     <p class="text-sm font-semibold text-slate-700">Export Prescriptions</p>
                 </div>
                 <p class="text-xs text-slate-400">Download your current and past prescriptions as CSV.</p>
@@ -844,6 +858,7 @@ const panelMeta = {
     'data-retrieval':     { title:'Data Retrieval',            sub:'Export and download your records' },
     'map':                { title:'Map',                       sub:'Interactive map of nearby health facilities' },
     'calendar':           { title:'Calendar',                  sub:'View and manage your appointments and events' },
+    'results':            { title:'Lab Results',               sub:'View your lab test results' },
 };
 
 function switchPanel(panelId) {
