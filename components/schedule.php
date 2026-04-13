@@ -1,5 +1,5 @@
 <?php
-session_start();
+// Schedule uses localStorage for events, no PHP session needed
 ?>
 <!DOCTYPE html>
 <html lang="en">
