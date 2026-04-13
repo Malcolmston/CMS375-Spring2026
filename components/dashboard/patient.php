@@ -160,6 +160,7 @@ $fullName = trim(
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+    <script src="https://kit.fontawesome.com/1ad3aa32da.js" crossorigin="anonymous"></script>
     <style>
         * { font-family: 'DM Sans', sans-serif; }
 
@@ -248,47 +249,53 @@ $fullName = trim(
         </div>
 
         <button class="sidebar-nav-item w-full flex items-center gap-3 px-2.5 py-2.5 rounded-xl text-slate-500 transition-all duration-200 active" data-panel="account" data-tooltip="Account">
-            <svg class="sidebar-icon w-5 h-5 flex-shrink-0 text-slate-600 transition-colors duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M17.982 18.725A7.488 7.488 0 0012 15.75a7.488 7.488 0 00-5.982 2.975m11.963 0a9 9 0 10-11.963 0m11.963 0A8.966 8.966 0 0112 21a8.966 8.966 0 01-5.982-2.275M15 9.75a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+            <i class="fa-regular fa-circle-user sidebar-icon flex-shrink-0 text-slate-600 transition-colors duration-200"></i>
             <span class="sidebar-label text-sm font-medium text-slate-700">Account</span>
         </button>
 
         <button class="sidebar-nav-item w-full flex items-center gap-3 px-2.5 py-2.5 rounded-xl text-slate-500 transition-all duration-200" data-panel="health-profile" data-tooltip="Health &amp; Profile">
-            <svg class="sidebar-icon w-5 h-5 flex-shrink-0 text-slate-400 transition-colors duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"/></svg>
+            <i class="fa-regular fa-heart sidebar-icon flex-shrink-0 text-slate-600 transition-colors duration-200"></i>
             <span class="sidebar-label text-sm font-medium text-slate-700">Health &amp; Profile</span>
         </button>
 
         <button class="sidebar-nav-item w-full flex items-center gap-3 px-2.5 py-2.5 rounded-xl text-slate-500 transition-all duration-200" data-panel="medical-overview" data-tooltip="Medical Overview">
-            <svg class="sidebar-icon w-5 h-5 flex-shrink-0 text-slate-400 transition-colors duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25z"/></svg>
+            <i class="fa-kit fa-overview sidebar-icon fa-lg flex-shrink-0 text-slate-400 transition-colors duration-200"></i>
             <span class="sidebar-label text-sm font-medium text-slate-700">Medical Overview</span>
         </button>
 
         <button class="sidebar-nav-item w-full flex items-center gap-3 px-2.5 py-2.5 rounded-xl text-slate-500 transition-all duration-200" data-panel="emergency-contacts" data-tooltip="Emergency Contacts">
-            <svg class="sidebar-icon w-5 h-5 flex-shrink-0 text-slate-400 transition-colors duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z"/></svg>
+            <i class="fa-regular fa-users sidebar-icon flex-shrink-0 text-slate-400 transition-colors duration-200"></i>
             <span class="sidebar-label text-sm font-medium text-slate-700">Emergency Contacts</span>
         </button>
 
         <button class="sidebar-nav-item w-full flex items-center gap-3 px-2.5 py-2.5 rounded-xl text-slate-500 transition-all duration-200" data-panel="dependents" data-tooltip="My Dependents">
-            <svg class="sidebar-icon w-5 h-5 flex-shrink-0 text-slate-400 transition-colors duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/></svg>
+            <i class="fa-slab-press fa-regular fa-users fa-lg sidebar-icon flex-shrink-0 text-slate-400 transition-colors duration-200""></i>
             <span class="sidebar-label text-sm font-medium text-slate-700">My Dependents</span>
         </button>
 
         <button class="sidebar-nav-item w-full flex items-center gap-3 px-2.5 py-2.5 rounded-xl text-slate-500 transition-all duration-200" data-panel="schedule" data-tooltip="Medication Schedule">
-            <svg class="sidebar-icon w-5 h-5 flex-shrink-0 text-slate-400 transition-colors duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <i class="fa-regular fa-clock sidebar-icon flex-shrink-0 text-slate-400 transition-colors duration-200"></i>
+
             <span class="sidebar-label text-sm font-medium text-slate-700">Schedule</span>
         </button>
 
         <button class="sidebar-nav-item w-full flex items-center gap-3 px-2.5 py-2.5 rounded-xl text-slate-500 transition-all duration-200" data-panel="calendar" data-tooltip="Calendar">
-            <svg class="sidebar-icon w-5 h-5 flex-shrink-0 text-slate-400 transition-colors duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5"/></svg>
+
+            <i class="fa-regular fa-calendar sidebar-icon flex-shrink-0 text-slate-400 transition-colors duration-200"></i>
+
             <span class="sidebar-label text-sm font-medium text-slate-700">Calendar</span>
         </button>
 
         <button class="sidebar-nav-item w-full flex items-center gap-3 px-2.5 py-2.5 rounded-xl text-slate-500 transition-all duration-200" data-panel="nearby-institutions" data-tooltip="Nearby Institutions">
-            <svg class="sidebar-icon w-5 h-5 flex-shrink-0 text-slate-400 transition-colors duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg>
+
+            <i class="fa-regular fa-location-dot sidebar-icon flex-shrink-0 text-slate-400 transition-colors duration-200"></i>
+
             <span class="sidebar-label text-sm font-medium text-slate-700">Nearby Institutions</span>
         </button>
 
         <button class="sidebar-nav-item w-full flex items-center gap-3 px-2.5 py-2.5 rounded-xl text-slate-500 transition-all duration-200" data-panel="quick-actions" data-tooltip="Quick Actions">
-            <svg class="sidebar-icon w-5 h-5 flex-shrink-0 text-slate-400 transition-colors duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z"/></svg>
+            <i class="fa-kit fa-more fa-lg sidebar-icon flex-shrink-0 text-slate-400 transition-colors duration-200""></i>
+
             <span class="sidebar-label text-sm font-medium text-slate-700">Quick Actions</span>
         </button>
 
@@ -301,19 +308,19 @@ $fullName = trim(
         </div>
 
         <button class="sidebar-nav-item w-full flex items-center gap-3 px-2.5 py-2.5 rounded-xl text-slate-500 transition-all duration-200" data-panel="access-control" data-tooltip="Access &amp; Security">
-            <svg class="sidebar-icon w-5 h-5 flex-shrink-0 text-slate-400 transition-colors duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"/></svg>
+            <i class="fa-regular fa-shield-check sidebar-icon flex-shrink-0 text-slate-400 transition-colors duration-200"></i>
             <span class="sidebar-label text-sm font-medium text-slate-700">Access &amp; Security</span>
         </button>
 
         <button class="sidebar-nav-item w-full flex items-center gap-3 px-2.5 py-2.5 rounded-xl text-slate-500 transition-all duration-200" data-panel="data-retrieval" data-tooltip="Data Retrieval">
-            <svg class="sidebar-icon w-5 h-5 flex-shrink-0 text-slate-400 transition-colors duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375m16.5 5.625c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125"/></svg>
+            <i class="fa-regular fa-database sidebar-icon flex-shrink-0 text-slate-400 transition-colors duration-200"></i>
             <span class="sidebar-label text-sm font-medium text-slate-700">Data Retrieval</span>
         </button>
     </nav>
 
     <div class="border-t border-slate-100 p-2">
         <button id="sidebar-logout" class="sidebar-nav-item w-full flex items-center gap-3 px-2.5 py-2.5 rounded-xl text-slate-400 transition-all duration-200" data-tooltip="Log Out" onclick="window.location.href='/logout'">
-            <svg class="w-5 h-5 flex-shrink-0 transition-colors duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75"/></svg>
+            <i class="fa-regular fa-right-from-bracket sidebar-icon flex-shrink-0 text-slate-400 transition-colors duration-200"></i>
             <span class="sidebar-label text-sm font-medium">Log Out</span>
         </button>
     </div>
@@ -735,7 +742,7 @@ $fullName = trim(
 
     <!-- ══ PANEL: Calendar ══ -->
     <div id="panel-calendar" class="panel animate__animated animate__fadeIn hidden">
-        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden" style="height: 600px;">
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden" style="height: 800px;">
             <iframe id="calendar-frame" src="/schedule" class="w-full h-full border-0"></iframe>
         </div>
     </div>
