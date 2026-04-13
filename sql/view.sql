@@ -383,6 +383,8 @@ SELECT
     i.id,
     i.name,
     i.address,
+    i.phone,
+    i.institution_type,
     ST_X(i.location) AS loc_x,
     ST_Y(i.location) AS loc_y
 FROM view_active_institutions i;
