@@ -14,7 +14,13 @@ int main() {
     SearchResults sr = quick_search(address);
 
     if (sr.count == 0) {
-        printf("No results found.\n");
+        printf("No exact results found. Trying nearest match...\n\n");
+        Point p = find_nearest(address);
+        if (p.display_name[0]) {
+            printf("Nearest: %s\n    Lat: %.6f  Lon: %.6f\n", p.display_name, p.lat, p.lon);
+        } else {
+            printf("No match found.\n");
+        }
     } else {
         for (int i = 0; i < sr.count; i++) {
             Point *p = &sr.results[i];
