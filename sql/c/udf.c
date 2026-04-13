@@ -2,7 +2,14 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
+#include <curl/curl.h>
 #include "point.h"
+
+__attribute__((constructor))
+static void lib_init(void) { curl_global_init(CURL_GLOBAL_ALL); }
+
+__attribute__((destructor))
+static void lib_cleanup(void) { curl_global_cleanup(); }
 
 bool addr_to_point_init(UDF_INIT *initid, UDF_ARGS *args, char *message) {
     if (args->arg_count != 1) {
@@ -184,6 +191,56 @@ void nearest_point_deinit(UDF_INIT *initid) {
     free(initid->ptr);
 }
 
+/* Append src into dst, escaping JSON special chars. Returns new dst end. */
+static char *json_append(char *dst, const char *src, const char *buf_end) {
+    while (*src && dst < buf_end - 2) {
+        if (*src == '"' || *src == '\\') {
+            if (dst >= buf_end - 3) break;
+            *dst++ = '\\';
+        }
+        *dst++ = *src++;
+    }
+    return dst;
+}
+
+/* Build a JSON object from AddressParts into a heap buffer (caller must free). */
+static char *build_parts_json(const AddressParts *p) {
+    /* worst case: each field doubled for escaping + structure */
+    size_t cap = 2 * (sizeof(p->house_number) + sizeof(p->road) + sizeof(p->city) +
+                      sizeof(p->state) + sizeof(p->postcode) +
+                      sizeof(p->country) + sizeof(p->country_code)) + 128;
+    char *buf = malloc(cap);
+    if (!buf) return NULL;
+
+    const char *end = buf + cap;
+    char *w = buf;
+
+    const struct { const char *key; const char *val; } fields[] = {
+        {"house_number", p->house_number},
+        {"road",         p->road},
+        {"city",         p->city},
+        {"state",        p->state},
+        {"postcode",     p->postcode},
+        {"country",      p->country},
+        {"country_code", p->country_code},
+    };
+    int n = sizeof(fields) / sizeof(fields[0]);
+
+    *w++ = '{';
+    for (int i = 0; i < n; i++) {
+        if (i) *w++ = ',';
+        *w++ = '"';
+        const char *k = fields[i].key;
+        while (*k) *w++ = *k++;
+        *w++ = '"'; *w++ = ':'; *w++ = '"';
+        w = json_append(w, fields[i].val, end);
+        *w++ = '"';
+    }
+    *w++ = '}';
+    *w   = '\0';
+    return buf;
+}
+
 /* address_parts(addr) -> JSON string with all address components */
 bool address_parts_init(UDF_INIT *initid, UDF_ARGS *args, char *message) {
     if (args->arg_count != 1) {
@@ -195,7 +252,7 @@ bool address_parts_init(UDF_INIT *initid, UDF_ARGS *args, char *message) {
         return 1;
     }
     initid->maybe_null = 1;
-    initid->max_length = 1024;
+    initid->max_length = 2048;
     initid->ptr = NULL;
     return 0;
 }
@@ -209,16 +266,8 @@ char *address_parts(UDF_INIT *initid, UDF_ARGS *args,
 
     if (!p.postcode[0] && !p.city[0] && !p.road[0]) { *is_null = 1; return NULL; }
 
-    char *buf = malloc(1024);
+    char *buf = build_parts_json(&p);
     if (!buf) { *error = 1; return NULL; }
-
-    snprintf(buf, 1024,
-             "{\"house_number\":\"%s\",\"road\":\"%s\",\"city\":\"%s\","
-             "\"state\":\"%s\",\"postcode\":\"%s\","
-             "\"country\":\"%s\",\"country_code\":\"%s\"}",
-             p.house_number, p.road, p.city,
-             p.state, p.postcode,
-             p.country, p.country_code);
 
     *length = strlen(buf);
     initid->ptr = buf;
