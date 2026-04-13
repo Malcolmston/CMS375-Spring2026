@@ -6,8 +6,6 @@ require_once __DIR__ . '/../Connect.php';
 
 use account\Patient;
 
-session_start();
-
 if (!isset($_SESSION['user_id'])) {
     header('Location: /login');
     exit;
