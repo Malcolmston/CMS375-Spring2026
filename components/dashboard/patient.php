@@ -1,4 +1,8 @@
 <?php
+// Configure session save path to a writable directory
+ini_set('session.save_path', '/tmp');
+ini_set('session.cookie_httponly', '1');
+
 require_once __DIR__ . '/../../account/role.php';
 require_once __DIR__ . '/../../account/Patient.php';
 require_once __DIR__ . '/../../account/Gaurduan.php';
@@ -271,6 +275,11 @@ $fullName = trim(
         <button class="sidebar-nav-item w-full flex items-center gap-3 px-2.5 py-2.5 rounded-xl text-slate-500 transition-all duration-200" data-panel="schedule" data-tooltip="Medication Schedule">
             <svg class="sidebar-icon w-5 h-5 flex-shrink-0 text-slate-400 transition-colors duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
             <span class="sidebar-label text-sm font-medium text-slate-700">Schedule</span>
+        </button>
+
+        <button class="sidebar-nav-item w-full flex items-center gap-3 px-2.5 py-2.5 rounded-xl text-slate-500 transition-all duration-200" data-panel="calendar" data-tooltip="Calendar">
+            <svg class="sidebar-icon w-5 h-5 flex-shrink-0 text-slate-400 transition-colors duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5"/></svg>
+            <span class="sidebar-label text-sm font-medium text-slate-700">Calendar</span>
         </button>
 
         <button class="sidebar-nav-item w-full flex items-center gap-3 px-2.5 py-2.5 rounded-xl text-slate-500 transition-all duration-200" data-panel="nearby-institutions" data-tooltip="Nearby Institutions">
@@ -717,6 +726,20 @@ $fullName = trim(
         </div>
     </div>
 
+    <!-- ══ PANEL: Map ══ -->
+    <div id="panel-map" class="panel animate__animated animate__fadeIn hidden">
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden" style="height: 600px;">
+            <iframe id="map-frame" src="/map" class="w-full h-full border-0"></iframe>
+        </div>
+    </div>
+
+    <!-- ══ PANEL: Calendar ══ -->
+    <div id="panel-calendar" class="panel animate__animated animate__fadeIn hidden">
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden" style="height: 600px;">
+            <iframe id="calendar-frame" src="/schedule" class="w-full h-full border-0"></iframe>
+        </div>
+    </div>
+
     <!-- ══ PANEL: Quick Actions ══ -->
     <div id="panel-quick-actions" class="panel animate__animated animate__fadeIn">
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -812,6 +835,8 @@ const panelMeta = {
     'quick-actions':          { title:'Quick Actions',             sub:'Common tasks and shortcuts' },
     'access-control':     { title:'Access Control & Security', sub:'Password and session management' },
     'data-retrieval':     { title:'Data Retrieval',            sub:'Export and download your records' },
+    'map':                { title:'Map',                       sub:'Interactive map of nearby health facilities' },
+    'calendar':           { title:'Calendar',                  sub:'View and manage your appointments and events' },
 };
 
 function switchPanel(panelId) {
@@ -855,31 +880,62 @@ $(function () {
 
         $btn.prop('disabled', true);
         $label.text('Loading…');
-        $status.text('Fetching nearest institutions…').removeClass('hidden text-red-500').addClass('text-slate-400');
+        $status.text('Getting your location…').removeClass('hidden text-red-500').addClass('text-slate-400');
 
-        $.getJSON('/api/nearest_institutions')
-            .done(function (institutions) {
-                $status.text('Sending to map…');
-                $.ajax({
-                    url: '/map',
-                    method: 'PUT',
-                    contentType: 'application/json',
-                    data: JSON.stringify(institutions)
-                })
-                .done(function () {
-                    window.location.href = '/map';
+        // Get user's current location first
+        if (!navigator.geolocation) {
+            $status.text('Geolocation not supported. Using your registered address.').addClass('text-red-500').removeClass('text-slate-400');
+            fetchInstitutions(null);
+            return;
+        }
+
+        navigator.geolocation.getCurrentPosition(
+            function (position) {
+                const { latitude: lat, longitude: lng } = position.coords;
+                $status.text('Found your location. Fetching nearest institutions…');
+                fetchInstitutions({ lat, lng });
+            },
+            function (error) {
+                let msg = 'Using your registered address.';
+                if (error.code === error.PERMISSION_DENIED) msg = 'Location denied. Using your registered address.';
+                else if (error.code === error.POSITION_UNAVAILABLE) msg = 'Location unavailable. Using your registered address.';
+                $status.text(msg).addClass('text-orange-500').removeClass('text-slate-400');
+                fetchInstitutions(null);
+            },
+            { enableHighAccuracy: true, timeout: 10000 }
+        );
+
+        function fetchInstitutions(coords) {
+            const url = coords
+                ? `/api/nearest-institutions?lat=${coords.lat}&lng=${coords.lng}`
+                : '/api/nearest-institutions';
+
+            $.getJSON(url)
+                .done(function (institutions) {
+                    $status.text('Loading map…');
+                    $.ajax({
+                        url: '/map',
+                        method: 'PUT',
+                        contentType: 'application/json',
+                        data: JSON.stringify(institutions)
+                    })
+                    .done(function () {
+                        // Refresh the iframe to load the map with new data
+                        $('#map-frame').attr('src', '/map');
+                        switchPanel('map');
+                    })
+                    .fail(function () {
+                        $status.text('Failed to load map. Please try again.').addClass('text-red-500').removeClass('text-slate-400 text-orange-500');
+                        $btn.prop('disabled', false);
+                        $label.text('Open Nearby Institutions');
+                    });
                 })
                 .fail(function () {
-                    $status.text('Failed to load map. Please try again.').addClass('text-red-500').removeClass('text-slate-400');
+                    $status.text('Could not fetch institutions. Please try again.').addClass('text-red-500').removeClass('text-slate-400 text-orange-500');
                     $btn.prop('disabled', false);
                     $label.text('Open Nearby Institutions');
                 });
-            })
-            .fail(function () {
-                $status.text('Could not fetch institutions. Please try again.').addClass('text-red-500').removeClass('text-slate-400');
-                $btn.prop('disabled', false);
-                $label.text('Open Nearby Institutions');
-            });
+        }
     });
 });
 </script>
