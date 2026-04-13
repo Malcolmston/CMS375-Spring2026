@@ -1,6 +1,21 @@
 DROP FUNCTION IF EXISTS addr_to_point;
 CREATE FUNCTION addr_to_point RETURNS STRING SONAME 'addr_to_point.so';
 
+DROP FUNCTION IF EXISTS is_valid_address;
+CREATE FUNCTION IF NOT EXISTS is_valid_address RETURNS INTEGER SONAME 'addr_to_point.so';
+
+DROP FUNCTION IF EXISTS nearest_addr;
+CREATE FUNCTION IF NOT EXISTS nearest_addr RETURNS STRING SONAME 'addr_to_point.so';
+
+DROP FUNCTION IF EXISTS nearest_point;
+CREATE FUNCTION IF NOT EXISTS nearest_point RETURNS STRING SONAME 'addr_to_point.so';
+
+DROP FUNCTION IF EXISTS address_parts;
+CREATE FUNCTION IF NOT EXISTS address_parts   RETURNS STRING  SONAME 'addr_to_point.so';
+
+DROP FUNCTION IF EXISTS address_zip;
+CREATE FUNCTION IF NOT EXISTS address_zip     RETURNS STRING  SONAME 'addr_to_point.so';"
+
 DROP FUNCTION IF EXISTS has_user;
 
 CREATE FUNCTION has_user(p_id INT)
