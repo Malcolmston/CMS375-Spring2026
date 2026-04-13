@@ -21,6 +21,18 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 require_once __DIR__ . '/../../account/Account.php';
+require_once __DIR__ . '/../../account/Patient.php';
+require_once __DIR__ . '/../../account/Physician.php';
+require_once __DIR__ . '/../../account/Nurse.php';
+require_once __DIR__ . '/../../account/Pharmacist.php';
+require_once __DIR__ . '/../../account/Admin.php';
+require_once __DIR__ . '/../../account/LabTech.php';
+require_once __DIR__ . '/../../account/Billing.php';
+require_once __DIR__ . '/../../account/Surgeon.php';
+require_once __DIR__ . '/../../account/Radiologist.php';
+require_once __DIR__ . '/../../account/Receptionist.php';
+require_once __DIR__ . '/../../account/Ems.php';
+require_once __DIR__ . '/../../account/Therapist.php';
 
 use account\Account;
 
@@ -30,7 +42,28 @@ $user_id = (int) $_SESSION['user_id'];
 $patLat = null;
 $patLng = null;
 
-$patient = Account::getUserById($user_id);
+// Look up user role first, then instantiate correct class
+$roleMap = [
+    'PATIENT'      => \account\Patient::class,
+    'PHYSICIAN'    => \account\Physician::class,
+    'NURSE'        => \account\Nurse::class,
+    'PHARMACIST'   => \account\Pharmacist::class,
+    'ADMIN'        => \account\Admin::class,
+    'LAB_TECH'     => \account\LabTech::class,
+    'BILLING'      => \account\Billing::class,
+    'SURGEON'      => \account\Surgeon::class,
+    'RADIOLOGIST'  => \account\Radiologist::class,
+    'RECEPTIONIST' => \account\Receptionist::class,
+    'EMS'          => \account\Ems::class,
+    'THERAPIST'    => \account\Therapist::class,
+];
+
+// Get user role from Account class
+$userRole = Account::getUserRole($user_id);
+
+$userClass = $roleMap[$userRole] ?? \account\Patient::class;
+$patient = $userClass::getUserById($user_id);
+
 if ($patient) {
     $loc    = $patient->getLocation();
     $patLat = (float) $loc->y;
