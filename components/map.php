@@ -30,6 +30,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'PUT') {
     http_response_code(200);
     exit;
 }
+
+// For GET requests, load from session if available
+$mapData = $_SESSION['mapData'] ?? [];
 ?>
 <!DOCTYPE html>
 <html lang="en">
