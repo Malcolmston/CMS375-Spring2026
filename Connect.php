@@ -7,21 +7,7 @@ class Connect
 
     protected function __construct()
     {
-        $host = getenv('DB_HOST') ?: '127.0.0.1';
-        $user = getenv('DB_USER') ?: 'app';
-        $pass = getenv('DB_PASS') ?: 'app';
-        $name = getenv('DB_NAME') ?: 'app';
-        $port = (int) (getenv('DB_PORT') ?: 3308);
-
-
-        $this->conn = new mysqli($host, $user, $pass, $name, $port);
-
-        if ($this->conn->connect_error) {
-            throw new Exception('DB connection failed: ' . $this->conn->connect_error);
-        }
-        $this->conn->set_charset('utf8mb4');
-
-        $this->conn->query("SET time_zone = '+00:00'");
+        $this->getConnection();
     }
 
     public static function getInstance(): self
@@ -34,6 +20,19 @@ class Connect
 
     public function getConnection(): mysqli
     {
+        // Check if connection is still valid
+        if ($this->conn instanceof mysqli && $this->conn->ping()) {
+            return $this->conn;
+        }
+        // Reconnect if needed
+        $host = getenv('DB_HOST') ?: '127.0.0.1';
+        $user = getenv('DB_USER') ?: 'app';
+        $pass = getenv('DB_PASS') ?: 'app';
+        $name = getenv('DB_NAME') ?: 'app';
+        $port = (int) (getenv('DB_PORT') ?: 3308);
+        $this->conn = new mysqli($host, $user, $pass, $name, $port);
+        $this->conn->set_charset('utf8mb4');
+        $this->conn->query("SET time_zone = '+00:00'");
         return $this->conn;
     }
 
@@ -45,18 +44,5 @@ class Connect
     public function isConnected(): bool
     {
         return isset($this->conn) && $this->conn instanceof mysqli;
-    }
-
-    public function __destruct()
-    {
-        // Skip if no connection or not a valid mysqli object
-        if (!isset($this->conn) || !($this->conn instanceof mysqli)) {
-            return;
-        }
-        try {
-            @$this->conn->close();
-        } catch (Error $e) {
-            // Already closed, ignore
-        }
     }
 }
