@@ -18,6 +18,15 @@ services:
     networks:
       - web
 
+  udf-builder:
+    build:
+      context: ./sql/c
+      dockerfile: Dockerfile
+    container_name: spring2026-udf-builder
+    volumes:
+      - mysql_plugins:/mysql-plugins
+    restart: "no"
+
   mysql:
     image: mysql:8.0
     container_name: spring2026-mysql
@@ -31,12 +40,35 @@ services:
       - "3308:3306"
     volumes:
       - mysql_data:/var/lib/mysql
+      - mysql_plugins:/usr/lib64/mysql/plugin
     command: --default-authentication-plugin=mysql_native_password --log-bin-trust-function-creators=1
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - web
+
+  load-udf:
+    image: mysql:8.0
+    container_name: spring2026-load-udf
+    depends_on:
+      mysql:
+        condition: service_healthy
+      udf-builder:
+        condition: service_completed_successfully
+    environment:
+      MYSQL_PWD: root
+    command: >
+      mysql -h mysql -u root med_helth
+      -e "CREATE FUNCTION IF NOT EXISTS addr_to_point   RETURNS STRING  SONAME 'addr_to_point.so';
+          CREATE FUNCTION IF NOT EXISTS is_valid_address RETURNS INTEGER SONAME 'addr_to_point.so';
+          CREATE FUNCTION IF NOT EXISTS nearest_addr    RETURNS STRING  SONAME 'addr_to_point.so';
+          CREATE FUNCTION IF NOT EXISTS nearest_point   RETURNS STRING  SONAME 'addr_to_point.so';
+          CREATE FUNCTION IF NOT EXISTS address_parts   RETURNS STRING  SONAME 'addr_to_point.so';
+          CREATE FUNCTION IF NOT EXISTS address_zip     RETURNS STRING  SONAME 'addr_to_point.so';"
+    restart: "no"
     networks:
       - web
 
@@ -94,6 +126,7 @@ services:
 
 volumes:
   mysql_data:
+  mysql_plugins:
 
 networks:
   web:
