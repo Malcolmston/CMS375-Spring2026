@@ -94,6 +94,58 @@ static int parse_result(const char **cursor, Point *p) {
     return 1;
 }
 
+/* Find key:"value" within a bounded region of JSON and copy value into dest. */
+static void parse_field(const char *json, const char *end,
+                        const char *key, char *dest, size_t dest_size) {
+    char search[256];
+    snprintf(search, sizeof(search), "\"%s\":\"", key);
+    const char *p = strstr(json, search);
+    if (!p || (end && p >= end)) { dest[0] = '\0'; return; }
+    p += strlen(search);
+    parse_json_string(p, dest, dest_size);
+}
+
+AddressParts get_address_parts(char *address) {
+    AddressParts parts = {0};
+    CURL *curl = curl_easy_init();
+    if (!curl) return parts;
+
+    char *encoded = curl_easy_escape(curl, address, 0);
+    char url[1024];
+    snprintf(url, sizeof(url),
+             "https://nominatim.openstreetmap.org/search?q=%s&format=json&addressdetails=1&limit=1",
+             encoded);
+    curl_free(encoded);
+    curl_easy_cleanup(curl);
+
+    char *body = fetch_url(url);
+    if (!body) return parts;
+
+    /* locate the nested "address":{...} object */
+    const char *addr_start = strstr(body, "\"address\":{");
+    if (addr_start) {
+        addr_start += strlen("\"address\":{");
+        const char *addr_end = strchr(addr_start, '}');
+
+        parse_field(addr_start, addr_end, "house_number", parts.house_number, sizeof(parts.house_number));
+        parse_field(addr_start, addr_end, "road",         parts.road,         sizeof(parts.road));
+        parse_field(addr_start, addr_end, "state",        parts.state,        sizeof(parts.state));
+        parse_field(addr_start, addr_end, "postcode",     parts.postcode,     sizeof(parts.postcode));
+        parse_field(addr_start, addr_end, "country",      parts.country,      sizeof(parts.country));
+        parse_field(addr_start, addr_end, "country_code", parts.country_code, sizeof(parts.country_code));
+
+        /* city may be keyed as city, town, village, or suburb */
+        const char *city_keys[] = {"city", "town", "village", "suburb", NULL};
+        for (int i = 0; city_keys[i]; i++) {
+            parse_field(addr_start, addr_end, city_keys[i], parts.city, sizeof(parts.city));
+            if (parts.city[0]) break;
+        }
+    }
+
+    free(body);
+    return parts;
+}
+
 Point get_point(char *address) {
     Point p = {0, 0, ""};
     CURL *curl = curl_easy_init();
@@ -114,6 +166,60 @@ Point get_point(char *address) {
             fprintf(stderr, "No results for: %s\n", address);
         free(body);
     }
+    return p;
+}
+
+/*
+ * nearest_point: find the closest real address to the input by progressively
+ * stripping leading comma-separated tokens until Nominatim returns a result.
+ *
+ * e.g. "7511 Main Blvd, Los Angeles, MO 34908"
+ *   1. try "7511 Main Blvd, Los Angeles, MO 34908"  -> []
+ *   2. try "Los Angeles, MO 34908"                  -> []
+ *   3. try "MO 34908"                               -> match
+ */
+Point find_nearest(char *address) {
+    Point p = {0, 0, ""};
+    CURL *curl = curl_easy_init();
+    if (!curl) return p;
+
+    char buf[512];
+    strncpy(buf, address, sizeof(buf) - 1);
+    buf[sizeof(buf) - 1] = '\0';
+
+    char *query = buf;
+    while (*query) {
+        /* trim leading spaces */
+        while (*query == ' ') query++;
+
+        char *encoded = curl_easy_escape(curl, query, 0);
+        char url[1024];
+        snprintf(url, sizeof(url),
+                 "https://nominatim.openstreetmap.org/search?q=%s&format=json&addressdetails=1&limit=1",
+                 encoded);
+        curl_free(encoded);
+
+        char *body = fetch_url(url);
+        if (body) {
+            fprintf(stderr, "  trying: %s -> %s\n", query, body);
+            const char *cursor = body;
+            int found = parse_result(&cursor, &p);
+            free(body);
+            if (found) break;
+        }
+
+        /* strip the first comma-delimited token and retry,
+           but stop if the remaining query has no comma —
+           a single bare token (e.g. "MS" or "47691") is too ambiguous */
+        char *comma = strchr(query, ',');
+        if (!comma) break;
+        char *next = comma + 1;
+        while (*next == ' ') next++;
+        if (!strchr(next, ',')) break; /* would leave only one token — stop */
+        query = next;
+    }
+
+    curl_easy_cleanup(curl);
     return p;
 }
 
