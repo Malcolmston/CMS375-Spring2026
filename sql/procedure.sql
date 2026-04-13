@@ -1108,3 +1108,82 @@ BEGIN
     SET loc_x = ST_X(p_point);
     SET loc_y = ST_Y(p_point);
 END;
+
+DROP PROCEDURE IF EXISTS fix_address;
+
+CREATE PROCEDURE fix_address(IN i_id INTEGER, INOUT i_name VARCHAR(255), OUT i_addr VARCHAR(2000), OUT i_point POINT)
+BEGIN
+    DECLARE v_inst_id   INTEGER;
+    DECLARE v_inst_name VARCHAR(255);
+    DECLARE v_address   VARCHAR(255);
+    DECLARE v_location  POINT;
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        RESIGNAL;
+    END;
+
+    -- Prevent NOT FOUND from escaping to the caller (e.g. the event loop)
+    -- and flipping its v_done flag. v_inst_id stays NULL → throw below handles it.
+    DECLARE CONTINUE HANDLER FOR NOT FOUND BEGIN END;
+
+    -- Resolve institution by id or name
+    IF i_id IS NOT NULL AND i_id > 0 THEN
+        SELECT id, name, address, location
+        INTO v_inst_id, v_inst_name, v_address, v_location
+        FROM institution
+        WHERE id = i_id AND deleted_at IS NULL
+        LIMIT 1;
+    ELSE
+        SELECT id, name, address, location
+        INTO v_inst_id, v_inst_name, v_address, v_location
+        FROM institution
+        WHERE name = i_name AND deleted_at IS NULL
+        LIMIT 1;
+    END IF;
+
+    IF v_inst_id IS NULL THEN
+        CALL throw('Institution does not exist');
+    END IF;
+
+    SET i_name = v_inst_name;
+
+    -- Nothing to fix if the point is already set
+    IF v_location IS NOT NULL THEN
+        CALL throw('Institution location point is already set');
+    END IF;
+
+    -- point IS NULL from here on
+    IF v_address IS NOT NULL AND is_valid_address(v_address) = 1 THEN
+        -- Valid address: geocode it and set point only
+        SET i_point = addr_to_point(v_address);
+
+        IF i_point IS NULL THEN
+            CALL throw('Geocoder returned no result for address');
+        END IF;
+
+        SET i_addr  = v_address;
+
+        START TRANSACTION;
+        UPDATE institution
+        SET location = i_point, updated_at = NOW()
+        WHERE id = v_inst_id;
+        COMMIT;
+    ELSE
+        -- Invalid or missing address: geocode from institution name, update both
+        SET i_point = addr_to_point(v_inst_name);
+
+        IF i_point IS NULL THEN
+            CALL throw('Unable to resolve address or location for institution');
+        END IF;
+
+        SET i_addr = v_inst_name;
+
+        START TRANSACTION;
+        UPDATE institution
+        SET address = v_inst_name, location = i_point, updated_at = NOW()
+        WHERE id = v_inst_id;
+        COMMIT;
+    END IF;
+END;
