@@ -50,6 +50,8 @@ static char *fetch_url(const char *url) {
 
     curl_easy_setopt(curl, CURLOPT_URL, url);
     curl_easy_setopt(curl, CURLOPT_USERAGENT, "CMS375/1.0");
+    curl_easy_setopt(curl, CURLOPT_TIMEOUT, 10L);
+    curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 5L);
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
 
@@ -105,44 +107,65 @@ static void parse_field(const char *json, const char *end,
     parse_json_string(p, dest, dest_size);
 }
 
+static int try_parse_parts(const char *body, AddressParts *parts) {
+    const char *addr_start = strstr(body, "\"address\":{");
+    if (!addr_start) return 0;
+
+    addr_start += strlen("\"address\":{");
+    const char *addr_end = strchr(addr_start, '}');
+
+    parse_field(addr_start, addr_end, "house_number", parts->house_number, sizeof(parts->house_number));
+    parse_field(addr_start, addr_end, "road",         parts->road,         sizeof(parts->road));
+    parse_field(addr_start, addr_end, "state",        parts->state,        sizeof(parts->state));
+    parse_field(addr_start, addr_end, "postcode",     parts->postcode,     sizeof(parts->postcode));
+    parse_field(addr_start, addr_end, "country",      parts->country,      sizeof(parts->country));
+    parse_field(addr_start, addr_end, "country_code", parts->country_code, sizeof(parts->country_code));
+
+    const char *city_keys[] = {"city", "town", "village", "suburb", NULL};
+    for (int i = 0; city_keys[i]; i++) {
+        parse_field(addr_start, addr_end, city_keys[i], parts->city, sizeof(parts->city));
+        if (parts->city[0]) break;
+    }
+
+    return parts->postcode[0] || parts->city[0] || parts->road[0];
+}
+
 AddressParts get_address_parts(char *address) {
     AddressParts parts = {0};
     CURL *curl = curl_easy_init();
     if (!curl) return parts;
 
-    char *encoded = curl_easy_escape(curl, address, 0);
-    char url[1024];
-    snprintf(url, sizeof(url),
-             "https://nominatim.openstreetmap.org/search?q=%s&format=json&addressdetails=1&limit=1",
-             encoded);
-    curl_free(encoded);
-    curl_easy_cleanup(curl);
+    char buf[512];
+    strncpy(buf, address, sizeof(buf) - 1);
+    buf[sizeof(buf) - 1] = '\0';
+    char *query = buf;
 
-    char *body = fetch_url(url);
-    if (!body) return parts;
+    while (*query) {
+        while (*query == ' ') query++;
 
-    /* locate the nested "address":{...} object */
-    const char *addr_start = strstr(body, "\"address\":{");
-    if (addr_start) {
-        addr_start += strlen("\"address\":{");
-        const char *addr_end = strchr(addr_start, '}');
+        char *encoded = curl_easy_escape(curl, query, 0);
+        char url[1024];
+        snprintf(url, sizeof(url),
+                 "https://nominatim.openstreetmap.org/search?q=%s&format=json&addressdetails=1&limit=1",
+                 encoded);
+        curl_free(encoded);
 
-        parse_field(addr_start, addr_end, "house_number", parts.house_number, sizeof(parts.house_number));
-        parse_field(addr_start, addr_end, "road",         parts.road,         sizeof(parts.road));
-        parse_field(addr_start, addr_end, "state",        parts.state,        sizeof(parts.state));
-        parse_field(addr_start, addr_end, "postcode",     parts.postcode,     sizeof(parts.postcode));
-        parse_field(addr_start, addr_end, "country",      parts.country,      sizeof(parts.country));
-        parse_field(addr_start, addr_end, "country_code", parts.country_code, sizeof(parts.country_code));
-
-        /* city may be keyed as city, town, village, or suburb */
-        const char *city_keys[] = {"city", "town", "village", "suburb", NULL};
-        for (int i = 0; city_keys[i]; i++) {
-            parse_field(addr_start, addr_end, city_keys[i], parts.city, sizeof(parts.city));
-            if (parts.city[0]) break;
+        char *body = fetch_url(url);
+        if (body) {
+            int found = try_parse_parts(body, &parts);
+            free(body);
+            if (found) break;
         }
+
+        char *comma = strchr(query, ',');
+        if (!comma) break;
+        char *next = comma + 1;
+        while (*next == ' ') next++;
+        if (!strchr(next, ',')) break;
+        query = next;
     }
 
-    free(body);
+    curl_easy_cleanup(curl);
     return parts;
 }
 
