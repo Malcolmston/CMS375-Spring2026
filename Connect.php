@@ -49,8 +49,14 @@ class Connect
 
     public function __destruct()
     {
-        if ($this->isConnected()) {
-            $this->conn->close();
+        // Skip if no connection or not a valid mysqli object
+        if (!isset($this->conn) || !($this->conn instanceof mysqli)) {
+            return;
+        }
+        try {
+            @$this->conn->close();
+        } catch (Error $e) {
+            // Already closed, ignore
         }
     }
 }
