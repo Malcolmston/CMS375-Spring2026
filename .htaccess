@@ -48,19 +48,23 @@ RewriteRule ^tool/map$                     /map                    [R=301,L]
 RewriteRule ^tool/schedule$                /schedule               [R=301,L]
 RewriteRule ^tool/calender$                /schedule               [R=301,L]
 
-# Legacy .html login pages → unified login
-RewriteRule ^patient/login\.html$          /login                  [R=301,L]
-RewriteRule ^staff/login\.html$            /login                  [R=301,L]
-RewriteRule ^admin/login\.html$            /login                  [R=301,L]
-RewriteRule ^login\.html$                  /login                  [R=301,L]
+# Legacy .html login pages → unified login with type param
+RewriteRule ^patient/login\.html$          /login?type=patient                  [R=301,L]
+RewriteRule ^staff/login\.html$            /login?type=staff                    [R=301,L]
+RewriteRule ^admin/login\.html$            /login?type=admin                    [R=301,L]
+RewriteRule ^login\.html$                  /login?type=patient                  [R=301,L]
 
 # Core
 RewriteRule ^index$                        index.php                                        [END]
-# Login: serve HTML form for GET, PHP handler for POST
+# Login: serve unified PHP form for GET (with type param), PHP handler for POST
 RewriteCond %{REQUEST_METHOD} GET
-RewriteRule ^login$                        components/basic/login.html                  [L]
+RewriteRule ^login(/patient|/staff|/admin)?$ components/login.php                     [L]
 RewriteCond %{REQUEST_METHOD} POST
 RewriteRule ^login$                        components/login.php                         [END]
+# Login with explicit type - redirect to query param for clean URLs
+RewriteRule ^login/patient$                /login?type=patient                           [R=301,L]
+RewriteRule ^login/staff$                  /login?type=staff                             [R=301,L]
+RewriteRule ^login/admin$                  /login?type=admin                             [R=301,L]
 RewriteRule ^logout$                       logout.php                                       [END]
 RewriteRule ^dashboard$                    components/dashboard.php                         [END]
 

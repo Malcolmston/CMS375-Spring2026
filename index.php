@@ -94,27 +94,7 @@
 
     <script>
         $(document).ready(function() {
-            // Nav click handler - only for divs, not anchor links
-            $('.nav-item').on('click', function(e) {
-                e.preventDefault();
-                const text = $(this).text().toLowerCase().trim();
-                console.log('Navigating to:', text);
-            });
-
-            // Let dropdown-item links navigate normally (don't block anchor clicks)
-            $('.dropdown-item[href]').on('click', function(e) {
-                // Allow default navigation
-            });
-
-            $('.nav-item').hover(
-                function() {
-                    $(this).addClass('bg-slate-100');
-                },
-                function() {
-                    $(this).removeClass('bg-slate-100');
-                }
-            );
-
+            // No click blocking - let all links work
             $(document).on('mousemove', function(e) {
                 const x = (e.clientX / $(window).width() - 0.5) * 10;
                 const y = (e.clientY / $(window).height() - 0.5) * 10;
@@ -122,5 +102,8 @@
             });
         });
     </script>
+
+    <!-- Footer -->
+    <?php include 'components/home/footer.php'; ?>
 </body>
 </html>
