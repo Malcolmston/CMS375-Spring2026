@@ -117,5 +117,7 @@ if ($api_key) {
         <?php endif; ?>
     </section>
 
+    <!-- Footer -->
+    <?php include __DIR__ . '/../../footer.php'; ?>
 </body>
 </html>

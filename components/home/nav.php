@@ -73,9 +73,9 @@
 
             <!-- Account -->
             <div class="mt-1 pt-3 border-t border-slate-100 space-y-0.5">
-                <a href="/patient/login.html" class="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors">Patient Login</a>
-                <a href="/staff/login.html"   class="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors">Staff Login</a>
-                <a href="/admin/login.html"   class="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors">Admin Login</a>
+                <a href="/patient/login.html" onclick="location.href=this.href" class="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors">Patient Login</a>
+                <a href="/staff/login.html" onclick="location.href=this.href" class="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors">Staff Login</a>
+                <a href="/admin/login.html" onclick="location.href=this.href" class="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors">Admin Login</a>
             </div>
         </div>
     </div>
