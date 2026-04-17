@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: spring2026-config
+data:
+  APP_ENV: "production"
+  DB_PORT: "3306"
+  DB_NAME: "med_helth"
+  MAIL_HOST: ""
+  MAIL_PORT: "25"
