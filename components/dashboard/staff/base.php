@@ -75,10 +75,12 @@ $institutions = $staff->viewMyInstitutions() ?: [];
 // Prescriptions for roles that write/fill them
 $prescriptions = [];
 $prescriptionsByRx = [];
-$hasPrescriptions = in_array($staffRole, [role::PHYSICIAN, role::SURGEON, role::PHARMACIST]);
-if ($hasPrescriptions) {
+$writesPrescriptions = in_array($staffRole, [role::PHYSICIAN, role::SURGEON]);
+$fillsPrescriptions = $staffRole === role::PHARMACIST;
+
+if ($writesPrescriptions) {
+    // Physicians/Surgeons: prescriptions they've written
     $prescriptions = $staff->getMyPrescriptions();
-    // Group by prescription_id for a header-level view
     foreach ($prescriptions as $row) {
         $rxId = $row['prescription_id'];
         if (!isset($prescriptionsByRx[$rxId])) {
@@ -95,6 +97,29 @@ if ($hasPrescriptions) {
         $prescriptionsByRx[$rxId]['items']++;
     }
     $prescriptionsByRx = array_values($prescriptionsByRx);
+} elseif ($fillsPrescriptions) {
+    // Pharmacists: prescriptions to fill at their pharmacy
+    $prescriptions = $staff->getPrescriptionsToFill($institutions);
+    foreach ($prescriptions as $row) {
+        $rxId = $row['prescription_id'];
+        if (!isset($prescriptionsByRx[$rxId])) {
+            $prescriptionsByRx[$rxId] = [
+                'prescription_id' => $rxId,
+                'patient_name'   => $row['patient_name'],
+                'patient_id'     => $row['patient_id'],
+                'issue_date'     => $row['issue_date'],
+                'expire_date'    => $row['expire_date'],
+                'status'         => $row['status'],
+            ];
+        }
+    }
+    $prescriptionsByRx = array_values($prescriptionsByRx);
+}
+
+// Appointments for receptionist role - use class method
+$appointments = [];
+if ($staffRole === role::RECEPTIONIST && !empty($institutions)) {
+    $appointments = $staff->getAppointments($institutions);
 }
 
 // Renewal requests for physician / surgeon
@@ -424,6 +449,34 @@ $extraTab = match ($staffRole) {
                     <p class="text-sm text-slate-400 mt-1">Contact your administrator to be linked to a facility.</p>
                 </div>
             <?php else: ?>
+                <!-- Employment Details Summary -->
+                <div class="mb-6 p-4 rounded-xl bg-slate-50 border border-slate-200">
+                    <h3 class="font-semibold text-slate-800 mb-3 flex items-center gap-2">
+                        <i class="fas fa-id-card text-slate-500"></i> Employment Details
+                    </h3>
+                    <div class="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                            <p class="text-slate-500">Employee ID</p>
+                            <p class="font-medium text-slate-800"><?= htmlspecialchars($staff->getEmployId() ?? '—') ?></p>
+                        </div>
+                        <div>
+                            <p class="text-slate-500">Role</p>
+                            <p class="font-medium text-slate-800"><?= htmlspecialchars($roleLabel) ?></p>
+                        </div>
+                        <div>
+                            <p class="text-slate-500">Start Date</p>
+                            <p class="font-medium text-slate-800">
+                                <?= !empty($institutions[0]['joined_at']) ? htmlspecialchars(date('M j, Y', strtotime($institutions[0]['joined_at']))) : '—' ?>
+                            </p>
+                        </div>
+                        <div>
+                            <p class="text-slate-500">Institutions</p>
+                            <p class="font-medium text-slate-800"><?= count($institutions) ?></p>
+                        </div>
+                    </div>
+                </div>
+
+                <h3 class="font-semibold text-slate-700 mb-3">Assigned Facilities</h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                 <?php foreach ($institutions as $inst): ?>
                     <div class="p-5 rounded-xl border border-slate-200 hover:border-indigo-300 hover:shadow-sm transition-all">
@@ -436,6 +489,9 @@ $extraTab = match ($staffRole) {
                             </span>
                         </div>
                         <h4 class="font-semibold text-slate-800 mb-1"><?= htmlspecialchars($inst['institution_name'] ?? '—') ?></h4>
+                        <p class="text-xs font-medium text-indigo-600 mb-2">
+                            Role: <?= htmlspecialchars(ucwords(strtolower(str_replace('_', ' ', $inst['role'] ?? 'Staff')))) ?>
+                        </p>
                         <?php if (!empty($inst['address'])): ?>
                             <p class="text-sm text-slate-500 flex items-start gap-1.5 mb-1">
                                 <i class="fas fa-map-marker-alt mt-0.5 flex-shrink-0 text-slate-400"></i>
@@ -461,9 +517,9 @@ $extraTab = match ($staffRole) {
             $tasksTitle = match ($staffRole) {
                 role::PHYSICIAN    => 'My Prescriptions',
                 role::SURGEON      => 'My Prescriptions',
-                role::PHARMACIST   => 'Prescriptions',
+                role::PHARMACIST   => 'Prescriptions to Fill',
                 role::NURSE        => 'Nursing Tasks',
-                role::RECEPTIONIST => 'Appointment Management',
+                role::RECEPTIONIST => 'Appointments',
                 role::LAB_TECH     => 'Lab Orders',
                 role::RADIOLOGIST  => 'Imaging Requests',
                 role::THERAPIST    => 'Therapy Sessions',
@@ -480,8 +536,12 @@ $extraTab = match ($staffRole) {
                         <div class="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center mb-3">
                             <i class="fas fa-prescription-bottle-alt text-slate-400 text-xl"></i>
                         </div>
-                        <p class="font-medium text-slate-600">No prescriptions on record</p>
-                        <p class="text-sm text-slate-400 mt-1">Prescriptions you create will appear here.</p>
+                        <p class="font-medium text-slate-600">
+                            <?= $fillsPrescriptions ? 'No prescriptions to fill' : 'No prescriptions on record' ?>
+                        </p>
+                        <p class="text-sm text-slate-400 mt-1">
+                            <?= $fillsPrescriptions ? 'Prescriptions sent to your pharmacy will appear here.' : 'Prescriptions you create will appear here.' ?>
+                        </p>
                     </div>
                 <?php else: ?>
                     <div class="overflow-x-auto">
@@ -491,7 +551,9 @@ $extraTab = match ($staffRole) {
                                     <th class="pb-3 pr-4 font-semibold text-slate-600">Patient</th>
                                     <th class="pb-3 pr-4 font-semibold text-slate-600">Issued</th>
                                     <th class="pb-3 pr-4 font-semibold text-slate-600">Expires</th>
-                                    <th class="pb-3 pr-4 font-semibold text-slate-600">Items</th>
+                                    <?php if (!$fillsPrescriptions): ?>
+                                        <th class="pb-3 pr-4 font-semibold text-slate-600">Items</th>
+                                    <?php endif; ?>
                                     <th class="pb-3 font-semibold text-slate-600">Status</th>
                                 </tr>
                             </thead>
@@ -504,14 +566,17 @@ $extraTab = match ($staffRole) {
                                     'expired'   => 'bg-slate-100 text-slate-500',
                                     default     => 'bg-blue-100 text-blue-700',
                                 };
+                                $patientName = $rx['patient_name'] ?? (($rx['patient_firstname'] ?? '') . ' ' . ($rx['patient_lastname'] ?? ''));
                                 ?>
                                 <tr class="hover:bg-slate-50 transition-colors">
                                     <td class="py-3 pr-4 font-medium text-slate-800">
-                                        <?= htmlspecialchars(($rx['patient_firstname'] ?? '') . ' ' . ($rx['patient_lastname'] ?? '')) ?>
+                                        <?= htmlspecialchars($patientName) ?>
                                     </td>
                                     <td class="py-3 pr-4 text-slate-500"><?= htmlspecialchars($rx['issue_date'] ?? '—') ?></td>
                                     <td class="py-3 pr-4 text-slate-500"><?= htmlspecialchars($rx['expire_date'] ?? '—') ?></td>
-                                    <td class="py-3 pr-4 text-slate-500"><?= (int) $rx['items'] ?></td>
+                                    <?php if (!$fillsPrescriptions): ?>
+                                        <td class="py-3 pr-4 text-slate-500"><?= (int) ($rx['items'] ?? 0) ?></td>
+                                    <?php endif; ?>
                                     <td class="py-3">
                                         <span class="px-2 py-0.5 rounded-full text-xs font-medium <?= $statusColor ?>">
                                             <?= ucfirst(strtolower($rx['status'] ?? 'unknown')) ?>
@@ -727,13 +792,72 @@ $extraTab = match ($staffRole) {
             <?php elseif ($staffRole === role::RECEPTIONIST): ?>
                 <h2 class="text-lg font-semibold text-slate-800 mb-1">Appointments</h2>
                 <p class="text-sm text-slate-500 mb-4">Manage and schedule patient appointments.</p>
-                <div class="flex flex-col items-center justify-center py-10 text-center">
-                    <div class="w-12 h-12 rounded-xl bg-indigo-50 flex items-center justify-center mb-3">
-                        <i class="fas fa-calendar-check text-indigo-400 text-xl"></i>
+                <?php if (empty($appointments)): ?>
+                    <div class="flex flex-col items-center justify-center py-10 text-center">
+                        <div class="w-12 h-12 rounded-xl bg-indigo-50 flex items-center justify-center mb-3">
+                            <i class="fas fa-calendar-check text-indigo-400 text-xl"></i>
+                        </div>
+                        <p class="font-medium text-slate-600">No upcoming appointments</p>
+                        <p class="text-sm text-slate-400 mt-1">Scheduled visits will appear here.</p>
                     </div>
-                    <p class="font-medium text-slate-600">Appointment scheduling coming soon</p>
-                    <p class="text-sm text-slate-400 mt-1">Patient appointment creation and calendar management will be available here.</p>
-                </div>
+                <?php else: ?>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm">
+                            <thead>
+                                <tr class="border-b border-slate-200 text-left">
+                                    <th class="pb-3 pr-4 font-semibold text-slate-600">Patient</th>
+                                    <th class="pb-3 pr-4 font-semibold text-slate-600">Type</th>
+                                    <th class="pb-3 pr-4 font-semibold text-slate-600">Date & Time</th>
+                                    <th class="pb-3 pr-4 font-semibold text-slate-600">Reason</th>
+                                    <th class="pb-3 font-semibold text-slate-600">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100">
+                            <?php foreach ($appointments as $appt): ?>
+                                <?php
+                                $statusColor = match ($appt['status'] ?? '') {
+                                    'SCHEDULED' => 'bg-blue-100 text-blue-700',
+                                    'COMPLETED' => 'bg-emerald-100 text-emerald-700',
+                                    'CANCELLED' => 'bg-red-100 text-red-700',
+                                    'NO_SHOW' => 'bg-slate-100 text-slate-500',
+                                    default => 'bg-gray-100 text-gray-700',
+                                };
+                                $typeColor = match ($appt['visit_type'] ?? '') {
+                                    'CHECKUP' => 'bg-emerald-50 text-emerald-700',
+                                    'FOLLOW_UP' => 'bg-amber-50 text-amber-700',
+                                    'EMERGENCY' => 'bg-red-50 text-red-700',
+                                    'SPECIALIST' => 'bg-purple-50 text-purple-700',
+                                    'LAB' => 'bg-blue-50 text-blue-700',
+                                    'THERAPY' => 'bg-cyan-50 text-cyan-700',
+                                    default => 'bg-slate-50 text-slate-700',
+                                };
+                                ?>
+                                <tr class="hover:bg-slate-50 transition-colors">
+                                    <td class="py-3 pr-4 font-medium text-slate-800">
+                                        <?= htmlspecialchars($appt['patient_name'] ?? '') ?>
+                                    </td>
+                                    <td class="py-3 pr-4">
+                                        <span class="px-2 py-0.5 rounded-full text-xs font-medium <?= $typeColor ?>">
+                                            <?= htmlspecialchars($appt['visit_type'] ?? '') ?>
+                                        </span>
+                                    </td>
+                                    <td class="py-3 pr-4 text-slate-500">
+                                        <?= htmlspecialchars(date('M d, h:i A', strtotime($appt['scheduled_at'] ?? ''))) ?>
+                                    </td>
+                                    <td class="py-3 pr-4 text-slate-500">
+                                        <?= htmlspecialchars($appt['reason'] ?? '') ?>
+                                    </td>
+                                    <td class="py-3">
+                                        <span class="px-2 py-0.5 rounded-full text-xs font-medium <?= $statusColor ?>">
+                                            <?= htmlspecialchars($appt['status'] ?? '') ?>
+                                        </span>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                <?php endif; ?>
             <?php endif; ?>
         </section>
         <?php endif; ?>
