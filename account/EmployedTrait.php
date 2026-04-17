@@ -174,4 +174,81 @@ trait EmployedTrait
     {
         return Institution::getById($institutionId);
     }
+
+    /**
+     * Get appointments for the staff member's institutions
+     *
+     * @param array $institutions Array of institution rows with 'institution_id' key
+     * @param string $status Filter by status (default: SCHEDULED)
+     * @param int $limit Maximum number of appointments to return
+     * @return array Array of appointment data
+     */
+    public function getAppointments(array $institutions, string $status = 'SCHEDULED', int $limit = 50): array
+    {
+        if (empty($institutions)) {
+            return [];
+        }
+
+        $instIds = array_column($institutions, 'institution_id');
+        $placeholders = implode(',', array_fill(0, count($instIds), '?'));
+        $conn = $this->getConnection();
+
+        $stmt = $conn->prepare("
+            SELECT v.id, v.patient_id, v.patient_name, v.institution_id, v.institution_name,
+                   v.visit_type, v.scheduled_at, v.status, v.reason
+            FROM view_visits v
+            WHERE v.institution_id IN ($placeholders)
+              AND v.status = ?
+            ORDER BY v.scheduled_at ASC
+            LIMIT $limit
+        ");
+        if (!$stmt) return [];
+
+        $params = array_merge($instIds, [$status]);
+        $stmt->bind_param(str_repeat('i', count($instIds)) . 's', ...$params);
+        $stmt->execute();
+        $appointments = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+        $stmt->close();
+
+        return $appointments;
+    }
+
+    /**
+     * Get prescriptions to fill at pharmacist's institution (pharmacy)
+     *
+     * @param array $institutions Array of institution rows with 'institution_id' key
+     * @param int $limit Maximum number of prescriptions to return
+     * @return array Array of prescription data
+     */
+    public function getPrescriptionsToFill(array $institutions, int $limit = 50): array
+    {
+        if (empty($institutions)) {
+            return [];
+        }
+
+        $instIds = array_column($institutions, 'institution_id');
+        $placeholders = implode(',', array_fill(0, count($instIds), '?'));
+        $conn = $this->getConnection();
+
+        $stmt = $conn->prepare("
+            SELECT p.id AS prescription_id, p.issue_date, p.expire_date, p.status,
+                   CONCAT(u.firstname, ' ', u.lastname) AS patient_name,
+                   p.patient_id
+            FROM prescription p
+            JOIN users u ON p.patient_id = u.id
+            WHERE p.institution_id IN ($placeholders)
+              AND p.status = 'active'
+              AND p.deleted_at IS NULL
+            ORDER BY p.issue_date DESC
+            LIMIT $limit
+        ");
+        if (!$stmt) return [];
+
+        $stmt->bind_param(str_repeat('i', count($instIds)), ...$instIds);
+        $stmt->execute();
+        $prescriptions = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+        $stmt->close();
+
+        return $prescriptions;
+    }
 }
