@@ -40,6 +40,7 @@ RewriteRule ^(Dockerfile|compose\.yml|README\.md|docs/.*)$  - [F,L]
 
 
 RewriteRule ^index\.php$                   /                       [R=301,L]
+RewriteRule ^index\.html$                   /                       [R=301,L]
 RewriteRule ^components/login\.php$        /login                  [R=301,L]
 RewriteRule ^components/dashboard\.php$    /dashboard              [R=301,L]
 
@@ -56,15 +57,12 @@ RewriteRule ^login\.html$                  /login?type=patient                  
 
 # Core
 RewriteRule ^index$                        index.php                                        [END]
-# Login: serve unified PHP form for GET (with type param), PHP handler for POST
-RewriteCond %{REQUEST_METHOD} GET
-RewriteRule ^login(/patient|/staff|/admin)?$ components/login.php                     [L]
-RewriteCond %{REQUEST_METHOD} POST
-RewriteRule ^login$                        components/login.php                         [END]
-# Login with explicit type - redirect to query param for clean URLs
-RewriteRule ^login/patient$                /login?type=patient                           [R=301,L]
-RewriteRule ^login/staff$                  /login?type=staff                             [R=301,L]
-RewriteRule ^login/admin$                  /login?type=admin                             [R=301,L]
+# Login: serve unified PHP form (type via query param ?type=patient/staff/admin)
+RewriteRule ^login$                       components/login.php                         [END]
+RewriteRule ^login/$                      components/login.php                         [END]
+RewriteRule ^login/patient$               components/login.php?type=patient           [END]
+RewriteRule ^login/staff$                 components/login.php?type=staff             [END]
+RewriteRule ^login/admin$                 components/login.php?type=admin            [END]
 RewriteRule ^logout$                       logout.php                                       [END]
 RewriteRule ^dashboard$                    components/dashboard.php                         [END]
 
