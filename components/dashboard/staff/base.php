@@ -1325,6 +1325,11 @@ $(function() {
 });
 </script>
 
-<?php require_once __DIR__ . '/../utils/drug_interaction_widget.php'; ?>
+<?php
+$clinicalRoles = [role::PHYSICIAN, role::NURSE, role::PHARMACIST, role::SURGEON, role::THERAPIST];
+if (in_array($staffRole, $clinicalRoles, true)) {
+    require_once __DIR__ . '/../utils/drug_interaction_widget.php';
+}
+?>
 </body>
 </html>
