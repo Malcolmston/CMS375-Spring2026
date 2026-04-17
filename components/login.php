@@ -139,7 +139,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
                 <p class="text-sm text-gray-500 mt-1"><?= htmlspecialchars($formConfig['subtitle']) ?></p>
             </div>
 
-            <form method="POST" action="/login" class="space-y-5">
+            <form method="POST" action="/login" id="login-form" class="space-y-5">
                 <input type="hidden" name="route" value="<?= htmlspecialchars($formConfig['route']) ?>">
 
                 <div>
@@ -223,6 +223,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             const newUrl = type ? '?type=' + type : location.pathname;
             history.replaceState(null, '', newUrl);
         }
+
+        // AJAX form submission with toast on error
+        document.getElementById('login-form')?.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const form = e.target;
+            const submitBtn = form.querySelector('button[type="submit"]');
+            const originalText = submitBtn?.textContent;
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Signing in...';
+
+            try {
+                const formData = new FormData(form);
+                const response = await fetch(form.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    window.location.href = data.redirect;
+                } else {
+                    document.getElementById('error-message').textContent = data.error;
+                    document.getElementById('error-popup').classList.remove('hidden');
+                }
+            } catch (err) {
+                document.getElementById('error-message').textContent = 'An error occurred. Please try again.';
+                document.getElementById('error-popup').classList.remove('hidden');
+            } finally {
+                submitBtn.disabled = false;
+                if (originalText) submitBtn.textContent = originalText;
+            }
+        });
     </script>
 </body>
 </html>
@@ -290,12 +323,12 @@ function handle_patient(): void
     $password = trim($_POST['password'] ?? '');
 
     if (!$email || !$password) {
-        redirect_back('Missing credentials.');
+        login_error('Missing credentials.');
     }
 
     $patient = new Patient();
     if (!$patient->login($email, $password)) {
-        redirect_back('Invalid email or password.');
+        login_error('Invalid email or password.');
     }
 
     if (session_status() === PHP_SESSION_ACTIVE) {
@@ -304,8 +337,7 @@ function handle_patient(): void
     $_SESSION['user_id'] = $patient->getId();
     $_SESSION['role']    = 'PATIENT';
     session_write_close();
-    header('Location: /dashboard');
-    exit;
+    login_success('/dashboard');
 }
 
 /**
@@ -318,12 +350,12 @@ function handle_staff(): void
     $employid = trim($_POST['employid'] ?? '');
 
     if (!$email || !$password || !$employid) {
-        redirect_back('Missing credentials.');
+        login_error('Missing credentials.');
     }
 
     $role = Billing::resolveRole($email, $employid);
     if ($role === null) {
-        redirect_back('Invalid credentials.');
+        login_error('Invalid credentials.');
     }
 
     $account = match ($role) {
@@ -341,7 +373,7 @@ function handle_staff(): void
     };
 
     if ($account === null || !$account->loginWithId($email, $password, $employid)) {
-        redirect_back('Invalid credentials.');
+        login_error('Invalid credentials.');
     }
 
     if (session_status() === PHP_SESSION_ACTIVE) {
@@ -350,8 +382,7 @@ function handle_staff(): void
     $_SESSION['user_id'] = $account->getId();
     $_SESSION['role']    = $role;
     session_write_close();
-    header('Location: /dashboard');
-    exit;
+    login_success('/dashboard');
 }
 
 /**
@@ -364,12 +395,12 @@ function handle_admin(): void
     $adminid  = trim($_POST['adminid']  ?? '');
 
     if (!$email || !$password || !$adminid) {
-        redirect_back('Missing credentials.');
+        login_error('Missing credentials.');
     }
 
     $admin = new Admin();
     if (!$admin->loginWithId($email, $password, $adminid)) {
-        redirect_back('Invalid credentials.');
+        login_error('Invalid credentials.');
     }
 
     if (session_status() === PHP_SESSION_ACTIVE) {
@@ -378,7 +409,47 @@ function handle_admin(): void
     $_SESSION['user_id'] = $admin->getId();
     $_SESSION['role']    = 'ADMIN';
     session_write_close();
-    header('Location: /dashboard');
+    login_success('/dashboard');
+}
+
+/**
+ * Checks if the request is an AJAX request.
+ */
+function is_ajax(): bool
+{
+    return isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
+}
+
+/**
+ * Sends a JSON response and exits.
+ */
+function json_response(array $data): never
+{
+    header('Content-Type: application/json');
+    echo json_encode($data);
+    exit;
+}
+
+/**
+ * Handles login error - returns JSON for AJAX requests, redirects otherwise.
+ */
+function login_error(string $error): never
+{
+    if (is_ajax()) {
+        json_response(['success' => false, 'error' => $error]);
+    }
+    redirect_back($error);
+}
+
+/**
+ * Handles successful login - returns JSON for AJAX requests, redirects otherwise.
+ */
+function login_success(string $redirect = '/dashboard'): never
+{
+    if (is_ajax()) {
+        json_response(['success' => true, 'redirect' => $redirect]);
+    }
+    header('Location: ' . $redirect);
     exit;
 }
 
