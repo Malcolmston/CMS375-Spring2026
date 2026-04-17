@@ -530,7 +530,7 @@ $extraTab = match ($staffRole) {
             ?>
             <h2 class="text-lg font-semibold text-slate-800 mb-4"><?= $tasksTitle ?></h2>
 
-            <?php if ($hasPrescriptions): ?>
+            <?php if (!empty($prescriptionsByRx)): ?>
                 <?php if (empty($prescriptionsByRx)): ?>
                     <div class="flex flex-col items-center justify-center py-10 text-center">
                         <div class="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center mb-3">
