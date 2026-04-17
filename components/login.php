@@ -115,7 +115,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     <header class="pt-8 pb-4 px-6">
         <div class="max-w-md mx-auto">
             <a href="/" class="inline-flex items-center gap-2 text-xl font-serif font-semibold italic text-slate-800 tracking-tight hover:opacity-80 transition-opacity">
-                <i class="fa-solid fa-heart-pulse text-rose-500"></i>
+                <i class="fa-solid fa-heart text-rose-500"></i>
                 medhealth
             </a>
         </div>
@@ -128,9 +128,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             <div class="text-center mb-6">
                 <div class="w-14 h-14 <?= htmlspecialchars($formConfig['iconBg']) ?> rounded-full flex items-center justify-center mx-auto mb-4">
                     <?php if ($type === 'admin'): ?>
-                        <i class="fa-solid fa-shield-halved <?= htmlspecialchars($formConfig['iconColor']) ?> text-xl"></i>
+                        <i class="fa-solid fa-shield <?= htmlspecialchars($formConfig['iconColor']) ?> text-xl"></i>
                     <?php elseif ($type === 'staff'): ?>
-                        <i class="fa-solid fa-id-card <?= htmlspecialchars($formConfig['iconColor']) ?> text-xl"></i>
+                        <i class="fa-solid fa-briefcase <?= htmlspecialchars($formConfig['iconColor']) ?> text-xl"></i>
                     <?php else: ?>
                         <i class="fa-solid fa-user <?= htmlspecialchars($formConfig['iconColor']) ?> text-xl"></i>
                     <?php endif; ?>
@@ -202,9 +202,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         </div>
     </main>
 
-    <!-- Footer -->
-    <?php include __DIR__ . '/home/footer.php'; ?>
-
     <!-- Login error popup -->
     <div id="error-popup" class="hidden fixed inset-0 z-50 flex items-start justify-center pt-6 px-4 pointer-events-none">
         <div class="pointer-events-auto flex items-start gap-3 bg-red-50 border border-red-200 text-red-800 rounded-xl shadow-lg px-5 py-4 max-w-sm w-full">
@@ -218,10 +215,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     <script>
         const params = new URLSearchParams(location.search);
         const err = params.get('error');
+        const type = params.get('type');
         if (err) {
             document.getElementById('error-message').textContent = err;
             document.getElementById('error-popup').classList.remove('hidden');
-            history.replaceState(null, '', location.pathname);
+            // Clear only the error param, preserve type
+            const newUrl = type ? '?type=' + type : location.pathname;
+            history.replaceState(null, '', newUrl);
         }
     </script>
 </body>
@@ -388,7 +388,9 @@ function handle_admin(): void
 function redirect_back(string $error): never
 {
     $base = $_SERVER['HTTP_REFERER'] ?? '/';
-    $url  = strtok($base, '?') . '?error=' . urlencode($error);
+    // Use the route from POST to preserve the login type
+    $route = $_POST['route'] ?? 'patient';
+    $url = strtok($base, '?') . '?type=' . urlencode($route) . '&error=' . urlencode($error);
     header('Location: ' . $url);
     exit;
 }
