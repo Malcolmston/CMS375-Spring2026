@@ -30,7 +30,24 @@ Option 2 (php with docker):
 2. Run `docker-compose up -d` or `docker compose up -d` to start the development server
 3. Open `http://localhost:8080` or `https://localhost:8443` in your browser
 
-Option 3 (php with xampp):
+Option 3 (Kubernetes with Helm):
+1. Install kubectl and helm
+2. Build and push Docker image:
+   ```bash
+   docker build -t malcolmston/spring2026-php:latest .
+   docker push malcolmston/spring2026-php:latest
+   ```
+3. Apply Kubernetes manifests:
+   ```bash
+   kubectl apply -f k8s/
+   ```
+4. Port forward for local access:
+   ```bash
+   kubectl port-forward svc/spring2026-php 8080:80 8443:443
+   ```
+5. Open `http://localhost:8080` or `https://localhost:8443`
+
+Option 4 (php with xampp):
 2. Open `http://localhost/Med-Health-Application/` in your browser
 3. Create a database and update the .env file with the database credentials
 4. Run `php composer install` to install dependencies
@@ -49,6 +66,62 @@ Option 3 (php with xampp):
 7. then apply all files in data dir
 
 > users using ** docker compose ** with gain accsess to the mailpit server at `http://localhost:8025`
+
+---
+
+## Kubernetes Deployment
+
+### Prerequisites
+- kubectl CLI
+- helm CLI
+- Docker Hub account (for storing images)
+
+### K8s Manifests (`k8s/` directory)
+| File | Purpose |
+|------|---------|
+| `deployment.yaml` | PHP app deployment |
+| `service.yaml` | ClusterIP service |
+| `service-lb.yaml` | LoadBalancer for external access |
+| `configmap.yaml` | Non-sensitive config |
+| `secrets.yaml` | Database credentials |
+| `mysql-deployment.yaml` | MySQL database |
+| `mysql-pvc.yaml` | Persistent volume for MySQL |
+
+### Quick Start
+```bash
+# Apply all manifests
+kubectl apply -f k8s/
+
+# Port forward for local access
+kubectl port-forward svc/spring2026-php 8080:80 8443:443
+```
+
+### HashiCorp Vault (Secrets Management)
+
+Install Vault with Helm:
+```bash
+helm install vault hashicorp/vault -n vault --create-namespace \
+  --set 'injector.enabled=false' \
+  --set 'server.dev.enabled=true' \
+  --set 'server.dev.devRootToken=root'
+```
+
+Write secrets to Vault:
+```bash
+kubectl exec -n vault vault-0 -- vault kv put secret/spring2026 \
+  DB_HOST=mysql \
+  DB_USER=app \
+  DB_PASS=app \
+  DB_NAME=med_helth \
+  NEWS_API_KEY=your_api_key \
+  MAIL_HOST="" \
+  MAIL_PORT="25"
+```
+
+Read secrets:
+```bash
+kubectl exec -n vault vault-0 -- vault kv get secret/spring2026
+```
 
 #### basic .env
 
