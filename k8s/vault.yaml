@@ -1,0 +1,42 @@
+# HashiCorp Cloud Vault Integration
+# Production deployment using HashiCorp Cloud Vault
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: vault-credentials
+type: Opaque
+---
+# Deployment with HashiCorp Cloud Vault using AppRole
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spring2026-php
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: spring2026-php
+  template:
+    metadata:
+      labels:
+        app: spring2026-php
+      annotations:
+        # HashiCorp Cloud Vault configuration
+        vault.hashicorp.com/agent-inject: "true"
+        vault.hashicorp.com/addr: "https://vault-cluster-public-vault-6aa09560.21f7c538.z1.hashicorp.cloud:8200"
+        vault.hashicorp.com/namespace: "admin"
+        vault.hashicorp.com/role: "spring2026"
+        vault.hashicorp.com/auth-method: "approle"
+        vault.hashicorp.com/agent-inject-secret-config: "secret/data/spring2026"
+        vault.hashicorp.com/agent-inject-template-config: |
+          {{- with secret "secret/data/spring2026" -}}
+          {{- range $k, $v := .data.data }}
+          export {{ $k | upper }}='{{ $v }}'
+          {{- end }}
+          {{- end }}
+    spec:
+      containers:
+        - name: php
+          image: malcolmston/spring2026-php:latest
+---
