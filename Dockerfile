@@ -65,3 +65,6 @@ COPY . /var/www/html/
 
 # Set proper permissions
 RUN chown -R www-data:www-data /var/www/html
+
+# Expose both HTTP and HTTPS
+EXPOSE 80 443
