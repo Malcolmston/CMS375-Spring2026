@@ -14,6 +14,8 @@ services:
         condition: service_healthy
       mailpit:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     env_file:
       - .env
     networks:
@@ -69,6 +71,40 @@ services:
           CREATE FUNCTION IF NOT EXISTS nearest_point   RETURNS STRING  SONAME 'addr_to_point.so';
           CREATE FUNCTION IF NOT EXISTS address_parts   RETURNS STRING  SONAME 'addr_to_point.so';
           CREATE FUNCTION IF NOT EXISTS address_zip     RETURNS STRING  SONAME 'addr_to_point.so';"
+    restart: "no"
+    networks:
+      - web
+
+  migrate:
+    image: mysql:8.0
+    container_name: spring2026-migrate
+    depends_on:
+      mysql:
+        condition: service_healthy
+      load-udf:
+        condition: service_completed_successfully
+      grant-permissions:
+        condition: service_completed_successfully
+    environment:
+      MYSQL_PWD: root
+    volumes:
+      - ./sql:/sql:ro
+    command: >
+      bash -c "
+        mysql -h mysql -u root med_helth < /sql/database.sql &&
+        mysql -h mysql -u root med_helth < /sql/table.sql &&
+        mysql -h mysql -u root med_helth < /sql/function.sql &&
+        mysql -h mysql -u root med_helth < /sql/procedure.sql &&
+        mysql -h mysql -u root med_helth < /sql/trigger.sql &&
+        mysql -h mysql -u root med_helth < /sql/view.sql &&
+        mysql -h mysql -u root med_helth < /sql/event.sql &&
+        mysql -h mysql -u root med_helth < /sql/data/institution.sql &&
+        mysql -h mysql -u root med_helth < /sql/data/allergy.sql &&
+        mysql -h mysql -u root med_helth < /sql/data/medicine.sql &&
+        mysql -h mysql -u root med_helth < /sql/data/interactions.sql &&
+        mysql -h mysql -u root med_helth < /sql/data/vaccine.sql &&
+        mysql -h mysql -u root med_helth < /sql/data/visit.sql
+      "
     restart: "no"
     networks:
       - web
