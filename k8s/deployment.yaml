@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spring2026-php
+  labels:
+    app: spring2026-php
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: spring2026-php
+  template:
+    metadata:
+      labels:
+        app: spring2026-php
+    spec:
+      containers:
+        - name: php
+          image: malcolmston/spring2026-php:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 80
+              name: http
+          envFrom:
+            - configMapRef:
+                name: spring2026-config
+            - secretRef:
+                name: spring2026-secrets
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 80
+              scheme: HTTP
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+              scheme: HTTP
+            initialDelaySeconds: 5
+            periodSeconds: 5
